@@ -141,8 +141,11 @@ export default {
         return json({ email: user.email, verified: !!user.verified, dailyCredits: total.credits, localDay: day });
       }
       return json({ error: 'Not found.' }, 404);
-    } catch (e) {
-      return json({ error: 'Unexpected server error.' }, 500);
+    } 
+      catch (e) {
+  console.error('KurdAI server error:', e);
+  return json({ error: 'Unexpected server error.' }, 500);
+}
     }
   }
 };
