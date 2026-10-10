@@ -1,0 +1,19 @@
+KurdAI local checks — 10 October 2026
+
+Passed:
+- worker.js JavaScript syntax check (node --check)
+- schema.sql executes successfully in SQLite and creates users, verification_tokens, credit_ledger, sessions
+
+Not yet tested / not ready for public launch:
+- Cloudflare D1 deployment and live bindings
+- email delivery / verification with a real sender domain
+- browser frontend integration with register/login/credits API
+- rate limiting and abuse prevention
+- credit spending and video generation
+- payment provider and refunds
+- end-to-end security review
+
+Important credit behavior:
+- /api/me grants one idempotent daily entry per verified account per Europe/Helsinki date.
+- The response now reports only today's credits, so daily free credits do not accumulate across days.
+- Purchased credit packs are not implemented and must be kept separate from daily free credits.
