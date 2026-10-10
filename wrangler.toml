@@ -10,3 +10,8 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "kurdai-db"
 database_id = "2fd9e61a-2bd8-434d-aa52-8d5445ea7229"
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
