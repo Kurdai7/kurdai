@@ -512,6 +512,11 @@ export default {
           localDay: day
         });
       }
+      if (url.pathname === '/api/generate' && request.method === 'POST') {
+  return json({
+    error: 'Video generation is not connected yet.'
+  }, 503);
+}
       return json({
         error: 'Not found.'
       }, 404);
