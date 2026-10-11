@@ -121,6 +121,12 @@ async function api(path, options={}) {
   if (!response.ok) throw new Error(data.error || 'هەڵەیەک ڕوویدا.');
   return data;
 }
+const videoCreditPrices = {
+  15: 110,
+  30: 220,
+  60: 440,
+  90: 660
+};
 async function refreshAccount() {
   const token = localStorage.getItem(tokenKey);
   document.getElementById('logoutBtn').hidden = !token;
