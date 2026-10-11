@@ -19,7 +19,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type,Authorization',
   'Content-Type': 'application/json; charset=utf-8'
 };
-
+// Video credit prices
+const videoCreditPrices = {
+  15: 110,
+  30: 220,
+  60: 440,
+  90: 660
+};
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -506,7 +512,6 @@ export default {
           localDay: day
         });
       }
-
       return json({
         error: 'Not found.'
       }, 404);
