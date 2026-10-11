@@ -513,113 +513,125 @@ export default {
         });
       }
    
-    // KurdAI - Google Veo video generation
-    if (
-      url.pathname === '/api/generate' &&
-      request.method === 'POST'
-    ) {
+    // KurdAI paid Veo pilot: explicitly enabled, one request for one authorized account.
+    // This pilot is deliberately limited to one native Veo clip; long-form assembly
+    // and Kurdish speech accuracy are not yet implemented.
+    if (url.pathname === '/api/generate' && request.method === 'POST') {
       const user = await currentUser(request, env);
-      if (!user) {
-        return json({ error: 'Please log in.' }, 401);
-      }
-
-      if (!env.GEMINI_API_KEY) {
+      if (!user) return json({ error: 'Please log in.' }, 401);
+      if (env.VIDEO_GENERATION_ENABLED !== 'true')
+        return json({ error: 'Video generation is temporarily disabled.' }, 503);
+      if (!env.GEMINI_API_KEY)
         return json({ error: 'Gemini API key is missing.' }, 503);
-      }
-
-      // Keep paid generation disabled until testing is ready.
-      if (env.VIDEO_GENERATION_ENABLED !== 'true') {
-        return json({
-          error: 'Video generation is temporarily disabled.'
-        }, 503);
-      }
+      if (!env.VIDEO_TEST_EMAIL || user.email.toLowerCase() !== env.VIDEO_TEST_EMAIL.toLowerCase())
+        return json({ error: 'Video pilot is restricted to the test account.' }, 403);
 
       const body = await request.json();
       const prompt = String(body.prompt || '').trim();
+      if (!prompt || prompt.length > 2000)
+        return json({ error: 'Prompt must contain 1 to 2000 characters.' }, 400);
 
-      if (!prompt || prompt.length > 2000) {
-        return json({
-          error: 'Prompt must contain 1 to 2000 characters.'
-        }, 400);
-      }
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS video_pilot_jobs (
+        user_id TEXT PRIMARY KEY,
+        operation TEXT,
+        video_uri TEXT,
+        created_at TEXT NOT NULL
+      )`).run();
 
-      const result = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-fast-generate-preview:predictLongRunning',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': env.GEMINI_API_KEY
-          },
-          body: JSON.stringify({
-            instances: [{ prompt }],
-            parameters: {
-              aspectRatio: '16:9',
-              resolution: '720p'
-            }
-          })
+      // Claim the only paid test slot BEFORE calling Google.
+      const claimed = await env.DB.prepare(
+        'INSERT OR IGNORE INTO video_pilot_jobs (user_id, created_at) VALUES (?, ?)'
+      ).bind(user.id, nowIso()).run();
+      if (!claimed.meta?.changes)
+        return json({ error: 'The single paid test has already been started. Do not pay twice.' }, 409);
+
+      try {
+        const result = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-fast-generate-preview:predictLongRunning',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+            body: JSON.stringify({
+              instances: [{ prompt }],
+              parameters: { aspectRatio: '16:9', resolution: '720p' }
+            })
+          }
+        );
+        const data = await result.json().catch(() => ({}));
+        if (!result.ok || !data.name) {
+          // Google rejected the request. No operation exists; release the slot.
+          await env.DB.prepare('DELETE FROM video_pilot_jobs WHERE user_id=? AND operation IS NULL')
+            .bind(user.id).run();
+          return json({ error: data.error?.message || 'Veo request failed.' }, result.ok ? 502 : result.status);
         }
-      );
-
-      const data = await result.json();
-
-      if (!result.ok) {
-        return json({
-          error: data.error?.message || 'Veo request failed.'
-        }, result.status);
+        await env.DB.prepare(
+          'UPDATE video_pilot_jobs SET operation=? WHERE user_id=?'
+        ).bind(data.name, user.id).run();
+        return json({ ok: true, operation: data.name, done: false });
+      } catch (e) {
+        // Network ambiguity: do NOT release the slot, to prevent a duplicate paid call.
+        console.error('Veo pilot request error:', e);
+        return json({ error: 'Network error. Do not retry a paid generation yet.' }, 502);
       }
-
-      return json({
-        ok: true,
-        operation: data.name,
-        done: false
-      });
     }
 
-    // Check whether a generated video is ready.
-    if (
-      url.pathname === '/api/video-status' &&
-      request.method === 'GET'
-    ) {
+    if (url.pathname === '/api/video-status' && request.method === 'GET') {
       const user = await currentUser(request, env);
-      if (!user) {
-        return json({ error: 'Please log in.' }, 401);
-      }
-
+      if (!user) return json({ error: 'Please log in.' }, 401);
       const operation = url.searchParams.get('operation') || '';
-
-      if (!/^models\/[a-zA-Z0-9._-]+\/operations\/[a-zA-Z0-9_-]+$/.test(operation)) {
+      if (!/^models\/[a-zA-Z0-9._-]+\/operations\/[a-zA-Z0-9_-]+$/.test(operation))
         return json({ error: 'Invalid operation.' }, 400);
-      }
-
-      if (!env.GEMINI_API_KEY) {
-        return json({ error: 'Gemini API key is missing.' }, 503);
-      }
+      const owned = await env.DB.prepare(
+        'SELECT operation, video_uri FROM video_pilot_jobs WHERE user_id=? AND operation=?'
+      ).bind(user.id, operation).first();
+      if (!owned) return json({ error: 'Video operation not found for this account.' }, 404);
+      if (owned.video_uri) return json({ done: true, ready: true, videoAvailable: true,
+        videoUrl: '/api/video-file?operation=' + encodeURIComponent(operation) });
 
       const result = await fetch(
         'https://generativelanguage.googleapis.com/v1beta/' + operation,
-        {
-          headers: {
-            'x-goog-api-key': env.GEMINI_API_KEY
-          }
-        }
+        { headers: { 'x-goog-api-key': env.GEMINI_API_KEY } }
       );
-
-      const data = await result.json();
-
-      if (!result.ok || data.error) {
-        return json({
-          error: data.error?.message || 'Status check failed.'
-        }, result.ok ? 502 : result.status);
+      const data = await result.json().catch(() => ({}));
+      if (!result.ok || data.error)
+        return json({ error: data.error?.message || 'Status check failed.' }, result.ok ? 502 : result.status);
+      const video = data.response?.generateVideoResponse?.generatedSamples?.[0]?.video;
+      if (video?.uri) {
+        const parsed = new URL(video.uri);
+        if (parsed.protocol !== 'https:' || parsed.hostname !== 'generativelanguage.googleapis.com')
+          return json({ error: 'Unexpected video host.' }, 502);
+        await env.DB.prepare('UPDATE video_pilot_jobs SET video_uri=? WHERE user_id=? AND operation=?')
+          .bind(video.uri, user.id, operation).run();
       }
+      return json({ done: !!data.done, ready: !!video?.uri, videoAvailable: !!video?.uri,
+        ...(video?.uri ? { videoUrl: '/api/video-file?operation=' + encodeURIComponent(operation) } : {}) });
+    }
 
-      const video = data.response?.generateVideoResponse
-        ?.generatedSamples?.[0]?.video;
-
-      return json({
-        done: !!data.done,
-        ready: !!video?.uri,
-        videoAvailable: !!video?.uri
+    // Authenticated video streaming. Google API key never reaches the browser.
+    if (url.pathname === '/api/video-file' && request.method === 'GET') {
+      const user = await currentUser(request, env);
+      if (!user) return json({ error: 'Please log in.' }, 401);
+      const operation = url.searchParams.get('operation') || '';
+      const owned = await env.DB.prepare(
+        'SELECT video_uri FROM video_pilot_jobs WHERE user_id=? AND operation=?'
+      ).bind(user.id, operation).first();
+      if (!owned?.video_uri) return json({ error: 'Video not ready.' }, 404);
+      const uri = new URL(owned.video_uri);
+      if (uri.protocol !== 'https:' || uri.hostname !== 'generativelanguage.googleapis.com')
+        return json({ error: 'Invalid video URL.' }, 502);
+      const googleResponse = await fetch(uri.toString(), {
+        headers: { 'x-goog-api-key': env.GEMINI_API_KEY },
+        redirect: 'manual'
+      });
+      if (!googleResponse.ok)
+        return json({ error: 'Video download failed: ' + googleResponse.status }, 502);
+      return new Response(googleResponse.body, {
+        status: 200,
+        headers: {
+          'Content-Type': googleResponse.headers.get('Content-Type') || 'video/mp4',
+          'Content-Disposition': 'inline; filename="kurdai-video.mp4"',
+          'Cache-Control': 'private, no-store'
+        }
       });
     }
    return json({
