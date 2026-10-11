@@ -76,8 +76,8 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
       <h2>پێشبینینی ڤیدیۆ</h2>
       <p class="sub">شوێنی پیشاندانی ڤیدیۆی دروستکراو.</p>
       <div class="preview-screen">
-        <div class="mountains back"></div><div class="mountains"></div>
-        <div class="preview-content"><div class="play">▶</div><div class="preview-title" id="previewTitle">KurdAI Studio</div><div class="preview-caption" id="previewCaption">چیرۆکە کوردییەکان بە شێوەیەکی نوێ</div></div>
+      <video id="videoPlayer" controls playsinline style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:5;background:#000;object-fit:contain"></video>  <div class="mountains back"></div><div class="mountains"></div>
+     <div class="mountains back"></div><div class="mountains"></div>   <div class="preview-content"><div class="play">▶</div><div class="preview-title" id="previewTitle">KurdAI Studio</div><div class="preview-caption" id="previewCaption">چیرۆکە کوردییەکان بە شێوەیەکی نوێ</div></div>
       </div>
       <div class="preview-footer"><span class="status"><span class="dot"></span><span id="previewStatus">ئامادەی تاقیکردنەوە</span></span><span id="previewDuration">٣٠ چرکە</span></div>
     </div>
@@ -166,7 +166,7 @@ function showVideoMessage(message, isError = false) {
   toast.style.color = isError ? '#842b22' : '#20583a';
 }
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
+const videoPlayer = document.getElementById('videoPlayer');
 generateBtn.addEventListener('click', async () => {
   const prompt = document.getElementById('prompt').value.trim();
   if (!prompt) {
@@ -193,6 +193,17 @@ generateBtn.addEventListener('click', async () => {
       await delay(10000);
       const status = await api('/api/video-status?operation=' + encodeURIComponent(result.operation));
       if (status.done) {
+    if (status.ready && status.videoUrl) {
+  const token = localStorage.getItem(tokenKey);
+  const response = await fetch(status.videoUrl, {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  if (!response.ok) throw new Error('نەتوانرا ڤیدیۆکە دابگیرێت.');
+  const blob = await response.blob();
+  videoPlayer.src = URL.createObjectURL(blob);
+  videoPlayer.style.display = 'block';
+  videoPlayer.load();
+  }   
         completed = true;
         document.getElementById('previewStatus').textContent = status.ready ? 'ڤیدیۆ ئامادەیە' : 'داواکاری کۆتایی هات';
         showVideoMessage(status.ready
