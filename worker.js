@@ -512,12 +512,117 @@ export default {
           localDay: day
         });
       }
-      if (url.pathname === '/api/generate' && request.method === 'POST') {
-  return json({
-    error: 'Video generation is not connected yet.'
-  }, 503);
-}
+   
+    // KurdAI - Google Veo video generation
+    if (
+      url.pathname === '/api/generate' &&
+      request.method === 'POST'
+    ) {
+      const user = await currentUser(request, env);
+      if (!user) {
+        return json({ error: 'Please log in.' }, 401);
+      }
+
+      if (!env.GEMINI_API_KEY) {
+        return json({ error: 'Gemini API key is missing.' }, 503);
+      }
+
+      // Keep paid generation disabled until testing is ready.
+      if (env.VIDEO_GENERATION_ENABLED !== 'true') {
+        return json({
+          error: 'Video generation is temporarily disabled.'
+        }, 503);
+      }
+
+      const body = await request.json();
+      const prompt = String(body.prompt || '').trim();
+
+      if (!prompt || prompt.length > 2000) {
+        return json({
+          error: 'Prompt must contain 1 to 2000 characters.'
+        }, 400);
+      }
+
+      const result = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-fast-generate-preview:predictLongRunning',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': env.GEMINI_API_KEY
+          },
+          body: JSON.stringify({
+            instances: [{ prompt }],
+            parameters: {
+              aspectRatio: '16:9',
+              resolution: '720p'
+            }
+          })
+        }
+      );
+
+      const data = await result.json();
+
+      if (!result.ok) {
+        return json({
+          error: data.error?.message || 'Veo request failed.'
+        }, result.status);
+      }
+
       return json({
+        ok: true,
+        operation: data.name,
+        done: false
+      });
+    }
+
+    // Check whether a generated video is ready.
+    if (
+      url.pathname === '/api/video-status' &&
+      request.method === 'GET'
+    ) {
+      const user = await currentUser(request, env);
+      if (!user) {
+        return json({ error: 'Please log in.' }, 401);
+      }
+
+      const operation = url.searchParams.get('operation') || '';
+
+      if (!/^models\/[a-zA-Z0-9._-]+\/operations\/[a-zA-Z0-9_-]+$/.test(operation)) {
+        return json({ error: 'Invalid operation.' }, 400);
+      }
+
+      if (!env.GEMINI_API_KEY) {
+        return json({ error: 'Gemini API key is missing.' }, 503);
+      }
+
+      const result = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/' + operation,
+        {
+          headers: {
+            'x-goog-api-key': env.GEMINI_API_KEY
+          }
+        }
+      );
+
+      const data = await result.json();
+
+      if (!result.ok || data.error) {
+        return json({
+          error: data.error?.message || 'Status check failed.'
+        }, result.ok ? 502 : result.status);
+      }
+
+      const video = data.response?.generateVideoResponse
+        ?.generatedSamples?.[0]?.video;
+
+      return json({
+        done: !!data.done,
+        ready: !!video?.uri,
+        videoAvailable: !!video?.uri
+      });
+    }
+   return json({
         error: 'Not found.'
       }, 404);
 
