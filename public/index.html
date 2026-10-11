@@ -135,9 +135,10 @@ async function refreshAccount() {
     const data = await api('/api/me');
     creditStatus.textContent = `ئەکاونت: ${data.email} · کرێدیتی ئەمڕۆ: ${data.dailyCredits} · نوێبوونەوە: نیوەشەوی فینلاند`;
   } catch (error) {
-    localStorage.removeItem(tokenKey);
-    document.getElementById('logoutBtn').hidden = true;
-    creditStatus.textContent = 'کرێدیت: تکایە دووبارە بچۆ ژوورەوە.';
+    // Do not erase a newer login because an older /api/me request failed.
+    if (localStorage.getItem(tokenKey) !== token) return;
+    document.getElementById('logoutBtn').hidden = false;
+    creditStatus.textContent = 'نەتوانرا زانیاری ئەکاونت بخوێندرێتەوە: ' + error.message;
   }
 }
 document.getElementById('registerBtn').addEventListener('click', async () => {
@@ -173,7 +174,7 @@ generateBtn.addEventListener('click', async () => {
     return showVideoMessage('تکایە بیرۆکەکەت بنووسە.', true);
   }
   if (prompt.length > 2000) return showVideoMessage('دەقەکە نابێت زیاتر لە ٢٠٠٠ پیت بێت.', true);
-  if (!localStorage.getItem(tokenKey)) return showVideoMessage('سەرەتا بچۆ ژوورەوە.', true);
+  if (!localStorage.getItem(tokenKey)) return showVideoMessage('سەرەتا بچۆ ژوورەوە. ئەگەر پێشتر چوویتە ژوورەوە، دووبارە بچۆ ژوورەوە و دڵنیابە کرێدیتەکانت دەردەکەون.', true);
   document.getElementById('previewTitle').textContent = selectedStyle;
   document.getElementById('previewStatus').textContent = 'پەیوەندی بە Veo...';
   generateBtn.disabled = true;
