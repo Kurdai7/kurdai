@@ -69,8 +69,8 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
         <button type="button" class="chip" data-style="Realistic">واقعی</button>
       </div>
       <button class="generate" id="generate">✦ ئامادەکردنی ڤیدیۆ</button>
-      <div class="toast" id="toast">ئەمە وەشانی سەرەتاییە. فۆڕمەکە ئامادەیە، بەڵام بۆ دروستکردنی ڤیدیۆی ڕاستەقینە پێویستە KurdAI بە خزمەتگوزارییەکی AI پەیوەست بکرێت. هیچ پارەیەک لێرە نادرێت.</div>
-      <p class="note">تێبینی: لەم وەشانەدا هێشتا ڤیدیۆ دروست ناکرێت؛ ئەم پەڕەیە نموونەی دیزاین و فۆڕمی ئەپەکەیە.</p>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <p class="note">تێبینی: پەیوەندی API ئامادەیە، بەڵام دروستکردنی بە پارە تا دانانی سنووری خەرجی و چالاککردنی خزمەتگوزاری ناچالاکە. Veo لەم پەیوەندییەدا تەنها داواکارییەکی کورت وەردەگرێت؛ هەڵبژاردەکانی ١٥–٩٠ چرکە هێشتا جێبەجێ نەکراون.</p>
     </div>
     <div class="panel preview">
       <h2>پێشبینینی ڤیدیۆ</h2>
@@ -155,15 +155,61 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   catch (error) { showAccountMessage(error.message, true); }
 });
 document.getElementById('logoutBtn').addEventListener('click', () => { localStorage.removeItem(tokenKey); creditStatus.textContent='چوویتە دەرەوە.'; document.getElementById('logoutBtn').hidden=true; showAccountMessage('چوویتە دەرەوە.'); });
-document.getElementById('generate').addEventListener('click', () => {
-  const prompt = document.getElementById('prompt').value.trim();
-  if (!prompt) { document.getElementById('prompt').focus(); document.getElementById('previewStatus').textContent = 'تکایە بیرۆکەکەت بنووسە'; return; }
-  document.getElementById('previewTitle').textContent = selectedStyle;
-  document.getElementById('previewStatus').textContent = language.value === 'badini' ? 'بادینی · ' + duration.value + ' چرکە' : 'سۆرانی · ' + duration.value + ' چرکە';
-  const toast = document.getElementById('toast');
-  toast.textContent = 'هێشتا خزمەتگوزاری دروستکردنی ڤیدیۆ پەیوەست نەکراوە؛ هیچ ڤیدیۆیەک دروست ناکرێت و هیچ کرێدیتێک کەم ناکرێتەوە.';
+const generateBtn = document.getElementById('generate');
+const toast = document.getElementById('toast');
+function showVideoMessage(message, isError = false) {
+  toast.textContent = message;
   toast.classList.add('show');
+  toast.style.background = isError ? '#fff0ef' : '#edf7ef';
+  toast.style.borderColor = isError ? '#e8b4ae' : '#b8d9c2';
+  toast.style.color = isError ? '#842b22' : '#20583a';
+}
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+generateBtn.addEventListener('click', async () => {
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) {
+    document.getElementById('prompt').focus();
+    return showVideoMessage('تکایە بیرۆکەکەت بنووسە.', true);
+  }
+  if (prompt.length > 2000) return showVideoMessage('دەقەکە نابێت زیاتر لە ٢٠٠٠ پیت بێت.', true);
+  if (!localStorage.getItem(tokenKey)) return showVideoMessage('سەرەتا بچۆ ژوورەوە.', true);
+  document.getElementById('previewTitle').textContent = selectedStyle;
+  document.getElementById('previewStatus').textContent = 'پەیوەندی بە Veo...';
+  generateBtn.disabled = true;
+  try {
+    // No charge is made when the server-side generation switch is off.
+    const result = await api('/api/generate', {
+      method: 'POST',
+      body: JSON.stringify({
+        prompt: `Style: ${selectedStyle}. Kurdish dialect: ${language.value}. ${prompt}`
+      })
+    });
+    if (!result.operation) throw new Error('ژمارەی داواکارییەکە نەگەڕایەوە.');
+    showVideoMessage('داواکارییەکە وەرگیرا. چاوەڕوانی دروستکردنی ڤیدیۆ بکە...');
+    let completed = false;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      await delay(10000);
+      const status = await api('/api/video-status?operation=' + encodeURIComponent(result.operation));
+      if (status.done) {
+        completed = true;
+        document.getElementById('previewStatus').textContent = status.ready ? 'ڤیدیۆ ئامادەیە' : 'داواکاری کۆتایی هات';
+        showVideoMessage(status.ready
+          ? 'ڤیدیۆ لە Google ئامادەیە، بەڵام بەشی داگرتن و پیشاندانی هێشتا پێویستی بە تەواوکردن هەیە.'
+          : 'داواکاری کۆتایی هات، بەڵام ڤیدیۆیەک نەگەڕایەوە.', !status.ready);
+        break;
+      }
+      document.getElementById('previewStatus').textContent = 'دروستکردن بەردەوامە...';
+    }
+    if (!completed) showVideoMessage('داواکاری هێشتا تەواو نەبوو؛ دوای چەند خولەکێک دووبارە هەوڵ بدە.', true);
+  } catch (error) {
+    document.getElementById('previewStatus').textContent = 'داواکاری سەرکەوتوو نەبوو';
+    showVideoMessage(error.message || 'هەڵەیەک ڕوویدا.', true);
+  } finally {
+    generateBtn.disabled = false;
+  }
 });
+
 refreshAccount();
 </script>
 </body>
