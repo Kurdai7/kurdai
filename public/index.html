@@ -240,6 +240,35 @@ generateBtn.addEventListener('click', async () => {
   finally { generateBtn.disabled = false; }
 });
 
+
+const videoBtn = document.createElement('button');
+videoBtn.type = 'button';
+videoBtn.textContent = '🎬 دروستکردنی ڤیدیۆی ڕاستەقینە (بە پارە)';
+generateBtn.insertAdjacentElement('afterend', videoBtn);
+
+videoBtn.addEventListener('click', async () => {
+  const prompt = document.getElementById('prompt')?.value?.trim();
+  if (!prompt) {
+    showVideoMessage('تکایە پرۆمپت بنووسە.', true);
+    return;
+  }
+
+  if (!confirm('Google Veo بە پارەی API کار دەکات. دڵنیایت دەتەوێت داواکاریی ڤیدیۆ بنێریت؟')) return;
+
+  videoBtn.disabled = true;
+  try {
+    const result = await api('/api/generate', {
+      method: 'POST',
+      body: JSON.stringify({ prompt, mode: 'new' })
+    });
+    showVideoMessage('داواکاریی ڤیدیۆ نێردرا.');
+    console.log(result);
+  } catch (error) {
+    showVideoMessage(error.message, true);
+  } finally {
+    videoBtn.disabled = false;
+  }
+});
 refreshAccount();
 </script>
 <script>
