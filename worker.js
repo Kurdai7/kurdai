@@ -564,7 +564,11 @@ if (mode.includes('extension') || mode.includes('extend')) {
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
             body: JSON.stringify({
               instances: [{ prompt }],
-              parameters: { aspectRatio: '16:9', resolution: '720p' }
+              parameters: {
+  aspectRatio: '16:9',
+  resolution: '720p',
+  durationSeconds: 8
+}
             })
           }
         );
