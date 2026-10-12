@@ -526,7 +526,17 @@ export default {
       if (!env.VIDEO_TEST_EMAIL || user.email.toLowerCase() !== env.VIDEO_TEST_EMAIL.toLowerCase())
         return json({ error: 'Video pilot is restricted to the test account.' }, 403);
 
-      const body = await request.json();
+  
+   
+      const body = await request.json(); 
+      const mode = String(body.mode || 
+      body.generationMode || 'new').toLowerCase();
+
+if (mode.includes('extension') || mode.includes('extend')) {
+  return json({
+    error: 'Video Extension is not enabled yet. No charge made.'
+  }, 422);
+
       const prompt = String(body.prompt || '').trim();
       if (!prompt || prompt.length > 2000)
         return json({ error: 'Prompt must contain 1 to 2000 characters.' }, 400);
