@@ -536,6 +536,7 @@ if (mode.includes('extension') || mode.includes('extend')) {
   return json({
     error: 'Video Extension is not enabled yet. No charge made.'
   }, 422);
+}
 
       const prompt = String(body.prompt || '').trim();
       if (!prompt || prompt.length > 2000)
