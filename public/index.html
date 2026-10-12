@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#103b2d">
 <title>KurdAI — دروستکەری ڤیدیۆی کوردی</title>
-<style>
+<script>
+window.KURDAI_VIDEO_EXTENSION = {
+  enabled: true,
+  minDuration: 5,
+  maxDuration: 70,
+  defaultDuration: 30
+};
+</script><style>
 :root{--green:#123d2e;--green2:#1b6547;--red:#d62929;--gold:#ffd52a;--cream:#f7f8f3;--ink:#17251e;--muted:#68776e;--line:#dfe7df}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--cream);color:var(--ink)}
 header{background:linear-gradient(135deg,#0d3024,#1b6547);color:white;padding:20px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:4px solid var(--gold)}
@@ -224,5 +231,31 @@ generateBtn.addEventListener('click', async () => {
 
 refreshAccount();
 </script>
-</body>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.createElement('div');
+  form.innerHTML = `
+    <h3>Video Extension</h3>
+    <label>ماوەی ڤیدیۆ (٥–٧٠ چرکە)</label>
+    <input id="extDuration" type="number"
+           min="5" max="70" value="30">
+    <label>کلیپی پێشوو</label>
+    <input id="extVideo" type="file"
+           accept="video/*">
+    <video id="extPreview" controls
+           style="width:100%;margin-top:12px"></video>
+  `;
+
+  document.querySelector('main')?.appendChild(form);
+
+  document.getElementById('extVideo')
+    .addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById('extPreview').src =
+          URL.createObjectURL(file);
+      }
+    });
+});
+</script></body>
 </html>
