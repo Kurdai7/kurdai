@@ -219,5 +219,48 @@ generateBtn.addEventListener('click', async () => {
 
 refreshAccount();
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const section = document.createElement('section');
+  section.style.cssText =
+    'padding:20px;margin:20px 0;border:1px solid #ddd;border-radius:16px';
+
+  section.innerHTML = `
+    <h2>🖼️ Images to Video</h2>
+    <p>وێنەیەک هەڵبژێرە بۆ ئامادەکردنی ڤیدیۆ</p>
+
+    <input type="file" id="imageToVideoFile"
+           accept="image/png,image/jpeg,image/webp">
+
+    <img id="imageToVideoPreview" alt="پێشبینینی وێنە"
+         style="display:none;width:100%;max-height:350px;
+                object-fit:contain;margin-top:15px">
+
+    <p>ڕووداوەکە بنووسە</p>
+    <textarea id="imageToVideoPrompt"
+              placeholder="بۆ نموونە: کارەکتەرەکە دەست دەجووڵێنێت و بە کوردی سۆرانی قسە دەکات"
+              style="width:100%;min-height:100px"></textarea>
+
+    <p id="imageToVideoStatus">
+      ئامادەیە بۆ هەڵبژاردنی وێنە
+    </p>
+  `;
+
+  document.body.appendChild(section);
+
+  document.getElementById('imageToVideoFile')
+    .addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const preview = document.getElementById('imageToVideoPreview');
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+
+      document.getElementById('imageToVideoStatus').textContent =
+        'وێنەکە هەڵبژێردرا. ئێستا دەتوانیت پرۆمپت بنووسیت.';
+    });
+});
+</script>
 </body>
 </html>
