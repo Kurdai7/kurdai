@@ -276,7 +276,14 @@ while (true) {
 
   if (status.ready && status.videoUrl) {
     showVideoMessage('✅ ڤیدیۆکە ئامادەیە!');
-    console.log('Video ready:', status.videoUrl);
+    const video = document.createElement('video');
+video.controls = true;
+video.style.cssText = 'width:100%;max-width:720px;margin-top:12px;';
+video.src = status.videoUrl;
+
+const container = document.createElement('div');
+container.appendChild(video);
+videoBtn.after(container);
     break;
   }
 
