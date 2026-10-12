@@ -261,8 +261,8 @@ videoBtn.addEventListener('click', async () => {
       method: 'POST',
       body: JSON.stringify({ prompt, mode: 'new' })
     });
-    showVideoMessage('داواکاریی ڤیدیۆ نێردرا.');
-    console.log(result);
+    showVideoMessage('🎬 داواکاری ڤیدیۆ نێردرا. چاوەڕوان بە.');
+console.log('KurdAI video job:', result);
   } catch (error) {
     showVideoMessage(error.message, true);
   } finally {
