@@ -5,14 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#103b2d">
 <title>KurdAI — دروستکەری ڤیدیۆی کوردی</title>
-<script>
-window.KURDAI_VIDEO_EXTENSION = {
-  enabled: true,
-  minDuration: 5,
-  maxDuration: 70,
-  defaultDuration: 30
-};
-</script><style>
+<style>
 :root{--green:#123d2e;--green2:#1b6547;--red:#d62929;--gold:#ffd52a;--cream:#f7f8f3;--ink:#17251e;--muted:#68776e;--line:#dfe7df}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--cream);color:var(--ink)}
 header{background:linear-gradient(135deg,#0d3024,#1b6547);color:white;padding:20px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:4px solid var(--gold)}
@@ -33,7 +26,7 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
     </svg>
     <div><div class="brand-name">Kurd<span>AI</span></div><div class="tagline">داهێنان بە زمانی کوردی</div></div>
   </div>
-  <div class="nav-pill">وەشانی تاقیکردنەوە</div>
+  <div class="nav-pill">Video Extension · 5–70</div>
 </header>
 <main>
   <section class="hero">
@@ -65,9 +58,15 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
           <select id="language"><option value="sorani">کوردی سۆرانی</option><option value="badini">کوردی بادینی</option></select>
         </div>
         <div><label class="field-label" for="duration">ماوەی ڤیدیۆ</label>
-          <select id="duration"><option value="15">١٥ چرکە</option><option value="30" selected>٣٠ چرکە</option><option value="60">٦٠ چرکە</option><option value="90">٩٠ چرکە</option></select>
+          <input id="duration" type="number" min="5" max="70" step="1" value="30" inputmode="numeric" aria-label="ماوە لە ٥ تا ٧٠ چرکە">
         </div>
       </div>
+      <label class="field-label" for="videoMode">جۆری دروستکردن</label>
+      <select id="videoMode"><option value="new">New Video — ڤیدیۆی نوێ</option><option value="extend">Video Extension — درێژکردنەوەی ڤیدیۆ</option></select>
+      <label class="field-label" for="previousFrame" id="previousFrameLabel" hidden>وێنەی دوا فڕەیمی ڤیدیۆی پێشوو</label>
+      <input id="previousFrame" type="file" accept="image/*" hidden>
+      <label class="field-label" for="previousVideo" id="previousVideoLabel" hidden>کلیپی پێشوو (بۆ پێشبینین بە دەنگ و کوالێتی ئەسڵی)</label>
+      <input id="previousVideo" type="file" accept="video/*" hidden>
       <label class="field-label">جۆری ڤیدیۆ</label>
       <div class="chips" id="styles">
         <button type="button" class="chip active" data-style="3D Animation">٣D ئەنیمەیشن</button>
@@ -77,14 +76,14 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
       </div>
       <button class="generate" id="generate">✦ ئامادەکردنی ڤیدیۆ</button>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
-      <p class="note">تێبینی: پەیوەندی API ئامادەیە، بەڵام دروستکردنی بە پارە تا دانانی سنووری خەرجی و چالاککردنی خزمەتگوزاری ناچالاکە. Veo لەم پەیوەندییەدا تەنها داواکارییەکی کورت وەردەگرێت؛ هەڵبژاردەکانی ١٥–٩٠ چرکە هێشتا جێبەجێ نەکراون.</p>
+      <p class="note">تێبینی: ئەم وەشانە پلانی دیمەنەکان لە مۆبایلەکەت دروست دەکات، بەبێ خەرج. کلیپی پێشوو بە دەنگ و کوالێتی ئەسڵی پیشان دەدات؛ بەڵام هێشتا ڤیدیۆی نوێ دروست یان درێژ ناکات.</p>
     </div>
     <div class="panel preview">
       <h2>پێشبینینی ڤیدیۆ</h2>
       <p class="sub">شوێنی پیشاندانی ڤیدیۆی دروستکراو.</p>
       <div class="preview-screen">
-      <video id="videoPlayer" controls playsinline style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:5;background:#000;object-fit:contain"></video>  <div class="mountains back"></div><div class="mountains"></div>
-     <div class="mountains back"></div><div class="mountains"></div>   <div class="preview-content"><div class="play">▶</div><div class="preview-title" id="previewTitle">KurdAI Studio</div><div class="preview-caption" id="previewCaption">چیرۆکە کوردییەکان بە شێوەیەکی نوێ</div></div>
+        <div class="mountains back"></div><div class="mountains"></div>
+        <div class="preview-content"><div class="play">▶</div><div class="preview-title" id="previewTitle">KurdAI Studio</div><div class="preview-caption" id="previewCaption">چیرۆکە کوردییەکان بە شێوەیەکی نوێ</div></div>
       </div>
       <div class="preview-footer"><span class="status"><span class="dot"></span><span id="previewStatus">ئامادەی تاقیکردنەوە</span></span><span id="previewDuration">٣٠ چرکە</span></div>
     </div>
@@ -128,12 +127,7 @@ async function api(path, options={}) {
   if (!response.ok) throw new Error(data.error || 'هەڵەیەک ڕوویدا.');
   return data;
 }
-const videoCreditPrices = {
-  15: 110,
-  30: 220,
-  60: 440,
-  90: 660
-};
+
 async function refreshAccount() {
   const token = localStorage.getItem(tokenKey);
   document.getElementById('logoutBtn').hidden = !token;
@@ -173,89 +167,57 @@ function showVideoMessage(message, isError = false) {
   toast.style.color = isError ? '#842b22' : '#20583a';
 }
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-const videoPlayer = document.getElementById('videoPlayer');
+
+generateBtn.textContent = 'ئامادەکردنی پلانی دیمەنەکان (بەخۆڕایی)';
+document.getElementById('videoMode').addEventListener('change', e => {
+  const show=e.target.value==='extend';
+  for (const id of ['previousFrame','previousFrameLabel','previousVideo','previousVideoLabel']) document.getElementById(id).hidden=!show;
+});
+document.getElementById('previousVideo').addEventListener('change', e => {
+  const file=e.target.files?.[0];
+  if (!file) return;
+  let player=document.getElementById('extensionPreview');
+  if (!player) {
+    player=document.createElement('video'); player.id='extensionPreview'; player.controls=true; player.playsInline=true;
+    player.style.cssText='width:100%;border-radius:12px;margin-top:14px;background:#000';
+    document.querySelector('.preview').append(player);
+  }
+  if (player.dataset.url) URL.revokeObjectURL(player.dataset.url);
+  player.dataset.url=URL.createObjectURL(file); player.src=player.dataset.url;
+  showVideoMessage('کلیپی پێشوو ئامادەی پێشبینینە. دەنگ و کوالێتی ئەسڵی دەپارێزرێت.');
+});
 generateBtn.addEventListener('click', async () => {
   const prompt = document.getElementById('prompt').value.trim();
-  if (!prompt) {
-    document.getElementById('prompt').focus();
-    return showVideoMessage('تکایە بیرۆکەکەت بنووسە.', true);
-  }
-  if (prompt.length > 2000) return showVideoMessage('دەقەکە نابێت زیاتر لە ٢٠٠٠ پیت بێت.', true);
-  if (!localStorage.getItem(tokenKey)) return showVideoMessage('سەرەتا بچۆ ژوورەوە. ئەگەر پێشتر چوویتە ژوورەوە، دووبارە بچۆ ژوورەوە و دڵنیابە کرێدیتەکانت دەردەکەون.', true);
-  document.getElementById('previewTitle').textContent = selectedStyle;
-  document.getElementById('previewStatus').textContent = 'پەیوەندی بە Veo...';
+  if (!prompt) return showVideoMessage('تکایە بیرۆکەکەت بنووسە.', true);
+  // Local planning needs no login and makes no paid API requests.
   generateBtn.disabled = true;
   try {
-    // No charge is made when the server-side generation switch is off.
-    const result = await api('/api/generate', {
-      method: 'POST',
-      body: JSON.stringify({
-        prompt: `Style: ${selectedStyle}. Kurdish dialect: ${language.value}. ${prompt}`
-      })
-    });
-    if (!result.operation) throw new Error('ژمارەی داواکارییەکە نەگەڕایەوە.');
-    showVideoMessage('داواکارییەکە وەرگیرا. چاوەڕوانی دروستکردنی ڤیدیۆ بکە...');
-    let completed = false;
-    for (let attempt = 0; attempt < 40; attempt++) {
-      await delay(10000);
-      const status = await api('/api/video-status?operation=' + encodeURIComponent(result.operation));
-      if (status.done) {
-    if (status.ready && status.videoUrl) {
-  const token = localStorage.getItem(tokenKey);
-  const response = await fetch(status.videoUrl, {
-    headers: { Authorization: 'Bearer ' + token }
-  });
-  if (!response.ok) throw new Error('نەتوانرا ڤیدیۆکە دابگیرێت.');
-  const blob = await response.blob();
-  videoPlayer.src = URL.createObjectURL(blob);
-  videoPlayer.style.display = 'block';
-  videoPlayer.load();
-  }   
-        completed = true;
-        document.getElementById('previewStatus').textContent = status.ready ? 'ڤیدیۆ ئامادەیە' : 'داواکاری کۆتایی هات';
-        showVideoMessage(status.ready
-          ? 'ڤیدیۆ لە Google ئامادەیە، بەڵام بەشی داگرتن و پیشاندانی هێشتا پێویستی بە تەواوکردن هەیە.'
-          : 'داواکاری کۆتایی هات، بەڵام ڤیدیۆیەک نەگەڕایەوە.', !status.ready);
-        break;
-      }
-      document.getElementById('previewStatus').textContent = 'دروستکردن بەردەوامە...';
+    const requested = Number(duration.value);
+    const mode = document.getElementById('videoMode').value;
+    if (!Number.isInteger(requested) || requested < 5 || requested > 70) throw new Error('ماوە دەبێت لە ٥ تا ٧٠ چرکە بێت.');
+    const clipSeconds=8;
+    const count=Math.ceil(requested/clipSeconds);
+    const scenes=Array.from({length:count},(_,i)=>({
+      scene:i+1, startSecond:i*clipSeconds, endSecond:Math.min(requested,(i+1)*clipSeconds),
+      prompt:(mode==='extend'?'Video Extension — continue exactly from the previous clip final frame. Preserve characters, clothing, lighting and audio continuity. ':'New video — ')+prompt+' | '+language.value+' | '+selectedStyle+' | Scene '+(i+1)+' of '+count
+    }));
+    const result={scenes,estimatedClips:count};
+    const lines = result.scenes.map(s => `دیمەنی ${s.scene}: ${s.startSecond}–${s.endSecond} چرکە`).join(' | ');
+    document.getElementById('previewTitle').textContent = 'پلانی ' + requested + ' چرکە';
+    document.getElementById('previewStatus').textContent = result.estimatedClips + ' دیمەن پلان کرا';
+    showVideoMessage('پلانەکە ئامادەیە (بەبێ خەرجی): ' + lines + ' — هێشتا هیچ ڤیدیۆیەک دروست نەکراوە.');
+    let pre = document.getElementById('scenePlanResult');
+    if (!pre) {
+      pre = document.createElement('pre'); pre.id = 'scenePlanResult';
+      pre.style.cssText='white-space:pre-wrap;direction:rtl;text-align:right;padding:12px;max-height:300px;overflow:auto;background:#f1f6f3;border-radius:12px';
+      document.querySelector('.preview').append(pre);
     }
-    if (!completed) showVideoMessage('داواکاری هێشتا تەواو نەبوو؛ دوای چەند خولەکێک دووبارە هەوڵ بدە.', true);
-  } catch (error) {
-    document.getElementById('previewStatus').textContent = 'داواکاری سەرکەوتوو نەبوو';
-    showVideoMessage(error.message || 'هەڵەیەک ڕوویدا.', true);
-  } finally {
-    generateBtn.disabled = false;
-  }
+    pre.textContent = result.scenes.map(s => `دیمەنی ${s.scene} (${s.startSecond}–${s.endSecond}):\n${s.prompt}`).join('\n\n');
+  } catch(error) { showVideoMessage(error.message || 'هەڵەیەک ڕوویدا.',true); }
+  finally { generateBtn.disabled = false; }
 });
 
 refreshAccount();
 </script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.createElement('div');
-  form.innerHTML = `
-    <h3>Video Extension</h3>
-    <label>ماوەی ڤیدیۆ (٥–٧٠ چرکە)</label>
-    <input id="extDuration" type="number"
-           min="5" max="70" value="30">
-    <label>کلیپی پێشوو</label>
-    <input id="extVideo" type="file"
-           accept="video/*">
-    <video id="extPreview" controls
-           style="width:100%;margin-top:12px"></video>
-  `;
-
-  document.querySelector('main')?.appendChild(form);
-
-  document.getElementById('extVideo')
-    .addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (file) {
-        document.getElementById('extPreview').src =
-          URL.createObjectURL(file);
-      }
-    });
-});
-</script></body>
+</body>
 </html>
