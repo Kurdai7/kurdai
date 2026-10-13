@@ -50,8 +50,11 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
     <div><div class="brand-name">Kurd<span>AI</span></div><div class="tagline">داهێنان بە زمانی کوردی</div></div>
   </div>
   <div class="nav-pill">Video Extension · 5–70</div>
+<div class="language-switcher">
+  <button type="button" id="languageToggle">🌐 KU / EN</button>
+</div>
 </header>
-<main>
+         <main>
   <section class="hero">
     <div class="eyebrow"><span class="sun">☀</span> هەنگاوێکی نوێ بۆ داهێنانی کوردی</div>
     <h1>بیرۆکەکەت بکە بە <em>ڤیدیۆ</em></h1>
@@ -357,5 +360,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-</body>
+<script>
+document.getElementById('languageToggle').addEventListener('click', () => {
+  const isEnglish = document.documentElement.lang !== 'en';
+  document.documentElement.lang = isEnglish ? 'en' : 'ku';
+  document.documentElement.dir = isEnglish ? 'ltr' : 'rtl';
+  document.getElementById('languageToggle').textContent =
+    isEnglish ? '🌐 EN / KU' : '🌐 KU / EN';
+});
+</script></body>
 </html>
