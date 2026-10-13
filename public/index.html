@@ -361,12 +361,59 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script>
-document.getElementById('languageToggle').addEventListener('click', () => {
-  const isEnglish = document.documentElement.lang !== 'en';
-  document.documentElement.lang = isEnglish ? 'en' : 'ku';
-  document.documentElement.dir = isEnglish ? 'ltr' : 'rtl';
-  document.getElementById('languageToggle').textContent =
-    isEnglish ? '🌐 EN / KU' : '🌐 KU / EN';
+const translations = {
+  'داهێنان بە زمانی کوردی': 'Innovation in Kurdish',
+  'هەنگاوێکی نوێ بۆ داهێنانی کوردی': 'A new era of Kurdish creativity',
+  'بیرۆکەکەت بکە بە': 'Turn your idea into',
+  'ڤیدیۆ': 'video',
+  'چیرۆکەکەت بنووسە، شێوەزاری کوردی هەڵبژێرە و ئامادەبە بۆ دروستکردنی ڤیدیۆی AI.': 'Write your story, choose a Kurdish dialect, and get ready to create AI videos.',
+  'ئەکاونتی KurdAI': 'KurdAI Account',
+  'ئیمەیڵ': 'Email',
+  'وشەی نهێنی': 'Password',
+  'دروستکردنی ئەکاونت': 'Create Account',
+  'چوونەژوورەوە': 'Log In',
+  'دەرچوون': 'Log Out',
+  'ڤیدیۆی نوێ دروست بکە': 'Create a New Video',
+  'چیرۆک یان بیرۆکەی ڤیدیۆ': 'Video Story or Idea',
+  'شێوەزاری کوردی': 'Kurdish Dialect',
+  'کوردی سۆرانی': 'Sorani Kurdish',
+  'کوردی بادینی': 'Badini Kurdish',
+  'ماوەی ڤیدیۆ': 'Video Duration',
+  'جۆری دروستکردن': 'Generation Mode',
+  'جۆری ڤیدیۆ': 'Video Style',
+  'پێشبینینی ڤیدیۆ': 'Video Preview',
+  'سینەمایی': 'Cinematic',
+  'کارتۆن': 'Cartoon',
+  'واقعی': 'Realistic'
+};
+
+const originals = new Map();
+
+document.querySelectorAll(
+  'h1,h2,h3,p,label,button,option,.tagline,.eyebrow,.preview-caption'
+).forEach(el => {
+  if (el.id === 'languageToggle') return;
+  originals.set(el, el.textContent.trim());
 });
-</script></body>
+
+document.getElementById('languageToggle').addEventListener('click', () => {
+  const english = document.documentElement.lang !== 'en';
+
+  document.documentElement.lang = english ? 'en' : 'ckb';
+  document.documentElement.dir = english ? 'ltr' : 'rtl';
+
+  originals.forEach((original, el) => {
+    if (english && translations[original]) {
+      el.textContent = translations[original];
+    } else if (!english) {
+      el.textContent = original;
+    }
+  });
+
+  document.getElementById('languageToggle').textContent =
+    english ? '🌐 EN / KU' : '🌐 KU / EN';
+
+ });
+</script>
+</body>
 </html>
