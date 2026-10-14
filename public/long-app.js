@@ -71,3 +71,16 @@ $('longRefresh').addEventListener('click', async () => {
     if (job) await refresh(job.id); else show('هێشتا دروستکردنی ٧٠ چرکە دەستی پێ نەکردووە.');
   } catch (e) { show(e.message); }
 });
+
+$('longReadiness').addEventListener('click', async () => {
+  const button = $('longReadiness'); button.disabled = true;
+  const session = token(), version = generation;
+  try {
+    const state = await call('capabilities');
+    if (session !== token() || version !== generation) return;
+    show(state.processorReachable ?
+      `سێرڤەر: بەردەستە.\nبە وێنەی خۆت: ${state.canStartWithReference ? 'ڕێکخراوە' : 'هێشتا ئامادە نییە'}. بە دەق: ${state.canStartFromText ? 'ڕێکخراوە' : 'هێشتا ئامادە نییە'}.\nدەنگی سۆرانی/بادینی: هێشتا چالاک نییە. ئەمە تەنها پشکنینی ڕێکخستنەکانە؛ تاقیکردنەوەی ڤیدیۆی AI نییە.` :
+      `سێرڤەری ٧٠ چرکە پەیوەست نەکراوە. ڕێکخستنە ونەکان: ${(state.missingConfiguration || []).join(', ')}. هیچ داواکارییەکی AI نەنێردراوە.`);
+  } catch (error) { if (session === token() && version === generation) show(error.message); }
+  finally { button.disabled = false; }
+});

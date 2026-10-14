@@ -152,7 +152,8 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
     <label class="field-label" for="longLanguage">زمانی دیالۆگی ٧٠ چرکە</label><select id="longLanguage"><option value="none">بێ دەنگ — ڕێگای ئێستا</option><option value="sorani">کوردی سۆرانی — TTS هێشتا چالاک نییە</option><option value="badini">کوردی بادینی — TTS هێشتا چالاک نییە</option></select>
     <label class="field-label" for="longDialogue">دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو</label><textarea id="longDialogue" maxlength="5000" placeholder="دیالۆگەکەت بە هەمان شێوەزار بنووسە؛ وەرگێڕانی خۆکار ناکرێت."></textarea>
     <p class="note">ئەگەر وێنە نەدەیت، وێنەیەک بە API دروست دەکرێت و خەرجییەکەی لە نرخەکەدا دەژمێردرێت. ئەگەر ڕوخسارێکی دیاریکراوت هەیە، وێنەی خۆت بەکاربهێنە.</p>
-    <div class="account-actions"><button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled>قبوڵکردنی خەرجی و دروستکردنی ٧٠ چرکە</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
+    <div class="account-actions"><button class="chip" id="longReadiness" type="button">پشکنینی سێرڤەری ٧٠ چرکە — بێ پارە</button>
+      <button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled>قبوڵکردنی خەرجی و دروستکردنی ٧٠ چرکە</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
     <div id="longCost" class="toast" role="status" aria-live="polite"></div>
     <p class="note">نرخی Admin = خەرجیی API و خەرجیی ڕاستەقینەی پرۆسێسکردن. قازانجی فرۆشتن زیاد ناکرێت. تا کۆی خەرجی دیاری نەکرێت، دروستکردن داخراوە. دووبارەکردنەوەی داواکاریی بە پارە بە خۆکار ناکرێت.</p>
     <video id="longVideo" controls playsinline hidden style="width:100%;max-height:500px"></video><a class="chip" id="longDownload" download="KurdAI-70s.mp4" hidden>داگرتنی ٧٠ چرکە</a>

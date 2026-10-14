@@ -6,9 +6,11 @@ import { createReadStream } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { longInput, quoteLong } from '../long-video.js';
+import { verifyRuntime } from './media.js';
 import { advance, save, load, publicLongJob } from './engine.js';
 
-export async function createProcessor(config) {
+export async function createProcessor(config, dependencies = {}) {
+  const mediaTools = await verifyRuntime();
   const root = resolve(config.LONG_DATA_DIR || './long-video-data');
   await mkdir(root, { recursive: true, mode: 0o700 });
   if (!config.LONG_VIDEO_SERVICE_SECRET || config.LONG_VIDEO_SERVICE_SECRET.length < 32)
@@ -21,18 +23,28 @@ export async function createProcessor(config) {
   for (const id of await readdir(root)) if (/^[a-f0-9-]{36}$/.test(id)) {
     const job = await load(join(root, id)); jobs.set(id, job);
   }
-  const costs = () => ({ mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
+  const costs = input => ({ mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
     vatPercent: config.LONG_VAT_PERCENT,
-    enabled: config.LONG_VIDEO_ENABLED === 'true' && !!config.DASHSCOPE_API_KEY && !!config.FAL_KEY
+    enabled: config.LONG_VIDEO_ENABLED === 'true' && !!config.DASHSCOPE_API_KEY && (!!input?.image || !!config.FAL_KEY)
       && new Date().toISOString().slice(0, 10) <= '2026-10-21' });
   const send = (res, data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
   const hash = value => createHash('sha256').update(value).digest();
   const server = http.createServer(async (req, res) => {
     try {
+      // Loopback health check returns no owner data, job IDs, configuration or keys.
+      if (req.method === 'GET' && req.url === '/healthz') return send(res, {ok: true, mediaTools});
       if (!timingSafeEqual(hash(req.headers.authorization || ''), hash(`Bearer ${config.LONG_VIDEO_SERVICE_SECRET}`))) return send(res, { error: 'Unauthorized.' }, 401);
       const owner = req.headers['x-kurdai-owner'];
       if (typeof owner !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(owner)) return send(res, { error: 'Invalid owner.' }, 400);
       const url = new URL(req.url, 'http://processor');
+      if (req.method === 'GET' && url.pathname === '/v1/health') {
+        const ready = image => quoteLong({resolution:'480p',image,language:'none'}, costs({image})).canStart;
+        return send(res, {processorReachable: true, mediaTools,
+          canStartWithReference: ready(true), canStartFromText: ready(false),
+          providerConfigured: {wan: !!config.DASHSCOPE_API_KEY, openingImage: !!config.FAL_KEY},
+          missingCosts: ['LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT'].filter(k => config[k] === undefined || config[k] === ''),
+          audioEnabled: {sorani: false, badini: false}, paidProviderProbe: false});
+      }
       if (req.method === 'GET' && url.pathname === '/v1/jobs')
         return send(res, { jobs: [...jobs.values()].filter(j => j.owner === owner).map(publicLongJob).reverse().slice(0, 30) });
       if (req.method === 'GET') {
@@ -51,7 +63,7 @@ export async function createProcessor(config) {
       const body = JSON.parse(raw);
       await serial(async () => {
         if (url.pathname === '/v1/quote') {
-          const input = longInput(body), quote = quoteLong(input, costs());
+          const input = longInput(body), quote = quoteLong(input, costs(input));
           const id = randomUUID(), expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
           const job = { id, owner, input, quote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0 };
           await save(job, join(root, id)); jobs.set(id, job);
@@ -61,7 +73,7 @@ export async function createProcessor(config) {
         const job = jobs.get(body.id);
         if (!job || job.owner !== owner) return send(res, { error: 'Not found.' }, 404);
         if (job.status !== 'quoted') return send(res, publicLongJob(job)); // Replay never generates again.
-        const current = quoteLong(job.input, costs());
+        const current = quoteLong(job.input, costs(job.input));
         if (!current.canStart || JSON.stringify(current) !== JSON.stringify(job.quote)) return send(res, { error: 'Processor or costs changed; request a new quote.' }, 409);
         if (Date.parse(job.expiresAt) < Date.now()) return send(res, { error: 'Quote expired.' }, 409);
         if (body.approved !== true || body.approvedTotalEUR !== job.quote.totalEUR)
@@ -76,15 +88,19 @@ export async function createProcessor(config) {
   let timer, closed = false;
   const tick = () => serial(async () => {
     const job = [...jobs.values()].find(j => j.status === 'running');
-    if (job) await advance(job, join(root, job.id), config);
+    if (job) await advance(job, join(root, job.id), config, dependencies);
   });
   return { server, tick,
     start() { timer = setInterval(() => tick().catch(() => {}), 15000); timer.unref(); },
     async close() { if (closed) return; closed = true; clearInterval(timer); await chain; await rm(lock, { recursive: true, force: true }); } };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const host = process.env.PROCESSOR_BIND_HOST || '127.0.0.1';
+  if (!['127.0.0.1','0.0.0.0'].includes(host)) throw new Error('Use an explicit loopback or container bind address.');
+  const port = Number(process.env.PORT || 8788);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be an integer from 1 to 65535.');
   const processor = await createProcessor(process.env);
-  processor.server.listen(Number(process.env.PORT || 8788), '127.0.0.1'); processor.start();
+  processor.server.listen(port, host); processor.start();
   const shutdown = () => processor.server.close(async () => { await processor.close(); process.exit(0); });
   process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 }

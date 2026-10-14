@@ -33,7 +33,7 @@ export function quoteLong(input, costs = {}) {
   const apiUSD = 70 * (input.resolution === '720p' ? LONG_PRICES.wan720PerSecond : LONG_PRICES.wan480PerSecond)
     + (input.image ? 0 : LONG_PRICES.firstImageUSD);
   const known = ['mediaEUR', 'fxPercent', 'vatPercent'].every(k =>
-    costs[k] !== undefined && costs[k] !== null && Number.isFinite(Number(costs[k])) && Number(costs[k]) >= 0)
+    ['number','string'].includes(typeof costs[k]) && String(costs[k]).trim() !== '' && Number.isFinite(Number(costs[k])) && Number(costs[k]) >= 0)
     && Number(costs.fxPercent) <= 100 && Number(costs.vatPercent) <= 100;
   const apiEUR = apiUSD / LONG_PRICES.usdPerEUR;
   const mediaEUR = known ? Number(costs.mediaEUR) : null;
@@ -62,25 +62,33 @@ export async function handleLong(request, env, user) {
     if (!user.verified || !env.VIDEO_TEST_EMAIL || user.email.trim().toLowerCase() !== env.VIDEO_TEST_EMAIL.trim().toLowerCase())
       return json({ error: 'Only the verified owner can use the 70-second workflow.' }, 403);
     const url = new URL(request.url);
-    const configured = env.LONG_VIDEO_SERVICE_URL && env.LONG_VIDEO_SERVICE_SECRET;
+    const missingConfiguration = ['LONG_VIDEO_SERVICE_URL','LONG_VIDEO_SERVICE_SECRET'].filter(k => !env[k]);
+    const configured = !missingConfiguration.length;
+    if (request.method === 'GET' && url.pathname === '/api/long/capabilities' && !configured)
+      return json({processorReachable: false, configured: false, missingConfiguration,
+        canStartWithReference: false, canStartFromText: false, audioEnabled: {sorani: false, badini: false}, paidProviderProbe: false});
     if (request.method === 'POST' && url.pathname === '/api/long/quote' && !configured) {
       const input = longInput(await request.json());
       return json({ ...quoteLong(input), blockedReason: 'Media processor, provider access and full processing/FX/tax costs are not configured. No paid call is enabled.' });
     }
     if (!configured) return json({ error: 'The 70-second processor is not configured. No paid request was sent.' }, 503);
     const base = new URL(env.LONG_VIDEO_SERVICE_URL);
-    if (base.protocol !== 'https:') throw new Error('Processor requires HTTPS.');
-    const path = url.pathname.slice('/api/long'.length);
+    if (base.protocol !== 'https:' || base.username || base.password || base.search || base.hash) throw new Error('Processor requires HTTPS.');
+    const path = url.pathname === '/api/long/capabilities' ? '/health' : url.pathname.slice('/api/long'.length);
     if (!((request.method === 'POST' && ['/quote', '/start'].includes(path)) ||
-      (request.method === 'GET' && ['/status', '/file', '/jobs'].includes(path)))) return json({ error: 'Unknown route.' }, 404);
+      (request.method === 'GET' && ['/health', '/status', '/file', '/jobs'].includes(path)))) return json({ error: 'Unknown route.' }, 404);
     const upstream = new URL(`/v1${path}`, base);
     if (url.searchParams.has('id')) upstream.searchParams.set('id', url.searchParams.get('id'));
-    const response = await fetch(upstream, { method: request.method, redirect: 'error',
+    const response = await fetch(upstream, { method: request.method, redirect: 'error', signal: AbortSignal.timeout(path === '/file' ? 120000 : 30000),
       headers: { Authorization: `Bearer ${env.LONG_VIDEO_SERVICE_SECRET}`, 'X-KurdAI-Owner': user.id,
         'Content-Type': 'application/json' },
       ...(request.method === 'POST' ? { body: await request.text() } : {}) });
     return new Response(response.body, { status: response.status, headers: { 'Cache-Control': 'private, no-store',
       'Content-Type': response.headers.get('content-type') || 'application/json',
       ...(path === '/file' ? { 'Content-Disposition': 'attachment; filename="KurdAI-70s.mp4"' } : {}) } });
-  } catch (error) { return json({ error: error.message }, 400); }
+  } catch (error) {
+    if (['TimeoutError','AbortError','TypeError'].includes(error.name))
+      return json({error: 'The private video processor is unreachable. No automatic generation retry was sent.'}, 503);
+    return json({ error: error.message }, 400);
+  }
 }

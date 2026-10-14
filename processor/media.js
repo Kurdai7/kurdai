@@ -35,3 +35,12 @@ export async function assemble(directory, count = 14) {
   if (Math.abs(await duration(output) - 70) > 0.04) throw new Error('Final video failed the 70-second duration check.');
   return output;
 }
+
+// Local readiness only; never contacts a generation provider.
+export async function verifyRuntime() {
+  await exec('ffmpeg', ['-version'], {timeout: 10000, maxBuffer: 65536});
+  await exec('ffprobe', ['-version'], {timeout: 10000, maxBuffer: 65536});
+  const {stdout} = await exec('ffmpeg', ['-hide_banner','-encoders'], {timeout: 10000, maxBuffer: 65536});
+  if (!stdout.includes('libx264')) throw new Error('FFmpeg requires the libx264 encoder.');
+  return {ffmpeg: true, ffprobe: true, libx264: true};
+}

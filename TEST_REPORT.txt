@@ -71,3 +71,13 @@ OWNER QUOTE ENFORCEMENT — 2026-10-14
 - keep_vars preserves dashboard controls. New schema columns are nullable for old jobs and initialized idempotently, retaining owner/history locks.
 - 25 automated tests PASS, syntax PASS, Worker dry-run PASS. Real local FFmpeg assembly now verifies both landscape and portrait 70-second outputs. Provider responses are mocked. No real AI, speech, bank charge, top-up, purchase or hosting deployment was performed.
 - 70-second processor hosting/access and TTS remain absent; full-cost and audio gates stay closed. Faces/voices/continuous motion are not guaranteed or independently quality-tested.
+
+
+PROCESSOR INTEGRATION CONTINUATION — 2026-10-14
+- Continued from remote main 75a17fe (tree 8097946662a19be71815ba388ed6742cc290cc91), preserving the prior 25 passing checks and deployment.
+- Fixed uploaded-reference activation: no unnecessary fal opening-image credential required when the owner supplies the opening image. Text-only jobs still require that provider.
+- Empty/whitespace/non-numeric cost configuration now blocks starts rather than being converted to zero.
+- Added local ffmpeg/ffprobe/libx264 preflight, private authenticated readiness route, secret-free container health check, explicit managed-container bind/port validation, Worker timeout diagnostics and a free readiness UI button.
+- New complete integration test crosses the Worker handler, real private Node HTTP server, immutable quote/approval, fourteen mock provider submissions, real FFmpeg assembly and authenticated download of a verified 70-second MP4. External provider traffic is forbidden. It verifies owner isolation, uploaded-image operation without fal credentials, exact-cost approval and no extra generation on replay.
+- Syntax, 28 automated tests and Worker dry-run PASS (46.55 KiB Worker bundle). Both aspect ratios continue passing the real local synthetic-media tests. Docker image build remains UNTESTED because Docker is not installed in this workspace.
+- Render integration was discovered and suggested but is NOT connected. No hosting service, disk, subscription, contract or paid provider request was created. Production 70-second hosting and real Kurdish speech/identity quality remain unverified.
