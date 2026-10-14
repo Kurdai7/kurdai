@@ -1,0 +1,68 @@
+const $ = id => document.getElementById(id);
+let quote = null, output = null, timer = null, generation = 0;
+const token = () => localStorage.getItem('kurdai_session_token');
+function show(text) { $('longCost').textContent = text; $('longCost').classList.add('show'); }
+const money = amount => amount == null ? 'دیاری نەکراوە' : `€${amount.toFixed(4)}`;
+async function call(path, body) {
+  const response = await fetch(`/api/long/${path}`, { method: body ? 'POST' : 'GET',
+    headers: { Authorization: `Bearer ${token() || ''}`, 'Content-Type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {}) });
+  const data = await response.json(); if (!response.ok) throw new Error(data.error || 'داواکاری سەرکەوتوو نەبوو.'); return data;
+}
+function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
+for (const id of ['prompt', 'aspectRatio', 'longResolution', 'longIdentity', 'longReference']) $(id).addEventListener('input', invalidate);
+function reset() {
+  generation++; clearTimeout(timer); invalidate();
+  $('longVideo').pause(); $('longVideo').removeAttribute('src'); $('longVideo').load();
+  if (output) URL.revokeObjectURL(output); output = null;
+  $('longVideo').hidden = $('longDownload').hidden = true;
+}
+$('logoutBtn').addEventListener('click', reset);
+$('loginBtn').addEventListener('click', reset);
+$('longQuote').addEventListener('click', async () => {
+  invalidate(); const button = $('longQuote'); button.disabled = true;
+  const session = token(); const version = generation;
+  try {
+    const file = $('longReference').files[0]; let image = null;
+    if (file) {
+      if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 4 * 1024 * 1024) throw new Error('وێنەی PNG/JPEG بەکاربهێنە، تا 4 MiB.');
+      image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+    }
+    const data = await call('quote', { prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
+      resolution: $('longResolution').value, identity: $('longIdentity').value, image });
+    if (session !== token() || version !== generation) return;
+    quote = data;
+    show(`٧٠ چرکە · ١٤ × ٥ · ${$('longResolution').value} · بێ دەنگ\nAPI: $${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}\nپرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی خەرجییە، پسوڵەی کۆتایی نییە. پێش دەستپێکردن قبوڵی بکە.' : 'هێشتا چالاک نییە؛ دەستگەیشتنی API و سێرڤەری یەکخستن و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.'}`);
+    $('longCost').style.whiteSpace = 'pre-line'; $('longStart').disabled = !data.canStart;
+  } catch (e) { show(e.message); } finally { button.disabled = false; }
+});
+async function refresh(id) {
+  clearTimeout(timer); const session = token(), version = generation;
+  try {
+    const job = await call(`status?id=${encodeURIComponent(id)}`);
+    if (session !== token() || version !== generation) return;
+    show(`${job.status} · ${job.completedSegments}/14\n${job.error || ''}\nخەرجیی API ـی تەرخانکراو (پسوڵە نییە): $${job.reservedAPIUSD.toFixed(3)}`);
+    if (job.status === 'ready') {
+      const response = await fetch(job.videoUrl, { headers: { Authorization: `Bearer ${session}` } });
+      if (!response.ok) throw new Error('داگرتنی ڤیدیۆ سەرکەوتوو نەبوو.');
+      const blob = await response.blob(); if (session !== token() || version !== generation) return;
+      if (output) URL.revokeObjectURL(output); output = URL.createObjectURL(blob);
+      $('longVideo').src = $('longDownload').href = output;
+      $('longVideo').hidden = $('longDownload').hidden = false;
+    } else if (job.status === 'running') timer = setTimeout(() => refresh(id), 15000);
+  } catch (e) { show(e.message); }
+}
+$('longStart').addEventListener('click', async () => {
+  if (!quote?.canStart) return;
+  if (!window.confirm(`خەرجیی پێشبینیکراوی ${money(quote.totalEUR)} بۆ ٧٠ چرکەی بێ دەنگ قبوڵ دەکەیت؟ داواکارییەکان پارە خەرج دەکەن، ڕوخساری یەکسان گەرەنتی نییە.`)) return;
+  $('longStart').disabled = true;
+  try {
+    const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR });
+    await refresh(job.id);
+  } catch (e) { show(e.message); }
+});
+$('longRefresh').addEventListener('click', async () => {
+  try { const { jobs } = await call('jobs'); const job = jobs.find(j => j.status !== 'quoted');
+    if (job) await refresh(job.id); else show('هێشتا دروستکردنی ٧٠ چرکە دەستی پێ نەکردووە.');
+  } catch (e) { show(e.message); }
+});
