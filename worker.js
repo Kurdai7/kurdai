@@ -188,6 +188,81 @@ export default {
         });
       }
 
+           // KurdAI Omni 1.1 Flash connection test.
+      if (
+        url.pathname === '/api/omni-test' &&
+        request.method === 'POST'
+      ) {
+        const user = await currentUser(request, env);
+        if (!user) {
+          return json({ error: 'Please log in.' }, 401);
+        }
+
+        if (
+          env.VIDEO_GENERATION_ENABLED !== 'true' ||
+          !env.GEMINI_API_KEY
+        ) {
+          return json({
+            error: 'Video API is not configured.'
+          }, 503);
+        }
+
+        if (
+          !env.VIDEO_TEST_EMAIL ||
+          user.email.toLowerCase() !==
+            env.VIDEO_TEST_EMAIL.toLowerCase()
+        ) {
+          return json({ error: 'Test account only.' }, 403);
+        }
+
+        const body = await request.json();
+        const prompt = String(body.prompt || '').trim();
+
+        if (!prompt || prompt.length > 2000) {
+          return json({ error: 'Invalid prompt.' }, 400);
+        }
+
+        const response = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/interactions',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': env.GEMINI_API_KEY
+            },
+            body: JSON.stringify({
+              model: 'gemini-omni-1.1-flash',
+              input: prompt,
+              response_format: {
+                type: 'video',
+                aspect_ratio: '16:9',
+                resolution: '360p'
+              }
+            })
+          }
+        );
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          return json({
+            error: data.error?.message || 'Omni API failed.'
+          }, response.status);
+        }
+
+        const video = data.steps
+          ?.filter(step => step.type === 'model_output')
+          .flatMap(step => step.content || [])
+          .find(item => item.type === 'video');
+
+        return json({
+          ok: true,
+          model: data.model,
+          status: data.status,
+          videoReturned: !!video?.data,
+          interactionId: data.id || null
+        });
+          } 
       // Register.
       if (
         url.pathname === '/api/register' &&
