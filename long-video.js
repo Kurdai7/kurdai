@@ -88,10 +88,15 @@ export async function handleLong(request, env, user) {
     if (url.searchParams.has('id')) upstream.searchParams.set('id', url.searchParams.get('id'));
     // Free staging can take over 50 seconds to wake. Only the read-only readiness
     // check gets a longer startup window; never retry a generation submission.
-    const response = await fetch(upstream, { method: request.method, redirect: 'error', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 90000 : 30000),
+    const response = await fetch(upstream, { method: request.method, redirect: 'manual', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 90000 : 30000),
       headers: { Authorization: `Bearer ${serviceSecret}`, 'X-KurdAI-Owner': user.id,
         'Content-Type': 'application/json' },
       ...(request.method === 'POST' ? { body: await request.text() } : {}) });
+    // workerd supports manual/follow only. Never follow a redirect with credentials.
+    if (response.status >= 300 && response.status < 400) {
+      await response.body?.cancel();
+      return json({error: 'Processor redirect blocked; configure its direct HTTPS origin. No automatic generation retry was sent.', code: 'PROCESSOR_REDIRECT_BLOCKED'}, 502);
+    }
     if (path === '/health' && [401,403].includes(response.status))
       return json({error: 'Render وەڵامی دا، بەڵام Secret ـی Cloudflare لەگەڵ Render یەکسان نییە.', code: 'PROCESSOR_AUTH_REJECTED'}, 503);
     return new Response(response.body, { status: response.status, headers: { 'Cache-Control': 'private, no-store',

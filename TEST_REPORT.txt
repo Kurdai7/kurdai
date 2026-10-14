@@ -102,3 +102,10 @@ FREE STAGING STARTUP WINDOW — 2026-10-14
 - Credential-format validation and explicit auth/network codes added without exposing credentials. Network root cause is still unverified; direct Render health succeeded independently.
 - 32 tests, syntax and Worker dry-run pass before the final supported-duration capability and stale-server quote guard; final UI checks rerun below. No paid API calls or paid resource enabled.
 - Final syntax/Worker dry-run PASS; UI test rerun PASS including refusal of a stale 70-second server quote for the default 60-second request.
+
+ACTUAL WORKERS RUNTIME FIX — 2026-10-14
+- Reproduced TypeError before outbound fetch in local workerd: redirect:error is rejected; only follow/manual are supported by this runtime.
+- Changed Worker proxy to redirect:manual and explicitly blocked 3xx responses without following or exposing credentials/Location. Native provider code and no-spend gates are unchanged.
+- Added regression using actual Miniflare/workerd and the bundled real handler: authenticated readiness succeeds; a 302 to an untrusted host is rejected with exactly one request. Injected upstream only; no provider calls.
+- All 33 tests, syntax and Worker dry-run PASS (48.49 KiB). Local runtime uses its supported 2026-09-25 test date; production wrangler date is retained.
+- Owner's successful Sorani use of Omni in Flow is recorded. Omni is the chosen direction for voiced output, but its direct API adapter is NOT implemented or tested yet.
