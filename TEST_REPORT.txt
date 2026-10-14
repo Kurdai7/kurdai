@@ -109,3 +109,9 @@ ACTUAL WORKERS RUNTIME FIX — 2026-10-14
 - Added regression using actual Miniflare/workerd and the bundled real handler: authenticated readiness succeeds; a 302 to an untrusted host is rejected with exactly one request. Injected upstream only; no provider calls.
 - All 33 tests, syntax and Worker dry-run PASS (48.49 KiB). Local runtime uses its supported 2026-09-25 test date; production wrangler date is retained.
 - Owner's successful Sorani use of Omni in Flow is recorded. Omni is the chosen direction for voiced output, but its direct API adapter is NOT implemented or tested yet.
+
+STRUCTURED PROCESSOR DIAGNOSTICS — 2026-10-14
+- User now receives a processor-generated error rather than Worker transport failure, confirming the request reaches the host. The precise route/cause is still unverified.
+- Worker validates configured quote inputs before proxying; processor distinguishes invalid JSON/input (400) from unexpected errors (500). Empty quote regression sends no upstream request. Existing HTTP test also checks explicit invalid-input response and healthy readiness.
+- Add opt-in PROCESSOR_DIAGNOSTICS=true with fixed route/event and sanitized error metadata only; no private payloads, headers, owner IDs or raw error messages. Generation stays disabled.
+- 34 tests, syntax and Worker dry-run PASS (48.74 KiB); final logging addition syntax-checked. All provider responses synthetic; no paid tests.

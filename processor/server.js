@@ -32,11 +32,13 @@ export async function createProcessor(config, dependencies = {}) {
   const server = http.createServer(async (req, res) => {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
-      if (req.method === 'GET' && req.url === '/healthz') return send(res, {ok: true, mediaTools});
+      if (req.method === 'GET' && req.url === '/healthz') return send(res, {ok: true, mediaTools, protocolVersion: 3, outputDurations: [60,70]});
       if (!timingSafeEqual(hash(req.headers.authorization || ''), hash(`Bearer ${config.LONG_VIDEO_SERVICE_SECRET}`))) return send(res, { error: 'Unauthorized.' }, 401);
       const owner = req.headers['x-kurdai-owner'];
       if (typeof owner !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(owner)) return send(res, { error: 'Invalid owner.' }, 400);
       const url = new URL(req.url, 'http://processor');
+      if (config.PROCESSOR_DIAGNOSTICS === 'true') console.info('processor_request', JSON.stringify({method: req.method,
+        route: ['/v1/health','/v1/quote','/v1/start','/v1/jobs','/v1/status','/v1/file'].includes(url.pathname) ? url.pathname : 'unknown'}));
       if (req.method === 'GET' && url.pathname === '/v1/health') {
         const ready = image => quoteLong({resolution:'480p',image,language:'none'}, costs({image})).canStart;
         return send(res, {processorReachable: true, mediaTools, outputDurations: [60,70], protocolVersion: 3,
@@ -60,10 +62,13 @@ export async function createProcessor(config, dependencies = {}) {
       }
       if (req.method !== 'POST') return send(res, { error: 'Method not allowed.' }, 405);
       let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 5700000) { send(res, { error: 'Request too large.' }, 413); return; } }
-      const body = JSON.parse(raw);
+      let body;
+      try { body = JSON.parse(raw); } catch { return send(res, {error: 'Invalid JSON request.', code: 'PROCESSOR_INVALID_INPUT'}, 400); }
       await serial(async () => {
         if (url.pathname === '/v1/quote') {
-          const input = longInput(body), quote = quoteLong(input, costs(input));
+          let input;
+          try { input = longInput(body); } catch (error) { return send(res, {error: error.message, code: 'PROCESSOR_INVALID_INPUT'}, 400); }
+          const quote = quoteLong(input, costs(input));
           const id = randomUUID(), expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
           const job = { id, owner, input, quote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0 };
           await save(job, join(root, id)); jobs.set(id, job);
@@ -83,7 +88,14 @@ export async function createProcessor(config, dependencies = {}) {
         job.status = 'running'; job.approvedAt = new Date().toISOString();
         await save(job, join(root, job.id)); send(res, publicLongJob(job), 202);
       });
-    } catch { if (!res.headersSent) send(res, { error: 'Processor request failed. Check server logs and stored job status.' }, 400); }
+    } catch (error) {
+      if (config.PROCESSOR_DIAGNOSTICS === 'true') console.error('processor_request_failed', JSON.stringify({
+        method: req.method, route: ['/v1/health','/v1/quote','/v1/start','/v1/jobs','/v1/status','/v1/file'].includes(String(req.url).split('?')[0]) ? String(req.url).split('?')[0] : 'unknown',
+        errorType: ['TypeError','Error','SyntaxError','RangeError'].includes(error.name) ? error.name : 'Error',
+        code: /^[A-Z_]{1,40}$/.test(error.code || '') ? error.code : 'INTERNAL'
+      })); // Never log body, prompts, owners, headers, credential values or raw exceptions.
+      if (!res.headersSent) send(res, {error: 'Processor request failed. Check server logs and stored job status.', code: 'PROCESSOR_INTERNAL_ERROR'}, 500);
+    }
   });
   let timer, closed = false;
   const tick = () => serial(async () => {

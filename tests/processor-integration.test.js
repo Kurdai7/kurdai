@@ -112,3 +112,11 @@ test('free readiness allows cold startup without extending or retrying paid POST
     const auth=await (await handleLong(req(),{...env,LONG_VIDEO_SERVICE_SECRET:'  '+ 'valid-dummy-credential-'.repeat(3)+'\n'},owner)).json();assert.equal(auth.code,'PROCESSOR_AUTH_REJECTED');assert.equal(calls,1);
   }finally{globalThis.fetch=original;}
  });
+
+test('configured Worker rejects empty quotes before contacting processor', async()=>{
+  const original=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('must not fetch');};
+  try {
+    const r=await handleLong(new Request('https://kurdai.net/api/long/quote',{method:'POST',body:'{}'}),{VIDEO_TEST_EMAIL:'owner@test.example',LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:'x'.repeat(32)},{id:'owner',email:'owner@test.example',verified:true});
+    assert.equal(r.status,400);assert.match((await r.json()).error,/prompt/);assert.equal(calls,0);
+  }finally{globalThis.fetch=original;}
+});

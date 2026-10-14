@@ -72,6 +72,8 @@ test('processor binds approval to owner, quote and total, is idempotent and reta
   const post = (path, body, overrides = {}) => fetch(base + path, { method: 'POST', headers: { ...headers, ...overrides }, body: JSON.stringify(body) });
   t.after(async () => { await new Promise(resolve => p.server.close(resolve)); await p.close(); });
   assert.equal((await post('/v1/quote', input, { Authorization: 'bad' })).status, 401);
+  const invalid=await post('/v1/quote',{});assert.equal(invalid.status,400);assert.equal((await invalid.json()).code,'PROCESSOR_INVALID_INPUT');
+  const health=await fetch(base+'/v1/health',{headers});assert.equal(health.status,200);assert.equal((await health.json()).processorReachable,true);
   const q = await (await post('/v1/quote', input)).json(); assert.equal(q.canStart, true);
   assert.equal((await post('/v1/start', { id: q.id })).status, 400);
   const approval = { id: q.id, approved: true, approvedTotalEUR: q.totalEUR };

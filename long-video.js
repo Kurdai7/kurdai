@@ -76,6 +76,12 @@ export async function handleLong(request, env, user) {
       return json({ ...quoteLong(input), blockedReason: 'Media processor, provider access and full processing/FX/tax costs are not configured. No paid call is enabled.' });
     }
     if (!configured) return json({ error: 'The 70-second processor is not configured. No paid request was sent.' }, 503);
+    // Validate quotes here too, so an empty form never becomes an opaque host error.
+    if (request.method === 'POST' && url.pathname === '/api/long/quote') {
+      let body;
+      try { body = await request.clone().json(); } catch { return json({error: 'Invalid JSON request.'}, 400); }
+      longInput(body);
+    }
     const serviceSecret = String(env.LONG_VIDEO_SERVICE_SECRET).trim();
     if (!/^[\x21-\x7e]{32,}$/.test(serviceSecret))
       return json({error: 'Secret ـی Cloudflare شێوەی دروستی نییە؛ بەهای نوێی Render بە تەواوی کۆپی بکە، نەک ناوی خانەکە.', code: 'PROCESSOR_SECRET_FORMAT'}, 503);
