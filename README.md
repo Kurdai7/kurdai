@@ -20,6 +20,8 @@ The tests simulate Google responses and use SQLite for D1 semantics. They are no
 
 ## Deployment
 
+Worker Previews build fix (2026-10-14): Cloudflare's PR build invokes `npx wrangler preview`, but the previous pinned Wrangler 4.45.0 does not implement that command. The project now pins Wrangler 4.135.0, the documented minimum for Worker Previews, and requires Node >=22. `wrangler preview --help`, the 23 tests, and production deployment dry-run pass with this version. The `previews` configuration explicitly disables billable generation. It intentionally does not point previews at the production D1 database: the preview UI can deploy, but account/video APIs need a separately configured test D1 binding and secrets. A preview URL is not a production deployment to kurdai.net.
+
 Cloudflare Workers Builds can retain `npx wrangler deploy` as the deploy command; `npm run deploy` is equivalent. Dependencies are pinned with package-lock.json. The assets configuration runs `/api/*` through the Worker first. Existing D1 identity is preserved.
 
 Configured bindings: DB and ASSETS. Existing secrets: EMAIL_API_KEY, EMAIL_FROM, GEMINI_API_KEY. Existing non-secret generation controls: VIDEO_GENERATION_ENABLED=true and VIDEO_TEST_EMAIL set to the owner login. Do not put secret values in git, screenshots, chat or wrangler.toml.

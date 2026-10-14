@@ -54,3 +54,11 @@ GITHUB + DIALECT UPDATE — 2026-10-14
 - Current syntax check/tests/local build PASS; see final reported count. No real speech synthesis was requested.
 - Cloudflare Workers Builds check 115891962407 for initial uploaded commit completed with FAILURE; GitHub exposes no error log in this check output. Cloudflare CLI reports not authenticated. This is a REMOTE build failure despite passing LOCAL dry-run, not a successful deploy.
 - No paid AI request, subscription, top-up or hosting purchase was made.
+
+PREVIEW BUILD FIX — 2026-10-14
+- User's Cloudflare build screenshot shows non-production branch codex/veo-video-workflow executing `npx wrangler preview`.
+- Reproduced incompatibility: pinned Wrangler 4.45.0 has no preview command. Official Worker Previews documentation requires Wrangler >=4.135.0.
+- Updated package.json/package-lock.json to Wrangler 4.135.0, declared Node >=22, and added Preview variables disabling paid generation. Production D1 binding was preserved; no new database or hosting product was purchased.
+- Verified `npx wrangler preview --help` now recognizes the command. Syntax checks and 23 tests PASS; production dry-run PASS with Wrangler 4.135.0, bundle 40.82 KiB.
+- Full Cloudflare error log has not been read, so this does not rule out additional account/binding errors. Remote rebuild result must be checked after push.
+- A preview without a configured test DB intentionally reports unavailable account/video APIs. A successful preview does not mean kurdai.net production was deployed or that AI generation was tested.

@@ -2,6 +2,12 @@ name = "kurdai"
 main = "worker.js"
 compatibility_date = "2026-10-10"
 
+# Worker Previews do not inherit production bindings or secrets.
+# Keep billable generation disabled until a separate test database is configured.
+[previews.vars]
+VIDEO_GENERATION_ENABLED = "false"
+LONG_VIDEO_ENABLED = "false"
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
