@@ -598,7 +598,7 @@ export default {
         return json({ error: 'Video generation is temporarily disabled.' }, 503);
       if (!env.GEMINI_API_KEY)
         return json({ error: 'Gemini API key is missing.' }, 503);
-      if (!env.VIDEO_TEST_EMAIL || user.email.toLowerCase() !== env.VIDEO_TEST_EMAIL.toLowerCase())
+      if (!env.VIDEO_TEST_EMAIL || user.email.toLowerCase() !== env.VIDEO_TEST_EMAIL.trim().toLowerCase()
         return json({ error: 'Video pilot is restricted to the test account.' }, 403);
 
   
