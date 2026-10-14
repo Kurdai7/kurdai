@@ -86,6 +86,7 @@ test('extension uses an owned generated video, retains ratio, and combines durat
   const stamp = new Date().toISOString();
   config.DB.raw.prepare(`INSERT INTO video_jobs (id,user_id,request_id,operation,status,video_uri,model,mode,aspect_ratio,resolution,duration,extension_count,created_at,updated_at)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run('parent','owner','old-request-id-123',operation,'ready',videoURI,'veo-3.1-fast-generate-preview','new','9:16','720p',8,0,stamp,stamp);
+  config.DB.raw.prepare("UPDATE video_jobs SET language='sorani' WHERE id='parent'").run();
   let sent;
   mockFetch(t, async (url, options) => {
     if (options?.method === 'POST') { sent = JSON.parse(options.body); return Response.json({ name: operation }); }
@@ -97,11 +98,26 @@ test('extension uses an owned generated video, retains ratio, and combines durat
   config.DB.raw.prepare('UPDATE video_jobs SET updated_at=?,resolution=? WHERE id=?').run(stamp, '1080p', 'parent');
   assert.equal((await handleVideo(post(fresh({ mode: 'extend', parentJobId: 'parent', aspectRatio: '9:16' })), config, owner)).status, 400);
   config.DB.raw.prepare('UPDATE video_jobs SET resolution=? WHERE id=?').run('720p', 'parent');
+  const mixed = await handleVideo(post(fresh({ mode: 'extend', parentJobId: 'parent', aspectRatio: '9:16', language: 'badini' })), config, owner);
+  assert.equal(mixed.status, 400); assert.match((await mixed.json()).error, /dialogue language/); assert.equal(sent, undefined);
   const response = await handleVideo(post(fresh({ mode: 'extend', parentJobId: 'parent', aspectRatio: '9:16' })), config, owner);
   const job = await response.json(); assert.equal(job.duration, 15);
   assert.equal(sent.parameters.durationSeconds, 8); assert.equal(sent.parameters.resolution, '720p');
   assert.equal(Buffer.from(sent.instances[0].video.inlineData.data, 'base64').toString(), 'original-video');
   assert.match(sent.instances[0].prompt, /Continue immediately from the final frame/);
+});
+
+test('Sorani and Badini use distinct instructions and documented capability labels without claiming tested speech', async () => {
+  const sorani = validateInput(fresh({ language: 'sorani' }));
+  const badini = validateInput(fresh({ language: 'badini' }));
+  assert.equal(sorani.language, 'sorani'); assert.equal(badini.language, 'badini');
+  assert.match(sorani.instance.prompt, /Sorani vocabulary, grammar, pronunciation/);
+  assert.match(badini.instance.prompt, /Duhok and Badinan/);
+  assert.match(badini.instance.prompt, /Never replace it with Sorani/);
+  assert.doesNotMatch(badini.instance.prompt, /All spoken dialogue must be natural Sorani/);
+  const cap = await (await handleVideo(get('/api/video-capabilities'), env(), owner)).json();
+  assert.equal(cap.dialogueLanguages.length, 2); assert.equal(cap.badiniGuaranteed, false);
+  assert.ok(cap.dialogueLanguages.every(d => d.ttsEnabled === false && d.nativeVideoVerified === false));
 });
 
 test('a previous final frame is sent as image input, not misrepresented as native extension', async t => {

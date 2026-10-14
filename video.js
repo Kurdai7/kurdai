@@ -1,5 +1,6 @@
 // Official API contracts: https://ai.google.dev/gemini-api/docs/veo
 // No provider keys, generated URIs, or uploaded image data are returned to clients.
+import { DIALECTS, dialogueInstruction } from './dialogue.js';
 export const MODELS = ['veo-3.1-fast-generate-preview', 'veo-3.1-generate-preview'];
 const API = 'https://generativelanguage.googleapis.com/v1beta/';
 const MAX_BODY = 18 * 1024 * 1024;
@@ -11,7 +12,7 @@ export const VIDEO_SCHEMA = [
     request_id TEXT NOT NULL, operation TEXT, status TEXT NOT NULL, video_uri TEXT, error TEXT,
     model TEXT NOT NULL, mode TEXT NOT NULL, aspect_ratio TEXT NOT NULL, resolution TEXT NOT NULL,
     duration INTEGER NOT NULL, extension_count INTEGER NOT NULL DEFAULT 0, parent_id TEXT,
-    created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(user_id, request_id))`,
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL, language TEXT NOT NULL DEFAULT 'unknown', UNIQUE(user_id, request_id))`,
   `CREATE UNIQUE INDEX IF NOT EXISTS video_jobs_active_user ON video_jobs(user_id)
     WHERE status IN ('submitting', 'running', 'uncertain')`,
   'CREATE INDEX IF NOT EXISTS video_jobs_history ON video_jobs(user_id, created_at DESC)'
@@ -84,15 +85,13 @@ export function validateInput(body) {
   if ((images.length || resolution === '1080p' || mode === 'extend') && duration !== 8)
     fail('References, 1080p, and extension require an 8-second generation setting.');
   if (mode === 'extend' && resolution !== '720p') fail('Video extension requires 720p.');
-  const language = body.language === 'none' ? 'No spoken dialogue.' :
-    body.language === 'badini' ? 'All spoken dialogue must be Badini Kurdish.' :
-    'All spoken dialogue must be natural Sorani Kurdish, not Kurmanji. Preserve the supplied Kurdish dialogue verbatim. No English speech.';
+  const language = dialogueInstruction(body.language || 'sorani');
   const continuity = mode === 'extend' || mode === 'frame' ?
     'Continue immediately from the final frame and action. Preserve camera movement, lighting, faces, clothing and character proportions. No reset, recap, black frame or title card.' :
     'Preserve the identity, faces, clothing and proportions of the supplied reference characters throughout the shot.';
   const style = body.style || '3D Animation';
   const visual = ['3D Animation', 'Cartoon'].includes(style) ? `${style}. Clearly stylized animation; no live-action humans.` : `${style} visual style.`;
-  return { model, mode, duration, resolution, aspectRatio,
+  return { model, mode, duration, resolution, aspectRatio, language: body.language || 'sorani',
     instance: { prompt: `${visual}\n${continuity}\n${language}\nNo subtitles unless explicitly requested below.\n\n${prompt}`,
       ...(images.length ? { referenceImages: images } : {}), ...(frame ? { image: frame } : {}) } };
 }
@@ -102,10 +101,10 @@ export function publicJob(job) {
   const ready = job.status === 'ready';
   return { id: job.id, operation: job.operation, status: job.status, ready,
     done: ['ready', 'failed', 'uncertain'].includes(job.status), error: job.error || null,
-    model: job.model, mode: job.mode, aspectRatio: job.aspect_ratio,
+    model: job.model, mode: job.mode, aspectRatio: job.aspect_ratio, language: job.language || 'unknown',
     resolution: job.resolution, duration: job.duration, createdAt: job.created_at,
     expired: ready && expired(job),
-    canExtend: ready && !expired(job) && job.resolution === '720p' && job.duration <= 141 && job.extension_count < 20,
+    canExtend: ready && !expired(job) && job.resolution === '720p' && job.duration <= 141 && job.extension_count < 20 && ['sorani', 'badini', 'none'].includes(job.language),
     ...(ready ? { videoUrl: `/api/video-file?job=${encodeURIComponent(job.id)}` } : {}) };
 }
 
@@ -145,7 +144,14 @@ async function providerError(response, fallback) {
   return data.error?.code ? `${fallback} (Google code ${Number(data.error.code) || response.status}).` : fallback;
 }
 
-async function ensureSchema(db) { await db.batch(VIDEO_SCHEMA.map(sql => db.prepare(sql))); }
+async function ensureSchema(db) {
+  await db.batch(VIDEO_SCHEMA.map(sql => db.prepare(sql)));
+  const columns = await db.prepare('PRAGMA table_info(video_jobs)').all();
+  if (!columns.results.some(column => column.name === 'language')) {
+    try { await db.prepare("ALTER TABLE video_jobs ADD COLUMN language TEXT NOT NULL DEFAULT 'unknown'").run(); }
+    catch (error) { if (!/duplicate column/i.test(error.message)) throw error; }
+  }
+}
 async function ownedJob(db, user, jobId) {
   return db.prepare('SELECT * FROM video_jobs WHERE id=? AND user_id=?').bind(jobId, user.id).first();
 }
@@ -157,7 +163,10 @@ export async function handleVideo(request, env, user) {
       const allowed = !!user && !!env.VIDEO_TEST_EMAIL && user.email.trim().toLowerCase() === env.VIDEO_TEST_EMAIL.trim().toLowerCase();
       return json({ configured: !!env.DB && !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true',
         accountAllowed: allowed, models: MODELS, durations: [4, 6, 8], aspectRatios: ['16:9', '9:16'],
-        maxReferenceImages: 3, extensionSeconds: 7, soraniGuaranteed: false, billing: 'owner_google_project' });
+        maxReferenceImages: 3, extensionSeconds: 7, soraniGuaranteed: false, badiniGuaranteed: false,
+        dialogueLanguages: Object.entries(DIALECTS).map(([id, d]) => ({ id, label: d.label,
+          nativeVideoVerified: false, ttsDocumented: d.ttsDocumented, ttsEnabled: false })),
+        audioBilling: 'Native Veo audio is included in the video rate; separate TTS is disabled.', billing: 'owner_google_project' });
     }
     if (!user) return json({ error: 'Please log in.' }, 401);
     if (!user.verified) return json({ error: 'Verify your email first.' }, 403);
@@ -188,6 +197,7 @@ export async function handleVideo(request, env, user) {
         if (!parent || !publicJob(parent).canExtend) fail('Select a ready 720p Veo video from this account, generated or extended within 48 hours.');
         if (input.aspectRatio !== parent.aspect_ratio) fail('Extension must keep the original aspect ratio.');
         if (input.model !== parent.model) fail('Extension must keep the original Veo model.');
+        if (parent.language !== input.language) fail('Extension must keep the original dialogue language. Older videos with unknown language require a new clip.');
         // REST extension accepts inline video data. Use only a server-owned Veo output.
         const source = await downloadVideo(parent.video_uri, env.GEMINI_API_KEY);
         if (!source.ok) fail(await providerError(source, 'Could not read the source video.'), 502);
@@ -201,9 +211,9 @@ export async function handleVideo(request, env, user) {
       }
       const jobId = crypto.randomUUID(); const stamp = now();
       const claim = await env.DB.prepare(`INSERT OR IGNORE INTO video_jobs
-        (id,user_id,request_id,status,model,mode,aspect_ratio,resolution,duration,extension_count,parent_id,created_at,updated_at)
-        VALUES (?,?,?,'submitting',?,?,?,?,?,?,?,?,?)`).bind(jobId, user.id, body.requestId,
-        input.model, input.mode, input.aspectRatio, input.resolution, duration, extensionCount, parent?.id || null, stamp, stamp).run();
+        (id,user_id,request_id,status,model,mode,aspect_ratio,resolution,duration,extension_count,parent_id,created_at,updated_at,language)
+        VALUES (?,?,?,'submitting',?,?,?,?,?,?,?,?,?,?)`).bind(jobId, user.id, body.requestId,
+        input.model, input.mode, input.aspectRatio, input.resolution, duration, extensionCount, parent?.id || null, stamp, stamp, input.language).run();
       if (!claim.meta?.changes) {
         const replay = await env.DB.prepare('SELECT * FROM video_jobs WHERE user_id=? AND request_id=?').bind(user.id, body.requestId).first();
         if (replay) return json(publicJob(replay));

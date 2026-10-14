@@ -44,3 +44,13 @@ NOT VERIFIED / STILL BLOCKED
 - Character identity, seamless movement, story progression and Sorani comprehension remain unverified; no automated identity QA or dialogue/lip-sync pipeline exists. Economy output is silent.
 - Quote exposes actual provider LIST-PRICE estimate without retail markup. Full total is unknown until processing/hosting/FX/applicable-tax costs are set. Unknown values block spending.
 - Existing retail pricing proposals remain separate; Wan/Kling/Hailuo/Seedance public credit purchases are still not implemented. The new Wan adapter is owner-only and undeployed.
+
+GITHUB + DIALECT UPDATE — 2026-10-14
+- GitHub integration write access now WORKS. Prepared changes uploaded to codex/veo-video-workflow, initial remote commit 172098689a116f32d27deff56fb2a655831c2b3b, PR https://github.com/Kurdai7/kurdai/pull/1.
+- Initial remote tree ac3eb43cb8a9797b2c3b28b73e7be4ae641d9abb exactly matched the local prepared git tree; previous work was retained.
+- Local CLI git push lacks credentials; connected GitHub tools successfully saved the source instead. This is NOT a renewed integration 403 failure.
+- Sorani and Badini have distinct native prompt instructions, explicit unverified audio capability labels and stored job dialect. Extension rejects a changed dialect before provider calls.
+- Long-video audio quote exposes partial TTS research estimates, but unknown full audio cost blocks starts. Separate TTS/mux/lip-sync is not enabled or tested.
+- Current syntax check/tests/local build PASS; see final reported count. No real speech synthesis was requested.
+- Cloudflare Workers Builds check 115891962407 for initial uploaded commit completed with FAILURE; GitHub exposes no error log in this check output. Cloudflare CLI reports not authenticated. This is a REMOTE build failure despite passing LOCAL dry-run, not a successful deploy.
+- No paid AI request, subscription, top-up or hosting purchase was made.

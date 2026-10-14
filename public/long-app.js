@@ -10,7 +10,7 @@ async function call(path, body) {
   const data = await response.json(); if (!response.ok) throw new Error(data.error || 'داواکاری سەرکەوتوو نەبوو.'); return data;
 }
 function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
-for (const id of ['prompt', 'aspectRatio', 'longResolution', 'longIdentity', 'longReference']) $(id).addEventListener('input', invalidate);
+for (const id of ['prompt', 'aspectRatio', 'longResolution', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
 function reset() {
   generation++; clearTimeout(timer); invalidate();
   $('longVideo').pause(); $('longVideo').removeAttribute('src'); $('longVideo').load();
@@ -29,11 +29,16 @@ $('longQuote').addEventListener('click', async () => {
       image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
     }
     const data = await call('quote', { prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
-      resolution: $('longResolution').value, identity: $('longIdentity').value, image });
+      resolution: $('longResolution').value, identity: $('longIdentity').value, image,
+      language: $('longLanguage').value, dialogueText: $('longDialogue').value });
     if (session !== token() || version !== generation) return;
     quote = data;
     show(`٧٠ چرکە · ١٤ × ٥ · ${$('longResolution').value} · بێ دەنگ\nAPI: $${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}\nپرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی خەرجییە، پسوڵەی کۆتایی نییە. پێش دەستپێکردن قبوڵی بکە.' : 'هێشتا چالاک نییە؛ دەستگەیشتنی API و سێرڤەری یەکخستن و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.'}`);
     $('longCost').style.whiteSpace = 'pre-line'; $('longStart').disabled = !data.canStart;
+    if (data.audioQuote && data.audioQuote.language !== 'none') {
+      const a = data.audioQuote;
+      show(`${$('longCost').textContent}\nدەنگ: هێشتا چالاک نییە؛ کۆی نرخ دیاری نەکراوە.\nهەڵسەنگاندنی بەشێکی API ـی دەنگ: $${a.estimateUSD.toFixed(6)}؛ ${a.language === 'sorani' ? 'تەنها دەرئەنجامی دەنگە؛ خەرجیی تێکستی چوونەژوورەوە زیاد دەبێت.' : 'تەنها بەهای پیتەکانە؛ بەشی بەشداری و مۆڵەت زیاد دەبێت.'}\nتا پشتڕاستکردنەوەی دەنگ و کۆی خەرجی، دروستکردنی بە دەنگ داخراوە.`);
+    }
   } catch (e) { show(e.message); } finally { button.disabled = false; }
 });
 async function refresh(id) {

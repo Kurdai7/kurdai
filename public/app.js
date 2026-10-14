@@ -11,6 +11,13 @@ let epoch = 0;
 let previewURLs = [];
 const token = () => localStorage.getItem(tokenKey);
 const ku = (sorani, english) => document.documentElement.lang === 'en' ? english : sorani;
+function updateDialogueSupport() {
+  const language = $('language').value;
+  $('dialogueSupport').textContent = language === 'none' ? ku('بێ دیالۆگ داوا دەکرێت؛ TTS ـی جیاواز بەکار نایەت.', 'No dialogue is requested; no separate TTS is used.') :
+    ku(`${language === 'badini' ? 'بادینی' : 'سۆرانی'} بە جیاوازی داوا دەکرێت؛ دەنگ و شێوەزار هێشتا بە ڤیدیۆی واقعی تاقی نەکراونەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.`,
+      `${language === 'badini' ? 'Badini' : 'Sorani'} is requested separately. Actual speech and dialect accuracy are unverified. Native audio is included in Veo pricing; separate TTS is disabled.`);
+}
+$('language').addEventListener('change', updateDialogueSupport);
 const errors = new Map([
   ['Please log in.', 'تکایە سەرەتا بچۆ ژوورەوە.'],
   ['Verify your email first.', 'سەرەتا ئیمەیڵەکەت پشتڕاست بکەرەوە.'],
@@ -117,12 +124,16 @@ function updateControls() {
   const extension = mode === 'extend';
   if (extension) {
     $('resolution').value = '720p';
-    if (parent) { $('aspectRatio').value = parent.aspectRatio; $('model').value = parent.model; }
+    if (parent) { $('aspectRatio').value = parent.aspectRatio; $('model').value = parent.model;
+      if (['sorani', 'badini', 'none'].includes(parent.language)) $('language').value = parent.language;
+    }
   }
   const eight = extension || $('resolution').value === '1080p' || (mode === 'new' && $('referenceImages').files.length > 0);
   if (eight) $('duration').value = '8';
   $('duration').disabled = eight;
   $('resolution').disabled = extension; $('aspectRatio').disabled = extension; $('model').disabled = extension;
+  $('language').disabled = extension && !!parent && ['sorani', 'badini', 'none'].includes(parent.language);
+  updateDialogueSupport();
   $('previewDuration').textContent = extension && parent ? `${parent.duration} → ${parent.duration + 7}s` : `${$('duration').value}s`;
 }
 for (const id of ['videoMode', 'resolution', 'duration', 'sourceJob', 'aspectRatio']) $(id).addEventListener('change', updateControls);
@@ -271,4 +282,4 @@ $('languageToggle').addEventListener('click', () => {
   for (const [node, original] of textNodes) if (node.isConnected) node.textContent = english ? translations.get(original) : original;
   $('languageToggle').textContent = english ? '🌐 EN / KU' : '🌐 KU / EN';
 });
-updateControls(); refreshAccount();
+updateControls(); updateDialogueSupport(); refreshAccount();

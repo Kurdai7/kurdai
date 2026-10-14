@@ -1,4 +1,5 @@
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
+import { audioPreview } from './dialogue.js';
 export const LONG_PRICES = Object.freeze({ reviewed: '2026-10-14', fxDate: '2026-10-13',
   usdPerEUR: 1.1188, wan480PerSecond: 0.015, wan720PerSecond: 0.036, firstImageUSD: 0.003 });
 export function longInput(body) {
@@ -18,11 +19,17 @@ export function longInput(body) {
     if (!(image.startsWith('data:image/png;') ? bytes.startsWith('\x89PNG\r\n\x1a\n') : bytes.startsWith('\xff\xd8\xff')))
       throw new Error('Image content does not match its type.');
   }
-  const input = { prompt, identity, image, aspectRatio: body.aspectRatio, resolution: body.resolution, duration: 70 };
+  const language = body.language || 'none';
+  if (!['none', 'sorani', 'badini'].includes(language)) throw new Error('Invalid dialogue language.');
+  const dialogueText = String(body.dialogueText || '').trim();
+  if (dialogueText.length > 5000) throw new Error('Dialogue exceeds 5000 characters.');
+  if (language === 'none' && dialogueText) throw new Error('Choose a dialogue language before entering spoken lines.');
+  const input = { prompt, identity, image, language, dialogueText, aspectRatio: body.aspectRatio, resolution: body.resolution, duration: 70 };
   if (segmentPrompt(input, 13).length > 800) throw new Error('Shorten the story and character description: the economy API allows 800 characters including continuity instructions.');
   return input;
 }
 export function quoteLong(input, costs = {}) {
+  const audioQuote = audioPreview(input.language || 'none', input.dialogueText || '', 70);
   const apiUSD = 70 * (input.resolution === '720p' ? LONG_PRICES.wan720PerSecond : LONG_PRICES.wan480PerSecond)
     + (input.image ? 0 : LONG_PRICES.firstImageUSD);
   const known = ['mediaEUR', 'fxPercent', 'vatPercent'].every(k =>
@@ -35,10 +42,10 @@ export function quoteLong(input, costs = {}) {
   return { ...LONG_PRICES, model: 'wan2.2-i2v-flash', outputSeconds: 70, segments: 14,
     segmentSeconds: 5, imageAPIUSD: input.image ? 0 : LONG_PRICES.firstImageUSD,
     apiUSD: Number(apiUSD.toFixed(6)), apiEUR, mediaEUR, fxEUR, vatEUR,
-    totalEUR: known ? apiEUR + mediaEUR + fxEUR + vatEUR : null,
+    totalEUR: known && audioQuote.enabled ? apiEUR + mediaEUR + fxEUR + vatEUR : null,
     costBasis: 'provider list price estimate; final invoice may differ', retailMarkupEUR: 0,
-    audio: false, identityGuaranteed: false, native70: false,
-    canStart: known && costs.enabled === true,
+    audio: false, audioQuote, audioAPIUSD: audioQuote.apiUSD, identityGuaranteed: false, native70: false,
+    canStart: known && costs.enabled === true && audioQuote.enabled,
     limitations: ['Silent video; Sorani speech and lip sync are not included.',
       'Last-frame conditioning reduces seams; identity and seamless movement are not guaranteed.',
       'Sorani prompt understanding is unverified; English motion instructions are recommended.',

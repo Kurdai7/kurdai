@@ -83,12 +83,13 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
       <textarea id="prompt" placeholder="بۆ نموونە: خێزانێکی کورد لە گوندێکی جواندا دەژی و ڕووداوێکی سەرنجڕاکێش ڕوودەدات..."></textarea>
       <div class="two">
         <div><label class="field-label" for="language">شێوەزاری کوردی</label>
-          <select id="language"><option value="sorani">کوردی سۆرانی</option><option value="badini">کوردی بادینی</option><option value="none">بەبێ دیالۆگ</option></select>
+          <select id="language"><option value="sorani">کوردی سۆرانی (Sorani Kurdish)</option><option value="badini">کوردی بادینی (Badini Kurdish)</option><option value="none">بەبێ دیالۆگ</option></select>
         </div>
         <div><label class="field-label" for="duration">ماوەی ڤیدیۆ</label>
           <select id="duration"><option value="4">٤ چرکە</option><option value="6">٦ چرکە</option><option value="8" selected>٨ چرکە</option></select>
         </div>
       </div>
+      <p class="note" id="dialogueSupport" role="status" aria-live="polite">Veo: داواکردنی سۆرانی؛ کوالێتیی دەنگ و شێوەزار هێشتا تاقی نەکراوەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.</p>
       <div class="two">
         <div><label class="field-label" for="aspectRatio">قەبارەی ڤیدیۆ</label><select id="aspectRatio"><option value="16:9">16:9 — ئاسۆیی</option><option value="9:16">9:16 — ستوونی / Reels</option></select></div>
         <div><label class="field-label" for="resolution">کوالێتی</label><select id="resolution"><option value="720p">720p — گونجاو بۆ Extension</option><option value="1080p">1080p — ٨ چرکە</option></select></div>
@@ -146,6 +147,8 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
       <div><label class="field-label" for="longIdentity">ناسنامەی جێگیری کارەکتەرەکان</label><input id="longIdentity" maxlength="200" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></div>
     </div>
     <label class="field-label" for="longReference">وێنەی سەرەتایی / کارەکتەر (ئارەزوومەندانە)</label><input id="longReference" type="file" accept="image/png,image/jpeg">
+    <label class="field-label" for="longLanguage">زمانی دیالۆگی ٧٠ چرکە</label><select id="longLanguage"><option value="none">بێ دەنگ — ڕێگای ئێستا</option><option value="sorani">کوردی سۆرانی — TTS هێشتا چالاک نییە</option><option value="badini">کوردی بادینی — TTS هێشتا چالاک نییە</option></select>
+    <label class="field-label" for="longDialogue">دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو</label><textarea id="longDialogue" maxlength="5000" placeholder="دیالۆگەکەت بە هەمان شێوەزار بنووسە؛ وەرگێڕانی خۆکار ناکرێت."></textarea>
     <p class="note">ئەگەر وێنە نەدەیت، وێنەیەک بە API دروست دەکرێت و خەرجییەکەی لە نرخەکەدا دەژمێردرێت. ئەگەر ڕوخسارێکی دیاریکراوت هەیە، وێنەی خۆت بەکاربهێنە.</p>
     <div class="account-actions"><button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled>قبوڵکردنی خەرجی و دروستکردنی ٧٠ چرکە</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
     <div id="longCost" class="toast" role="status" aria-live="polite"></div>

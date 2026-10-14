@@ -23,6 +23,11 @@ test('70-second admin quote counts all 14 video calls and the opening image; unk
   assert.equal(quoteLong(input).totalEUR, null); assert.equal(quoteLong(input).canStart, false);
   assert.equal(quoteLong({ ...input, image: 'existing' }, costs).apiUSD, 1.05);
   assert.equal(quoteLong({ ...input, resolution: '720p' }, costs).apiUSD, 2.523);
+  for (const language of ['sorani', 'badini']) {
+    const audio = quoteLong({ ...input, language, dialogueText: 'سڵاو' }, costs);
+    assert.equal(audio.canStart, false); assert.equal(audio.totalEUR, null); assert.equal(audio.audioAPIUSD, null);
+    assert.equal(audio.audioQuote.language, language); assert.ok(audio.audioQuote.estimateUSD > 0);
+  }
   assert.throws(() => longInput({ ...input, image: 'https://localhost/private' }));
   assert.throws(() => longInput({ ...input, image: 'data:image/png;base64,YQ==' }));
   const request = new Request('https://kurdai.net/api/long/quote', { method: 'POST', body: JSON.stringify(input) });
