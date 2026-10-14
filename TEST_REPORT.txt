@@ -1,19 +1,64 @@
-KurdAI local checks — 10 October 2026
+KurdAI verification — 14 October 2026
 
-Passed:
-- worker.js JavaScript syntax check (node --check)
-- schema.sql executes successfully in SQLite and creates users, verification_tokens, credit_ledger, sessions
+LOCAL CHECKS PASSED
+- JavaScript syntax: worker.js, video.js, public/app.js, pricing.js.
+- 15 automated checks: 10 video API/auth/SQLite workflow checks, 4 pricing/economics checks, and one DOM interaction suite.
+- Native generation serializes 16:9/9:16, model, resolution, duration and reference images.
+- Reference/frame/extension constraints reject unsupported combinations before a paid call.
+- Concurrent/replayed request IDs produce one provider call; an active or uncertain job blocks a second paid call.
+- Polling handles successful outputs, provider quota rejection, safety filtering, and uncertain network outcomes.
+- Ownership checks protect status, extension sources and downloads.
+- Native extension serializes the original owned Veo video as inlineData and accounts for +7 seconds; expired and 1080p sources are rejected.
+- A final-frame image is transmitted as a standalone image-to-video input, never misrepresented as native combined extension.
+- Signed download redirects strip the API key outside Google's API host and reject untrusted hosts.
+- DOM suite exercises register, login, logout, language switch preserving h1 markup, style selection, generation fields, authenticated blob playback/download, extension selection, missing-frame validation, 1080p/8s constraints and read-only job resume. Media and provider calls in this suite are simulated.
+- Wrangler dry-run bundle passes with DB and ASSETS bindings; /api/* runs through Worker.
+- Pricing model covers only stated costs; tests verify conservative positive contributions at 100 completed outputs/month and the €0.10 low-volume loss scenario.
 
-Not yet tested / not ready for public launch:
-- Cloudflare D1 deployment and live bindings
-- email delivery / verification with a real sender domain
-- browser frontend integration with register/login/credits API
-- rate limiting and abuse prevention
-- credit spending and video generation
-- payment provider and refunds
-- end-to-end security review
+LIVE READ-ONLY CHECKS
+- https://kurdai.net/api/health returned the old {ok:true,service:'KurdAI API'} response before deployment.
+- GitHub connected account can read Kurdai7/kurdai; repository metadata lists owner-level push permission.
+- Creating the requested working branch via the connected integration returned GitHub 403: Resource not accessible by integration. No remote branch/commit was created. This is an integration permission failure, not proof that the owner lacks repository permission.
 
-Important credit behavior:
-- /api/me grants one idempotent daily entry per verified account per Europe/Helsinki date.
-- The response now reports only today's credits, so daily free credits do not accumulate across days.
-- Purchased credit packs are not implemented and must be kept separate from daily free credits.
+NOT VERIFIED / STILL BLOCKED
+- No real Google or other billable generation was submitted; spending requires separate user approval.
+- No new credit purchases, subscriptions, top-ups or external contracts were created.
+- No remote push, merge or Cloudflare deployment succeeded.
+- Real D1 schema creation, Cloudflare build logs and production bindings need authenticated deployment verification.
+- A real browser rendering pass could not run: no Chromium was preinstalled and the browser download returned invalid archives. The DOM suite is not a visual mobile/desktop review.
+- Local Wrangler dev could not start in this host (uv_interface_addresses OS restriction). This is separate from the successful deployment dry-run.
+- Real output duration, audio, Sorani pronunciation, image identity, continuity and quality are unverified.
+- Wan/Kling/Hailuo/Seedance pricing is a proposal; these adapters and their public paid credit ledger/checkout/refund flows are not implemented.
+- Owner test-account billing restriction remains in place. Daily free credits do not pay Google bills.
+- Native extension source payload is capped at 12 MiB to protect Worker memory; larger sources require a different upload/storage architecture.
+
+70-SECOND WORKFLOW ADDENDUM — 2026-10-14
+- Extended the same existing branch; prior changes were retained.
+- Added private Node/FFmpeg engine, Wan Flash I2V / FLUX opening-image adapters, owner quote/start/status/download proxy and UI.
+- npm run check: PASS. npm test: 22/22 PASS (includes previous suites).
+- npm run build: PASS; Worker dry-run bundle 36.70 KiB. No deploy occurred.
+- Added tests: quote accounting with unknown-cost blocking; 14 dependent calls; ambiguous POST lock and no paid retry; owner-bound exact-total approval; replay idempotency and persisted restart; documented provider parameters and trusted queue URLs; UI approval and read-only refresh.
+- Real local FFmpeg test: generated synthetic non-AI test media, normalized clips, extracted a frame, concatenated 14 clips and verified final duration exactly 70 seconds with ffprobe. This is NOT evidence of AI quality, AI duration or character continuity.
+- Provider calls in tests were mocked; no real billable provider request was sent.
+- The processor has NOT been hosted, Docker build has NOT been tested, credentials/commercial access are NOT verified, and production routes are NOT deployed.
+- Character identity, seamless movement, story progression and Sorani comprehension remain unverified; no automated identity QA or dialogue/lip-sync pipeline exists. Economy output is silent.
+- Quote exposes actual provider LIST-PRICE estimate without retail markup. Full total is unknown until processing/hosting/FX/applicable-tax costs are set. Unknown values block spending.
+- Existing retail pricing proposals remain separate; Wan/Kling/Hailuo/Seedance public credit purchases are still not implemented. The new Wan adapter is owner-only and undeployed.
+
+GITHUB + DIALECT UPDATE — 2026-10-14
+- GitHub integration write access now WORKS. Prepared changes uploaded to codex/veo-video-workflow, initial remote commit 172098689a116f32d27deff56fb2a655831c2b3b, PR https://github.com/Kurdai7/kurdai/pull/1.
+- Initial remote tree ac3eb43cb8a9797b2c3b28b73e7be4ae641d9abb exactly matched the local prepared git tree; previous work was retained.
+- Local CLI git push lacks credentials; connected GitHub tools successfully saved the source instead. This is NOT a renewed integration 403 failure.
+- Sorani and Badini have distinct native prompt instructions, explicit unverified audio capability labels and stored job dialect. Extension rejects a changed dialect before provider calls.
+- Long-video audio quote exposes partial TTS research estimates, but unknown full audio cost blocks starts. Separate TTS/mux/lip-sync is not enabled or tested.
+- Current syntax check/tests/local build PASS; see final reported count. No real speech synthesis was requested.
+- Cloudflare Workers Builds check 115891962407 for initial uploaded commit completed with FAILURE; GitHub exposes no error log in this check output. Cloudflare CLI reports not authenticated. This is a REMOTE build failure despite passing LOCAL dry-run, not a successful deploy.
+- No paid AI request, subscription, top-up or hosting purchase was made.
+
+PREVIEW BUILD FIX — 2026-10-14
+- User's Cloudflare build screenshot shows non-production branch codex/veo-video-workflow executing `npx wrangler preview`.
+- Reproduced incompatibility: pinned Wrangler 4.45.0 has no preview command. Official Worker Previews documentation requires Wrangler >=4.135.0.
+- Updated package.json/package-lock.json to Wrangler 4.135.0, declared Node >=22, and added Preview variables disabling paid generation. Production D1 binding was preserved; no new database or hosting product was purchased.
+- Verified `npx wrangler preview --help` now recognizes the command. Syntax checks and 23 tests PASS; production dry-run PASS with Wrangler 4.135.0, bundle 40.82 KiB.
+- Full Cloudflare error log has not been read, so this does not rule out additional account/binding errors. Remote rebuild result must be checked after push.
+- A preview without a configured test DB intentionally reports unavailable account/video APIs. A successful preview does not mean kurdai.net production was deployed or that AI generation was tested.
