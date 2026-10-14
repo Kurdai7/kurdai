@@ -10,7 +10,16 @@ async function call(path, body) {
   const data = await response.json(); if (!response.ok) throw new Error((data.error || 'داواکاری سەرکەوتوو نەبوو.') + (data.code ? ` [${data.code} · v${data.diagnosticVersion || 3}]` : '')); return data;
 }
 function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
-for (const id of ['prompt', 'aspectRatio', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
+for (const id of ['prompt', 'aspectRatio', 'longModel', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
+function modelChanged() {
+  invalidate();const omni=$('longModel').value==='gemini-omni-1.1-flash';
+  for(const option of $('longDuration').options) option.disabled=!omni && !['60','70'].includes(option.value);
+  for(const option of $('longResolution').options) option.disabled=omni && option.value==='480p';
+  if(omni) $('longResolution').value='720p';
+  if(!omni && !['60','70'].includes($('longDuration').value)) $('longDuration').value='60';
+  if(!omni) $('longLanguage').value='none';
+}
+$('longModel').addEventListener('change',modelChanged);modelChanged();
 function reset() {
   generation++; clearTimeout(timer); invalidate();
   $('longVideo').pause(); $('longVideo').removeAttribute('src'); $('longVideo').load();
@@ -23,21 +32,22 @@ $('longQuote').addEventListener('click', async () => {
   invalidate(); const button = $('longQuote'); button.disabled = true;
   const session = token(); const version = generation;
   try {
-    const file = $('longReference').files[0]; let image = null;
-    if (file) {
+    const files=Array.from($('longReference').files),images=[];
+    if(files.length>($('longModel').value==='gemini-omni-1.1-flash'?3:1)) throw new Error('Omni تا سێ وێنە، Wan تەنها یەک وێنە پەسەند دەکات.');
+    for (const file of files) {
       if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 4 * 1024 * 1024) throw new Error('وێنەی PNG/JPEG بەکاربهێنە، تا 4 MiB.');
-      image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+      images.push(await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }));
     }
-    const data = await call('quote', { prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
-      resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: $('longIdentity').value, image,
+    const data = await call('quote', { model:$('longModel').value,prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
+      resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: $('longIdentity').value, image:images[0] || null,referenceImages:images.slice(1),
       language: $('longLanguage').value, dialogueText: $('longDialogue').value });
     if (session !== token() || version !== generation) return;
-    if (data.outputSeconds !== Number($('longDuration').value))
+    if (data.outputSeconds !== Number($('longDuration').value) || data.model !== $('longModel').value)
       throw new Error('سێرڤەری Render هێشتا ماوەی هەڵبژێردراو پشتگیری ناکات؛ پێویستی بە Deploy ـی کۆدی نوێ هەیە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
-    show(`${data.outputSeconds} چرکە · ${data.segments} × ٥ · ${$('longResolution').value} · بێ دەنگ\nAPI: $${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}\nپرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی خەرجییە، پسوڵەی کۆتایی نییە. پێش دەستپێکردن قبوڵی بکە.' : 'هێشتا چالاک نییە؛ دەستگەیشتنی API و سێرڤەری یەکخستن و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.'}`);
-    $('longCost').style.whiteSpace = 'pre-line'; $('longStart').disabled = !data.canStart;
-    if (data.audioQuote && data.audioQuote.language !== 'none') {
+    show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ٥ · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ لە دەرئەنجامی Omni دایە؛ کوالێتی زمان تاقی نەکراوەتەوە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
+    $('longCost').style.whiteSpace = 'pre-line'; $('longStart').disabled = !(data.canStart && Number.isFinite(data.totalEUR) && data.totalEUR>0 && Number.isFinite(data.apiUSD));
+    if (data.audioQuote && !data.audioQuote.native && data.audioQuote.language !== 'none') {
       const a = data.audioQuote;
       show(`${$('longCost').textContent}\nدەنگ: هێشتا چالاک نییە؛ کۆی نرخ دیاری نەکراوە.\nهەڵسەنگاندنی بەشێکی API ـی دەنگ: $${a.estimateUSD.toFixed(6)}؛ ${a.language === 'sorani' ? 'تەنها دەرئەنجامی دەنگە؛ خەرجیی تێکستی چوونەژوورەوە زیاد دەبێت.' : 'تەنها بەهای پیتەکانە؛ بەشی بەشداری و مۆڵەت زیاد دەبێت.'}\nتا پشتڕاستکردنەوەی دەنگ و کۆی خەرجی، دروستکردنی بە دەنگ داخراوە.`);
     }
@@ -61,8 +71,8 @@ async function refresh(id) {
   } catch (e) { show(e.message); }
 }
 $('longStart').addEventListener('click', async () => {
-  if (!quote?.canStart) return;
-  if (!window.confirm(`خەرجیی پێشبینیکراوی ${money(quote.totalEUR)} بۆ ${quote.outputSeconds} چرکەی بێ دەنگ قبوڵ دەکەیت؟ داواکارییەکان پارە خەرج دەکەن، ڕوخساری یەکسان گەرەنتی نییە.`)) return;
+  if (!quote?.canStart || $('longStart').disabled || !Number.isFinite(quote.totalEUR) || quote.totalEUR<=0) return;
+  if (!window.confirm(`${quote.model}\nخەرجیی پێشبینیکراوی ${money(quote.totalEUR)} بۆ ${quote.outputSeconds} چرکە قبوڵ دەکەیت؟ پسوڵەی کۆتایی لەوانەیە جیاواز بێت. داواکارییەکان پارە خەرج دەکەن؛ یەکسانی ڕوخسار و دەنگ گەرەنتی نییە.`)) return;
   $('longStart').disabled = true;
   try {
     const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR });
@@ -82,6 +92,11 @@ $('longReadiness').addEventListener('click', async () => {
   try {
     const state = await call('capabilities');
     if (session !== token() || version !== generation) return;
+    if(state.processorReachable && $('longModel').value==='gemini-omni-1.1-flash') {
+      const model=state.models?.['gemini-omni-1.1-flash'];
+      show(`سێرڤەر: بەردەستە.\nOmni 1.1 Flash: ${model ? (model.canStart?'ڕێکخراوە؛ تاقیکردنەوەی AI هێشتا نەکراوە.':(model.blockedReasons || []).join('\n')):'سێرڤەر پێویستی بە Deploy ـی کۆدی نوێی Omni هەیە.'}\nسۆرانی و بادینی جیاوازن؛ کوالێتیی دەنگ و جێگیری کارەکتەر هێشتا بە API تاقی نەکراونەتەوە.\nهیچ داواکارییەکی ڤیدیۆ نەنێردراوە.`);
+      return;
+    }
     show(state.processorReachable ?
       `سێرڤەر: بەردەستە.\nبە وێنەی خۆت: ${state.canStartWithReference ? 'ڕێکخراوە' : 'هێشتا ئامادە نییە'}. بە دەق: ${state.canStartFromText ? 'ڕێکخراوە' : 'هێشتا ئامادە نییە'}.\nدەنگی سۆرانی/بادینی: هێشتا چالاک نییە. ئەمە تەنها پشکنینی ڕێکخستنەکانە؛ تاقیکردنەوەی ڤیدیۆی AI نییە.` :
       `سێرڤەری ڤیدیۆ پەیوەست نەکراوە. ڕێکخستنە ونەکان: ${(state.missingConfiguration || []).join(', ')}. هیچ داواکارییەکی AI نەنێردراوە.`);

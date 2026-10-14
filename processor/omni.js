@@ -3,6 +3,16 @@
 export const OMNI_MODEL = 'gemini-omni-1.1-flash';
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const interactionID = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,300}$/.test(value);
+function safeUsage(value) {
+  if(!value || typeof value!=='object')return {};
+  const usage={};
+  for(const key of ['total_input_tokens','total_output_tokens','total_thought_tokens','total_cached_tokens','total_tool_use_tokens','total_tokens'])
+    if(Number.isSafeInteger(value[key]) && value[key]>=0)usage[key]=value[key];
+  for(const key of ['input_tokens_by_modality','output_tokens_by_modality'])
+    if(Array.isArray(value[key]))usage[key]=value[key].filter(x=>['text','video','audio','image'].includes(x?.modality) && Number.isSafeInteger(x.tokens) && x.tokens>=0)
+      .map(x=>({modality:x.modality,tokens:x.tokens}));
+  return Object.keys(usage).length?{usage}:{};
+}
 
 export function omniRequest(input, previousInteractionId) {
   if (!input || typeof input.prompt !== 'string' || !input.prompt.trim() || input.prompt.length > 10000)
@@ -57,19 +67,19 @@ function fileResource(uri) {
 export function parseOmniInteraction(data) {
   if (!interactionID(data?.id)) throw new Error('No valid Omni interaction ID; do not resubmit automatically.');
   if (['failed','cancelled','canceled'].includes(data.status)) throw new Error('Omni generation failed; no automatic paid retry.');
-  if (['in_progress','queued'].includes(data.status)) return {id:data.id,status:data.status};
+  if (['in_progress','queued'].includes(data.status)) return {id:data.id,status:data.status,...safeUsage(data.usage)};
   if (data.status !== 'completed') throw new Error('Unknown Omni status; inspect the provider before resubmitting.');
   const videos = (data.steps || []).filter(step => step.type === 'model_output')
     .flatMap(step => Array.isArray(step.content) ? step.content : []).filter(item => item.type === 'video');
   if (videos.length !== 1 || videos[0].mime_type !== 'video/mp4') throw new Error('Expected one Omni MP4 output.');
   const video = videos[0];
-  if (video.uri) return {id:data.id,status:'completed',fileResource:fileResource(video.uri)};
+  if (video.uri) return {id:data.id,status:'completed',fileResource:fileResource(video.uri),...safeUsage(data.usage)};
   if (typeof video.data !== 'string' || video.data.length > 89478488 || !/^[A-Za-z0-9+/]+={0,2}$/.test(video.data))
     throw new Error('Invalid or oversized inline Omni output.');
   const bytes = Buffer.from(video.data,'base64');
   if (bytes.toString('base64') !== video.data || bytes.length > 67108864 || bytes.subarray(4,8).toString() !== 'ftyp')
     throw new Error('Invalid inline Omni MP4.');
-  return {id:data.id,status:'completed',bytes};
+  return {id:data.id,status:'completed',bytes,...safeUsage(data.usage)};
 }
 
 // An uncertain POST is intentionally never retried here. The calling job engine

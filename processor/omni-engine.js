@@ -1,5 +1,4 @@
-// Experimental voiced pipeline, deliberately not routed from the public server.
-// Live integration requires a complete token/context quote and durable storage.
+// Voiced pipeline behind the owner's immutable quote, configuration and storage gates.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {save} from './engine.js';
@@ -40,13 +39,15 @@ export async function advanceOmni(job,directory,config,dependencies={}) {
       await persist(); // Before the one billable POST; no retries after an uncertain result.
       const result=await client.submit({...job.input,segmentSeconds:5,
         dialogueText:job.input.dialogueSegments?.[i] || '',
-        prompt:job.input.actions?.[i] || job.input.prompt},job.previousInteractionId);
+        prompt:job.input.actions?.[i] || `${job.input.prompt}\nStory part ${i+1}/${count}: advance the action from the prior ending; do not repeat earlier action or lines.`},job.previousInteractionId);
+      if(result.usage) {job.providerUsage ||= {};job.providerUsage[result.id]=result.usage;}
       job.inflight={kind:'omni',state:'polling',id:result.id};await persist();
       // Persist only the interaction ID, never inline video buffers or output URIs.
       return;
     }
     const result=await client.poll(job.inflight.id);
     if (result.status !== 'completed') return;
+    if(result.usage) {job.providerUsage ||= {};job.providerUsage[result.id]=result.usage;await persist();}
     const bytes=await client.media(result);
     if (!bytes) return;
     const source=join(directory,`raw-${i}.mp4`);

@@ -120,3 +120,8 @@ STRUCTURED PROCESSOR DIAGNOSTICS — 2026-10-14
 39 tests passed; 0 failures. Five new offline Omni tests cover separate dialect/reference requests, disabled/no-retry transport, trusted Google downloads, native audio preservation through real FFmpeg, and persisted 60/70s orchestration with synthetic provider calls.
 Syntax passed for all production modules including Omni. Worker dry-run: 48.74 KiB.
 Omni modules are not yet routed from the website. Token/context pricing, quote/UI integration and real provider quality verification remain pending. No paid requests were sent. Render diagnostic deploy remains build_in_progress despite a successful build event; older revision remains live.
+
+2026-10-15 Routed Omni integration:
+44 tests pass, 0 failures. Full signed-in Worker-to-Node HTTP quote/approval/idempotency/private-download tests produce real 5/60/70s voiced MP4 files using synthetic generation only; no external provider requests permitted in these tests. Distinct languages, references, 5–70s controls, model/duration stale-backend guards, unknown-cost blocks and native-audio retention verified.
+All module syntax checks and Worker dry-run pass: 58.79 KiB.
+Omni pipeline is now routed in code, but deployment of this revision, actual provider access, verified token/context allowances, durable host and real AI quality remain pending. No paid API request, paid hosting or secret exposure.

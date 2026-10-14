@@ -142,17 +142,18 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
     </div>
   </section>
   <section class="panel account-panel" aria-labelledby="longTitle">
-    <h2 id="longTitle">ڤیدیۆی درێژ بە یەک پرۆمپت — Admin</h2>
-    <p class="sub">پرۆمپتی سەرەوە بەکاردێت. ١٢ یان ١٤ کلیپی ٥ چرکەیی بە دوا فڕەیمی یەکتری بەردەوام دەکرێن و دەبنە یەک MP4. ئەم ڕێگایە بێ دەنگە؛ ڕوخساری یەکسان و دیالۆگی سۆرانی گەرەنتی ناکرێن.</p>
-    <label class="field-label" for="longDuration">ماوەی ڤیدیۆ</label><select id="longDuration"><option value="60" selected>٦٠ چرکە</option><option value="70">٧٠ چرکە</option></select>
+    <h2 id="longTitle">Omni 1.1 Flash — بە یەک پرۆمپت</h2>
+    <p class="sub">پرۆمپتی سەرەوە بەکاردێت. Omni دیمەنەکان بە ناسنامەی ڤیدیۆی پێشوو بەردەوام دەکات و دەبنە یەک MP4 بە دەنگەوە. کوالێتی شێوەزار و جێگیری ڕوخسار و دەنگ هێشتا بە API تاقی نەکراونەتەوە.</p>
+    <label class="field-label" for="longModel">مۆدێلی ڤیدیۆ</label><select id="longModel"><option value="gemini-omni-1.1-flash">Omni 1.1 Flash — دەنگ و ڤیدیۆ</option><option value="wan2.2-i2v-flash">Wan — هەرزان، بێ دیالۆگ</option></select>
+    <label class="field-label" for="longDuration">ماوەی ڤیدیۆ</label><select id="longDuration"><option value="5">5 چرکە</option><option value="10">10 چرکە</option><option value="15">15 چرکە</option><option value="20">20 چرکە</option><option value="25">25 چرکە</option><option value="30">30 چرکە</option><option value="35">35 چرکە</option><option value="40">40 چرکە</option><option value="45">45 چرکە</option><option value="50">50 چرکە</option><option value="55">55 چرکە</option><option value="60" selected>60 چرکە</option><option value="65">65 چرکە</option><option value="70">70 چرکە</option></select>
     <div class="two">
-      <div><label class="field-label" for="longResolution">کوالێتی ڤیدیۆی درێژ</label><select id="longResolution"><option value="480p">480p — هەرزان</option><option value="720p">720p</option></select></div>
-      <div><label class="field-label" for="longIdentity">ناسنامەی جێگیری کارەکتەرەکان</label><input id="longIdentity" maxlength="200" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></div>
+      <div><label class="field-label" for="longResolution">کوالێتی ڤیدیۆی درێژ</label><select id="longResolution"><option value="720p">720p</option><option value="480p">480p — تەنها Wan</option></select></div>
+      <div><label class="field-label" for="longIdentity">ناسنامەی جێگیری کارەکتەرەکان</label><input id="longIdentity" maxlength="2000" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></div>
     </div>
-    <label class="field-label" for="longReference">وێنەی سەرەتایی / کارەکتەر (ئارەزوومەندانە)</label><input id="longReference" type="file" accept="image/png,image/jpeg">
-    <label class="field-label" for="longLanguage">زمانی دیالۆگی ڤیدیۆی درێژ</label><select id="longLanguage"><option value="none">بێ دەنگ — ڕێگای ئێستا</option><option value="sorani">کوردی سۆرانی — TTS هێشتا چالاک نییە</option><option value="badini">کوردی بادینی — TTS هێشتا چالاک نییە</option></select>
-    <label class="field-label" for="longDialogue">دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو</label><textarea id="longDialogue" maxlength="5000" placeholder="دیالۆگەکەت بە هەمان شێوەزار بنووسە؛ وەرگێڕانی خۆکار ناکرێت."></textarea>
-    <p class="note">ئەگەر وێنە نەدەیت، وێنەیەک بە API دروست دەکرێت و خەرجییەکەی لە نرخەکەدا دەژمێردرێت. ئەگەر ڕوخسارێکی دیاریکراوت هەیە، وێنەی خۆت بەکاربهێنە.</p>
+    <label class="field-label" for="longReference">وێنەی سەرەتایی / ڕەفەرەنسی کارەکتەر (تا ٣ وێنە بۆ Omni)</label><input id="longReference" type="file" multiple accept="image/png,image/jpeg">
+    <label class="field-label" for="longLanguage">زمانی دیالۆگی ڤیدیۆی درێژ</label><select id="longLanguage"><option value="sorani">کوردی سۆرانی — دەنگی Omni، هێشتا تاقی نەکراوەتەوە</option><option value="badini">کوردی بادینی — دەنگی Omni، هێشتا تاقی نەکراوەتەوە</option><option value="none">بێ دیالۆگ</option></select>
+    <label class="field-label" for="longDialogue">دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو</label><textarea id="longDialogue" maxlength="5000" placeholder="هەر هێڵێک بۆ دیمەنێک، تا ١٤٠ پیت. شێوەزارەکە وەرناگێڕدرێت."></textarea>
+    <p class="note">Omni ڕاستەوخۆ بە دەق یان وێنە کار دەکات. تا سێ ڕەفەرەنس ڕوخسار و جل ڕوونتر دەکەن؛ یەکسانیی تەواو گەرەنتی نییە. Wan بەبێ وێنە، خەرجی وێنەی سەرەتایی زیاد دەکات.</p>
     <div class="account-actions"><button class="chip" id="longReadiness" type="button">پشکنینی سێرڤەری ڤیدیۆی درێژ — بێ پارە</button>
       <button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled>قبوڵکردنی خەرجی و دروستکردنی ڤیدیۆی درێژ</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
     <div id="longCost" class="toast" role="status" aria-live="polite"></div>

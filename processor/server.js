@@ -5,9 +5,12 @@ import { mkdir, readdir, readFile, access, rm } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { StringDecoder } from 'node:string_decoder';
 import { longInput, quoteLong } from '../long-video.js';
 import { verifyRuntime } from './media.js';
 import { advance, save, load, publicLongJob } from './engine.js';
+import { advanceOmni } from './omni-engine.js';
+import { OMNI_MODEL } from '../omni-cost.js';
 
 export async function createProcessor(config, dependencies = {}) {
   const mediaTools = await verifyRuntime();
@@ -25,6 +28,12 @@ export async function createProcessor(config, dependencies = {}) {
   }
   const costs = input => ({ mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
     vatPercent: config.LONG_VAT_PERCENT,
+    omniInputTokensPerSegment: config.OMNI_INPUT_TOKENS_PER_SEGMENT,
+    omniTextTokensPerSegment: config.OMNI_TEXT_TOKENS_PER_SEGMENT,
+    omniConfigured: !!config.GEMINI_API_KEY,
+    omniEnabled: config.OMNI_GENERATION_ENABLED === 'true',
+    omniBillingVerified: config.OMNI_BILLING_VERIFIED === 'true',
+    durableStorage: config.LONG_DURABLE_STORAGE === 'true',
     enabled: config.LONG_VIDEO_ENABLED === 'true' && !!config.DASHSCOPE_API_KEY && (!!input?.image || !!config.FAL_KEY)
       && new Date().toISOString().slice(0, 10) <= '2026-10-21' });
   const send = (res, data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
@@ -32,7 +41,7 @@ export async function createProcessor(config, dependencies = {}) {
   const server = http.createServer(async (req, res) => {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
-      if (req.method === 'GET' && req.url === '/healthz') return send(res, {ok: true, mediaTools, protocolVersion: 3, outputDurations: [60,70]});
+      if (req.method === 'GET' && req.url === '/healthz') return send(res, {ok: true, mediaTools, protocolVersion: 4, outputDurations: Array.from({length:14},(_,i)=>(i+1)*5)});
       if (!timingSafeEqual(hash(req.headers.authorization || ''), hash(`Bearer ${config.LONG_VIDEO_SERVICE_SECRET}`))) return send(res, { error: 'Unauthorized.' }, 401);
       const owner = req.headers['x-kurdai-owner'];
       if (typeof owner !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(owner)) return send(res, { error: 'Invalid owner.' }, 400);
@@ -41,11 +50,14 @@ export async function createProcessor(config, dependencies = {}) {
         route: ['/v1/health','/v1/quote','/v1/start','/v1/jobs','/v1/status','/v1/file'].includes(url.pathname) ? url.pathname : 'unknown'}));
       if (req.method === 'GET' && url.pathname === '/v1/health') {
         const ready = image => quoteLong({resolution:'480p',image,language:'none'}, costs({image})).canStart;
-        return send(res, {processorReachable: true, mediaTools, outputDurations: [60,70], protocolVersion: 3,
+        const omni=quoteLong({model:OMNI_MODEL,duration:5,language:'sorani',resolution:'720p'},costs({}));
+        return send(res, {processorReachable: true, mediaTools, outputDurations: Array.from({length:14},(_,i)=>(i+1)*5), protocolVersion: 4,
           canStartWithReference: ready(true), canStartFromText: ready(false),
           providerConfigured: {wan: !!config.DASHSCOPE_API_KEY, openingImage: !!config.FAL_KEY},
           missingCosts: ['LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT'].filter(k => config[k] === undefined || config[k] === ''),
-          audioEnabled: {sorani: false, badini: false}, paidProviderProbe: false});
+          audioEnabled: {sorani: false, badini: false},
+          models:{[OMNI_MODEL]:{configured:!!config.GEMINI_API_KEY,canStart:omni.canStart,
+            blockedReasons:omni.blockedReasons,nativeAudio:true,speechQualityVerified:false}},paidProviderProbe: false});
       }
       if (req.method === 'GET' && url.pathname === '/v1/jobs')
         return send(res, { jobs: [...jobs.values()].filter(j => j.owner === owner).map(publicLongJob).reverse().slice(0, 30) });
@@ -61,7 +73,9 @@ export async function createProcessor(config, dependencies = {}) {
         return send(res, { error: 'Not ready or unknown route.' }, 404);
       }
       if (req.method !== 'POST') return send(res, { error: 'Method not allowed.' }, 405);
-      let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 5700000) { send(res, { error: 'Request too large.' }, 413); return; } }
+      const decoder=new StringDecoder('utf8');let raw = '',rawBytes=0;
+      for await (const chunk of req) { rawBytes+=chunk.length; if(rawBytes>17000000) { send(res,{error:'Request too large.'},413);return; } raw+=decoder.write(chunk); }
+      raw+=decoder.end();
       let body;
       try { body = JSON.parse(raw); } catch { return send(res, {error: 'Invalid JSON request.', code: 'PROCESSOR_INVALID_INPUT'}, 400); }
       await serial(async () => {
@@ -85,7 +99,7 @@ export async function createProcessor(config, dependencies = {}) {
           return send(res, { error: 'Explicit approval of the quoted total is required.' }, 400);
         if ([...jobs.values()].some(j => ['running', 'uncertain'].includes(j.status)))
           return send(res, { error: 'An active or uncertain job must be resolved first.' }, 409);
-        job.status = 'running'; job.approvedAt = new Date().toISOString();
+        job.status = 'running'; job.approvedAt = new Date().toISOString(); job.approvedTotalEUR=body.approvedTotalEUR;
         await save(job, join(root, job.id)); send(res, publicLongJob(job), 202);
       });
     } catch (error) {
@@ -100,7 +114,14 @@ export async function createProcessor(config, dependencies = {}) {
   let timer, closed = false;
   const tick = () => serial(async () => {
     const job = [...jobs.values()].find(j => j.status === 'running');
-    if (job) await advance(job, join(root, job.id), config, dependencies);
+    if (job?.input.model===OMNI_MODEL) {
+      // A later configuration change must not silently unlock or reprice a job.
+      if(!job.inflight && job.completedSegments<job.input.duration/5 && !quoteLong(job.input,costs(job.input)).canStart) {
+        job.status='failed';job.error='Omni configuration changed; no new generation request was sent.';
+        await save(job,join(root,job.id));return;
+      }
+      await advanceOmni(job,join(root,job.id),config,dependencies.omni || {});
+    } else if (job) await advance(job, join(root, job.id), config, dependencies);
   });
   return { server, tick,
     start() { timer = setInterval(() => tick().catch(() => {}), 15000); timer.unref(); },

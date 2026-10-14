@@ -81,3 +81,20 @@ The owner's primary requested model is Gemini Omni 1.1 Flash. `omni.js` implemen
 Native audio is retained in `normalizeVoiced`/`assembleVoiced`; a missing audio track stops processing rather than presenting silent output as voiced. Five-second length is prompt requested, not an invented API parameter. Returned duration is checked, longer continuation outputs are trimmed to their requested tail, and short outputs fail without a paid retry. Real model continuity, dialect quality, voice consistency and continuation-output semantics remain untested; synthetic tests cannot prove them. User-reported Sorani success in Flow is accepted, but the API deployment has not been tested with paid generation.
 
 Render deploy `dep-db7u3mmi0phs73cpt0l0`, source `4191edca`, has a successful build event but remains `build_in_progress`; the API reports no deploy-start event or reason. The older source `52ada29` is still live. Do not claim this checkpoint or the diagnostic revision is deployed until public health and authenticated readiness establish it.
+
+## Routed Omni integration — 2026-10-15 (supersedes internal-only checkpoint)
+
+The preceding internal-only description is historical. Omni is now routed from `/v1/quote` and `/v1/start`, with Worker-side validation and a default Omni UI. `omni-cost.js` is shared by Worker and Node and copied into the Docker image. Public protocolVersion=4 advertises 5–70s; authenticated readiness includes model-specific blockers without returning credential values. Old Wan jobs retain their legacy behavior. Sorani/Badini lines remain separate; up to three PNG/JPEG references are validated by content/size and carried into the Interactions request. UTF-8 request decoding preserves Kurdish characters across HTTP chunks.
+
+Every live-generation gate defaults closed. Processor-only configuration needed before an operator can enable a separately approved real test:
+
+- GEMINI_API_KEY (host secret; no value in git/chat),
+- OMNI_GENERATION_ENABLED=true only after the owner separately approves activation/spending,
+- LONG_DURABLE_STORAGE=true only after durable storage actually exists, never for the current ephemeral free host,
+- OMNI_INPUT_TOKENS_PER_SEGMENT and OMNI_TEXT_TOKENS_PER_SEGMENT: verified non-negative token allowances that include retained conversation context/thinking, not guessed zeroes,
+- OMNI_BILLING_VERIFIED=true only after usage/continuation billing semantics have been checked; do not flip this merely to remove a blocker,
+- LONG_MEDIA_EUR, LONG_FX_PERCENT and LONG_VAT_PERCENT: explicitly verified costs.
+
+720p output list price is $0.10136/second. The UI displays requested-output cost separately from unknown full API cost; missing input/context/text or hosting/tax/FX costs keep total and start unavailable. When all meters are explicitly configured, the estimate reserves ten seconds of output per five-second request plus the input/text allowances; this is a conservative estimate, NOT a provider-enforced charge cap. No fabricated duration API field is sent. Native audio has no separate TTS fee here. A saved exact EUR approval, current settings and the Omni-specific estimate are required; a Wan quote cannot authorize Omni. Reported provider token counters are retained by interaction ID without secret/prompt payloads; invoice reconciliation remains explicit and incomplete.
+
+All 44 offline tests pass, including complete Worker→Node HTTP→quoted approval→Omni state machine→real voiced MP4 for 5/60/70 seconds using synthetic provider responses. The last deployed Render source 4191edca is protocol3; this integration must be deployed before the website's new Omni form can work. No provider activation, secret transfer or paid request was performed.

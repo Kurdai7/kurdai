@@ -43,6 +43,10 @@ test('Omni reads raw REST steps, polls only trusted Google files and blocks redi
   assert.throws(()=>parseOmniInteraction(completed('https://attacker.test/v1beta/files/a')),/Untrusted/);
   const inline={id:'v1_test',status:'completed',steps:[{type:'model_output',content:[{type:'video',mime_type:'video/mp4',data:mp4.toString('base64')}]}]};
   assert.deepEqual(parseOmniInteraction(inline).bytes,mp4);
+  inline.usage={total_input_tokens:12,total_output_tokens:28960,output_tokens_by_modality:[{modality:'video',tokens:28960}],privateKey:'must-never-persist'};
+  const usage=parseOmniInteraction(inline).usage;
+  assert.equal(usage.total_input_tokens,12);assert.equal(usage.output_tokens_by_modality[0].tokens,28960);
+  assert.equal(JSON.stringify(usage).includes('privateKey'),false);
   let calls=[];
   const client=createOmniClient({apiKey:'dummy-test-only',enabled:true},async(url,options)=>{
     calls.push(url);assert.equal(options.redirect,'manual');assert.equal(options.headers['x-goog-api-key'],'dummy-test-only');
