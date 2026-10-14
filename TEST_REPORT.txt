@@ -81,3 +81,12 @@ PROCESSOR INTEGRATION CONTINUATION — 2026-10-14
 - New complete integration test crosses the Worker handler, real private Node HTTP server, immutable quote/approval, fourteen mock provider submissions, real FFmpeg assembly and authenticated download of a verified 70-second MP4. External provider traffic is forbidden. It verifies owner isolation, uploaded-image operation without fal credentials, exact-cost approval and no extra generation on replay.
 - Syntax, 28 automated tests and Worker dry-run PASS (46.55 KiB Worker bundle). Both aspect ratios continue passing the real local synthetic-media tests. Docker image build remains UNTESTED because Docker is not installed in this workspace.
 - Render integration was discovered and suggested but is NOT connected. No hosting service, disk, subscription, contract or paid provider request was created. Production 70-second hosting and real Kurdish speech/identity quality remain unverified.
+
+RENDER FREE STAGING — 2026-10-14
+- Render connected; free Frankfurt Docker service srv-db7si6bl550s73d6l360 created with generation disabled and no provider keys.
+- Docker build and initial deployment dep-db7si73l550s73d6l7pg LIVE on remote source 2982f4c. Public HTTPS /healthz returned 200 with ffmpeg, ffprobe and libx264 verified.
+- Re-ran syntax, all 28 tests, and Worker dry-run successfully. No real AI/TTS calls or paid hosting enabled.
+- Public staging URL configured in wrangler.toml. Shared secret still needs secure Cloudflare configuration; no credential is in source.
+- Free ephemeral staging is not production storage and must not run paid generation. Durable production hosting needs separate cost approval.
+
+Deployed authorization check: GET /v1/health without credentials returned 401; with the Render-only shared credential and deployment-check owner it returned 200. Both start capabilities and both Kurdish audio capabilities were false, provider credentials absent, and missing costs explicitly named. paidProviderProbe=false. No provider request was issued.

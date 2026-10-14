@@ -4,6 +4,11 @@ compatibility_date = "2026-10-10"
 # Preserve runtime variables configured in the dashboard during Git deployments.
 keep_vars = true
 
+# Public staging origin only; its shared credential belongs in Worker secrets.
+# The Render service has paid generation disabled and no provider credentials.
+[vars]
+LONG_VIDEO_SERVICE_URL = "https://kurdai-processor-staging.onrender.com"
+
 # Worker Previews do not inherit production bindings or secrets.
 # Keep billable generation disabled until a separate test database is configured.
 [previews.vars]

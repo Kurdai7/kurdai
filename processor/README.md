@@ -1,8 +1,8 @@
-# Private 70-second processor (not deployed)
+# Private 70-second processor (free staging deployed)
 
 The Worker authenticates the existing verified owner, then forwards only `/api/long/*` to this private Node service over HTTPS. Node owns durable files, billable task IDs, serial execution and FFmpeg. Ordinary Workers cannot run this FFmpeg executable. Keep this separate from the existing Veo workflow.
 
-Runtime: Node 24+, `ffmpeg` and `ffprobe` with libx264, durable disk, a single processor instance per disk, private TLS ingress/proxy. `processor/Dockerfile` is a build recipe; the image has not been built or deployed. The HTTP listener defaults to loopback; deploy behind a TLS proxy in the same network namespace. A managed Docker web service may explicitly set PROCESSOR_BIND_HOST=0.0.0.0 so its HTTPS ingress can reach PORT. All /v1 routes still require the service credential and owner header. There are no new npm runtime dependencies. `npm run processor` starts the service after the operator has configured it. Do not purchase hosting or enable paid providers without owner approval.
+Runtime: Node 24+, `ffmpeg` and `ffprobe` with libx264, durable disk, a single processor instance per disk, private TLS ingress/proxy. `processor/Dockerfile` was built and deployed successfully on Render free staging on 2026-10-14. This is not durable production hosting. The HTTP listener defaults to loopback; deploy behind a TLS proxy in the same network namespace. A managed Docker web service may explicitly set PROCESSOR_BIND_HOST=0.0.0.0 so its HTTPS ingress can reach PORT. All /v1 routes still require the service credential and owner header. There are no new npm runtime dependencies. `npm run processor` starts the service after the operator has configured it. Do not purchase hosting or enable paid providers without owner approval.
 
 Host environment (values must be configured in host secret/config settings, never chat/git):
 
@@ -15,7 +15,7 @@ Host environment (values must be configured in host secret/config settings, neve
 - `LONG_FX_PERCENT` and `LONG_VAT_PERCENT`: actual applicable conversion/tax scenario; explicit zero permitted only if verified applicable. These are estimates, not tax advice or an invoice guarantee.
 - `PORT`: loopback listener port, default 8788.
 
-Worker configuration: `LONG_VIDEO_SERVICE_URL` is the HTTPS origin for that private service; `LONG_VIDEO_SERVICE_SECRET` is a secret. Existing `VIDEO_TEST_EMAIL` selects the owner. These bindings are intentionally absent from wrangler.toml until a concrete service is available. Without them, the quote endpoint shows API costs but reports unknown total and blocks generation.
+Worker configuration: `LONG_VIDEO_SERVICE_URL` is the HTTPS origin for that private service; `LONG_VIDEO_SERVICE_SECRET` is a secret. Existing `VIDEO_TEST_EMAIL` selects the owner. The public staging origin is configured in wrangler.toml. The shared credential must be configured separately in Cloudflare secrets; it is never committed. Without them, the quote endpoint shows API costs but reports unknown total and blocks generation.
 
 Each job quote expires after 15 minutes and binds the immutable prompt/reference/ratio/resolution and server costs. A billable start requires explicit `approved: true` and exact `approvedTotalEUR`. The engine does not authorize new POSTs after the job approval is 24 hours old. This price snapshot disables new starts after 2026-10-21; review provider rates and FX before extending it. A quote is a list-price estimate, not a hard guarantee of the bank invoice. `reservedAPIUSD` is conservative potential exposure including ambiguous submissions, not audited money spent.
 
@@ -32,6 +32,20 @@ Startup checks local ffmpeg, ffprobe and libx264 before acquiring the processor 
 
 A free end-to-end integration test now drives the Worker proxy, actual private HTTP service, immutable quote/approval, fourteen synthetic provider tasks, real FFmpeg and authenticated MP4 download. It checks 70-second duration, owner isolation and replay without another submission. All external provider traffic is forbidden in that test. This is not a real AI sample.
 
-For Render (not created or deployed): connect the repository as a Docker web service with Docker context repository root and Dockerfile processor/Dockerfile. Use one instance, an attached persistent disk at /data, LONG_DATA_DIR=/data, PROCESSOR_BIND_HOST=0.0.0.0, platform PORT, and health path /healthz. Keep LONG_VIDEO_ENABLED=false until provider access and full per-job processing/FX/tax costs are verified. Put credentials only in the host secret settings. Copy no secrets into files or chat. Do not use a free ephemeral filesystem for paid jobs: losing a task ID could lead to duplicate charges on manual retries. Render's durable-disk service is billable and must not be provisioned before separate owner cost approval. Container image build is unverified here because Docker is unavailable in this workspace.
+For durable Render production (not provisioned): connect the repository as a Docker web service with Docker context repository root and Dockerfile processor/Dockerfile. Use one instance, an attached persistent disk at /data, LONG_DATA_DIR=/data, PROCESSOR_BIND_HOST=0.0.0.0, platform PORT, and health path /healthz. Keep LONG_VIDEO_ENABLED=false until provider access and full per-job processing/FX/tax costs are verified. Put credentials only in the host secret settings. Copy no secrets into files or chat. Do not use a free ephemeral filesystem for paid jobs: losing a task ID could lead to duplicate charges on manual retries. Render's durable-disk service is billable and must not be provisioned before separate owner cost approval. The Docker image build and deployment succeeded on Render. Local Docker remains unavailable.
 
-Official references: https://render.com/docs/web-services , https://render.com/docs/disks , https://render.com/docs/free , https://render.com/pricing . No Render resource, disk, subscription or contract was created.
+Official references: https://render.com/docs/web-services , https://render.com/docs/disks , https://render.com/docs/free , https://render.com/pricing . A free staging web service was created; no paid resource, disk or subscription was purchased.
+
+## Render staging verification — 2026-10-14
+
+- Service: https://kurdai-processor-staging.onrender.com
+- Dashboard: https://dashboard.render.com/web/srv-db7si6bl550s73d6l360
+- Repository: Kurdai7/kurdai, main; Docker context `.`; Dockerfile `processor/Dockerfile`; Frankfurt; plan `free`; automatic Git deployment enabled.
+- Initial deploy `dep-db7si73l550s73d6l7pg` reached `live` on source commit `2982f4c19eefb5b2c5934e443d0f36a057eaa368`.
+- Public HTTPS /healthz returned 200 and verified FFmpeg, ffprobe and libx264 in the deployed image.
+- LONG_VIDEO_ENABLED=false. No provider credentials or invented zero hosting/tax costs were supplied. /data is ephemeral on this free service: no paid AI jobs may run here.
+- Shared authentication credential is stored only in Render environment settings. To connect Worker diagnostics, securely copy LONG_VIDEO_SERVICE_SECRET from this service's Environment panel into Cloudflare Worker kurdai → Settings → Variables and Secrets as a Secret with the identical name, then deploy. Never paste it in chat or git. Worker origin is configured by wrangler.toml; the generation gate stays disabled on Render.
+- Cloudflare Dashboard access is not available in this assistant session, so secure credential wiring and authenticated kurdai.net → Render verification remain pending.
+- Durable disk hosting, applicable costs, provider access and an explicit per-job approval remain necessary before real AI generation. Sorani/Badini TTS and identity/voice consistency are not verified.
+
+Deployed authorization check: GET /v1/health without credentials returned 401; with the Render-only shared credential and deployment-check owner it returned 200. Both start capabilities and both Kurdish audio capabilities were false, provider credentials absent, and missing costs explicitly named. paidProviderProbe=false. No provider request was issued.
