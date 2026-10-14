@@ -90,3 +90,8 @@ RENDER FREE STAGING — 2026-10-14
 - Free ephemeral staging is not production storage and must not run paid generation. Durable production hosting needs separate cost approval.
 
 Deployed authorization check: GET /v1/health without credentials returned 401; with the Render-only shared credential and deployment-check owner it returned 200. Both start capabilities and both Kurdish audio capabilities were false, provider credentials absent, and missing costs explicitly named. paidProviderProbe=false. No provider request was issued.
+
+FREE STAGING STARTUP WINDOW — 2026-10-14
+- User authenticated UI reported processor unreachable; direct Render /healthz subsequently returned HTTP 200 with media tools available in approximately 20 seconds. Shared Worker credential correctness is not established by this independent health request.
+- Allow 90 seconds for read-only readiness, retain 30 seconds for POSTs and 120 seconds for downloads. Show Sorani waiting notice and explicit readiness timeout. No automatic retry or generation was added.
+- Syntax, all 29 tests and Worker dry-run PASS (46.90 KiB). New regression test verifies startup wait and no automatic paid-POST retry with mocked timeouts. No paid requests issued.

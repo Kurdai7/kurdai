@@ -75,6 +75,7 @@ $('longRefresh').addEventListener('click', async () => {
 $('longReadiness').addEventListener('click', async () => {
   const button = $('longReadiness'); button.disabled = true;
   const session = token(), version = generation;
+  show('پشکنینی سێرڤەر… Render ـی بەخۆڕایی لەوانەیە خەوتبێت؛ تا ٩٠ چرکە چاوەڕێ بکە. هیچ داواکارییەکی ڤیدیۆ نەنێردراوە.');
   try {
     const state = await call('capabilities');
     if (session !== token() || version !== generation) return;

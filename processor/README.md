@@ -49,3 +49,7 @@ Official references: https://render.com/docs/web-services , https://render.com/d
 - Durable disk hosting, applicable costs, provider access and an explicit per-job approval remain necessary before real AI generation. Sorani/Badini TTS and identity/voice consistency are not verified.
 
 Deployed authorization check: GET /v1/health without credentials returned 401; with the Render-only shared credential and deployment-check owner it returned 200. Both start capabilities and both Kurdish audio capabilities were false, provider credentials absent, and missing costs explicitly named. paidProviderProbe=false. No provider request was issued.
+
+## Free staging cold-start diagnostics — 2026-10-14
+
+A user readiness request reported unreachable. Direct Render HTTPS health subsequently returned 200 with all media tools available (approximately 20 seconds); this does not independently prove the Worker shared credential is correct. Free instances can sleep and take over 50 seconds to wake. Worker readiness previously stopped at 30 seconds: GET /api/long/capabilities now allows 90 seconds and the UI displays a waiting message. Paid POSTs keep their 30-second limit and are never automatically retried. An explicit readiness timeout explains how to repeat only the free check. The deployed Cloudflare-to-Render check still needs to be repeated through the signed-in UI.

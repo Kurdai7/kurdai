@@ -79,7 +79,9 @@ export async function handleLong(request, env, user) {
       (request.method === 'GET' && ['/health', '/status', '/file', '/jobs'].includes(path)))) return json({ error: 'Unknown route.' }, 404);
     const upstream = new URL(`/v1${path}`, base);
     if (url.searchParams.has('id')) upstream.searchParams.set('id', url.searchParams.get('id'));
-    const response = await fetch(upstream, { method: request.method, redirect: 'error', signal: AbortSignal.timeout(path === '/file' ? 120000 : 30000),
+    // Free staging can take over 50 seconds to wake. Only the read-only readiness
+    // check gets a longer startup window; never retry a generation submission.
+    const response = await fetch(upstream, { method: request.method, redirect: 'error', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 90000 : 30000),
       headers: { Authorization: `Bearer ${env.LONG_VIDEO_SERVICE_SECRET}`, 'X-KurdAI-Owner': user.id,
         'Content-Type': 'application/json' },
       ...(request.method === 'POST' ? { body: await request.text() } : {}) });
@@ -87,6 +89,8 @@ export async function handleLong(request, env, user) {
       'Content-Type': response.headers.get('content-type') || 'application/json',
       ...(path === '/file' ? { 'Content-Disposition': 'attachment; filename="KurdAI-70s.mp4"' } : {}) } });
   } catch (error) {
+    if (['TimeoutError','AbortError'].includes(error.name) && request.method === 'GET' && new URL(request.url).pathname === '/api/long/capabilities')
+      return json({error: 'The processor did not respond within 90 seconds. Free staging may be waking up. Run the free server check again. No generation request was sent.'}, 503);
     if (['TimeoutError','AbortError','TypeError'].includes(error.name))
       return json({error: 'The private video processor is unreachable. No automatic generation retry was sent.'}, 503);
     return json({ error: error.message }, 400);
