@@ -37,6 +37,36 @@ export async function assemble(directory, count = 14) {
   return output;
 }
 
+// Omni produces native audio. Keep it throughout normalization and assembly;
+// never pass voiced output through the silent economy '-an' path.
+export async function normalizeVoiced(source, target, aspectRatio, resolution, seconds = 5) {
+  const sourceSeconds = await duration(source);
+  if (!Number.isFinite(sourceSeconds) || sourceSeconds < seconds - 0.04)
+    throw new Error('Omni returned a short segment; stop without a paid retry.');
+  const {stdout} = await exec('ffprobe',['-v','error','-select_streams','a:0','-show_entries','stream=codec_type','-of','csv=p=0',source]);
+  if (!stdout.includes('audio')) throw new Error('Omni returned no audio track; do not label the video as voiced.');
+  const size = resolution === '720p' ? [1280,720] : [640,360];
+  if (aspectRatio === '9:16') size.reverse();
+  // Continuations may include the source clip. Retain only the requested tail.
+  await run(['-protocol_whitelist','file,pipe','-ss',String(Math.max(0,sourceSeconds-seconds)),'-i',source,
+    '-map','0:v:0','-map','0:a:0','-t',String(seconds),
+    '-vf',`scale=${size[0]}:${size[1]}:force_original_aspect_ratio=increase,crop=${size[0]}:${size[1]},setsar=1,fps=30`,
+    '-af','aresample=48000,apad','-c:v','libx264','-preset','fast','-crf','19','-pix_fmt','yuv420p',
+    '-c:a','aac','-b:a','128k','-ac','2','-movflags','+faststart',target]);
+  if (Math.abs(await duration(target)-seconds)>0.06) throw new Error('Invalid voiced segment duration.');
+}
+
+export async function assembleVoiced(directory, count) {
+  if (!Number.isInteger(count) || count < 1 || count > 14) throw new Error('Use one to fourteen voiced clips.');
+  const list = join(directory,'concat-voiced.txt'), target = join(directory,'final.mp4');
+  await writeFile(list,Array.from({length:count},(_,i)=>`file 'clip-${i}.mp4'`).join('\n'));
+  await run(['-protocol_whitelist','file,pipe','-f','concat','-safe','1','-i',list,
+    '-map','0:v:0','-map','0:a:0','-t',String(count*5),'-c:v','copy',
+    '-af','aresample=async=1:first_pts=0','-c:a','aac','-b:a','128k','-movflags','+faststart',target]);
+  if (Math.abs(await duration(target)-count*5)>0.08) throw new Error('Voiced output failed its duration check.');
+  return target;
+}
+
 // Local readiness only; never contacts a generation provider.
 export async function verifyRuntime() {
   await exec('ffmpeg', ['-version'], {timeout: 10000, maxBuffer: 65536});

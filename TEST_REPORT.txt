@@ -115,3 +115,8 @@ STRUCTURED PROCESSOR DIAGNOSTICS — 2026-10-14
 - Worker validates configured quote inputs before proxying; processor distinguishes invalid JSON/input (400) from unexpected errors (500). Empty quote regression sends no upstream request. Existing HTTP test also checks explicit invalid-input response and healthy readiness.
 - Add opt-in PROCESSOR_DIAGNOSTICS=true with fixed route/event and sanitized error metadata only; no private payloads, headers, owner IDs or raw error messages. Generation stays disabled.
 - 34 tests, syntax and Worker dry-run PASS (48.74 KiB); final logging addition syntax-checked. All provider responses synthetic; no paid tests.
+
+2026-10-14 Omni internal pipeline checkpoint:
+39 tests passed; 0 failures. Five new offline Omni tests cover separate dialect/reference requests, disabled/no-retry transport, trusted Google downloads, native audio preservation through real FFmpeg, and persisted 60/70s orchestration with synthetic provider calls.
+Syntax passed for all production modules including Omni. Worker dry-run: 48.74 KiB.
+Omni modules are not yet routed from the website. Token/context pricing, quote/UI integration and real provider quality verification remain pending. No paid requests were sent. Render diagnostic deploy remains build_in_progress despite a successful build event; older revision remains live.
