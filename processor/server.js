@@ -39,7 +39,7 @@ export async function createProcessor(config, dependencies = {}) {
       const url = new URL(req.url, 'http://processor');
       if (req.method === 'GET' && url.pathname === '/v1/health') {
         const ready = image => quoteLong({resolution:'480p',image,language:'none'}, costs({image})).canStart;
-        return send(res, {processorReachable: true, mediaTools,
+        return send(res, {processorReachable: true, mediaTools, outputDurations: [60,70], protocolVersion: 3,
           canStartWithReference: ready(true), canStartFromText: ready(false),
           providerConfigured: {wan: !!config.DASHSCOPE_API_KEY, openingImage: !!config.FAL_KEY},
           missingCosts: ['LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT'].filter(k => config[k] === undefined || config[k] === ''),

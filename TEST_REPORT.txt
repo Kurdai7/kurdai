@@ -95,3 +95,10 @@ FREE STAGING STARTUP WINDOW — 2026-10-14
 - User authenticated UI reported processor unreachable; direct Render /healthz subsequently returned HTTP 200 with media tools available in approximately 20 seconds. Shared Worker credential correctness is not established by this independent health request.
 - Allow 90 seconds for read-only readiness, retain 30 seconds for POSTs and 120 seconds for downloads. Show Sorani waiting notice and explicit readiness timeout. No automatic retry or generation was added.
 - Syntax, all 29 tests and Worker dry-run PASS (46.90 KiB). New regression test verifies startup wait and no automatic paid-POST retry with mocked timeouts. No paid requests issued.
+
+60/70-SECOND WORKFLOW AND DIAGNOSTICS — 2026-10-14
+- Default UI duration 60, optional 70; explicit validated input controls quote, twelve/fourteen tasks, progress, assembly and downloaded duration. Legacy persisted inputs remain 70.
+- Complete Worker → HTTP service → real FFmpeg → authenticated download tests pass separately for 60 and 70 seconds with synthetic providers only. Both aspect ratios mux to both durations. Quotes price exactly twelve clips for 60 seconds.
+- Credential-format validation and explicit auth/network codes added without exposing credentials. Network root cause is still unverified; direct Render health succeeded independently.
+- 32 tests, syntax and Worker dry-run pass before the final supported-duration capability and stale-server quote guard; final UI checks rerun below. No paid API calls or paid resource enabled.
+- Final syntax/Worker dry-run PASS; UI test rerun PASS including refusal of a stale 70-second server quote for the default 60-second request.

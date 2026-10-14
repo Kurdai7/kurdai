@@ -116,9 +116,17 @@ test('real FFmpeg normalizes media, extracts final frame and muxes a verified 70
     await lastFrame(join(directory, 'clip-0.mp4'), join(directory, 'frame.png')); await access(join(directory, 'frame.png'));
     await prepareOpening(join(directory, 'frame.png'), join(directory, 'portrait.png'), '9:16');
     for (let i = 1; i < 14; i++) await copyFile(join(directory, 'clip-0.mp4'), join(directory, `clip-${i}.mp4`));
-    const final = await assemble(directory); assert.equal(await duration(final), 70);
+    for (const count of [12,14]) { const final = await assemble(directory,count); assert.equal(await duration(final),count*5); }
+    const final = join(directory,"final.mp4");
     const {stdout}=await promisify(execFile)('ffprobe',['-v','error','-select_streams','v:0','-show_entries','stream=width,height','-of','json',final]);
     const stream=JSON.parse(stdout).streams[0];
     assert.deepEqual([stream.width,stream.height],ratio==='16:9'?[848,480]:[480,848]);
   }
+});
+
+test('60-second quotes price exactly twelve clips and reject unsupported durations',()=>{
+  const sixty=longInput({...input,duration:60});const q=quoteLong(sixty,costs);
+  assert.equal(q.outputSeconds,60);assert.equal(q.segments,12);assert.equal(q.apiUSD,0.903);
+  assert.equal(quoteLong({...sixty,image:'uploaded'},costs).apiUSD,0.9);
+  for(const value of [0,65,80,'60',null])assert.throws(()=>longInput({...input,duration:value}));
 });

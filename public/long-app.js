@@ -7,10 +7,10 @@ async function call(path, body) {
   const response = await fetch(`/api/long/${path}`, { method: body ? 'POST' : 'GET',
     headers: { Authorization: `Bearer ${token() || ''}`, 'Content-Type': 'application/json' },
     ...(body ? { body: JSON.stringify(body) } : {}) });
-  const data = await response.json(); if (!response.ok) throw new Error(data.error || 'داواکاری سەرکەوتوو نەبوو.'); return data;
+  const data = await response.json(); if (!response.ok) throw new Error((data.error || 'داواکاری سەرکەوتوو نەبوو.') + (data.code ? ` [${data.code} · v${data.diagnosticVersion || 3}]` : '')); return data;
 }
 function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
-for (const id of ['prompt', 'aspectRatio', 'longResolution', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
+for (const id of ['prompt', 'aspectRatio', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
 function reset() {
   generation++; clearTimeout(timer); invalidate();
   $('longVideo').pause(); $('longVideo').removeAttribute('src'); $('longVideo').load();
@@ -29,11 +29,13 @@ $('longQuote').addEventListener('click', async () => {
       image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
     }
     const data = await call('quote', { prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
-      resolution: $('longResolution').value, identity: $('longIdentity').value, image,
+      resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: $('longIdentity').value, image,
       language: $('longLanguage').value, dialogueText: $('longDialogue').value });
     if (session !== token() || version !== generation) return;
+    if (data.outputSeconds !== Number($('longDuration').value))
+      throw new Error('سێرڤەری Render هێشتا ماوەی هەڵبژێردراو پشتگیری ناکات؛ پێویستی بە Deploy ـی کۆدی نوێ هەیە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
-    show(`٧٠ چرکە · ١٤ × ٥ · ${$('longResolution').value} · بێ دەنگ\nAPI: $${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}\nپرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی خەرجییە، پسوڵەی کۆتایی نییە. پێش دەستپێکردن قبوڵی بکە.' : 'هێشتا چالاک نییە؛ دەستگەیشتنی API و سێرڤەری یەکخستن و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.'}`);
+    show(`${data.outputSeconds} چرکە · ${data.segments} × ٥ · ${$('longResolution').value} · بێ دەنگ\nAPI: $${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}\nپرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی خەرجییە، پسوڵەی کۆتایی نییە. پێش دەستپێکردن قبوڵی بکە.' : 'هێشتا چالاک نییە؛ دەستگەیشتنی API و سێرڤەری یەکخستن و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.'}`);
     $('longCost').style.whiteSpace = 'pre-line'; $('longStart').disabled = !data.canStart;
     if (data.audioQuote && data.audioQuote.language !== 'none') {
       const a = data.audioQuote;
@@ -46,20 +48,21 @@ async function refresh(id) {
   try {
     const job = await call(`status?id=${encodeURIComponent(id)}`);
     if (session !== token() || version !== generation) return;
-    show(`${job.status} · ${job.completedSegments}/14\n${job.error || ''}\nخەرجیی API ـی تەرخانکراو (پسوڵە نییە): $${job.reservedAPIUSD.toFixed(3)}`);
+    show(`${job.status} · ${job.completedSegments}/${job.totalSegments}\n${job.error || ''}\nخەرجیی API ـی تەرخانکراو (پسوڵە نییە): $${job.reservedAPIUSD.toFixed(3)}`);
     if (job.status === 'ready') {
       const response = await fetch(job.videoUrl, { headers: { Authorization: `Bearer ${session}` } });
       if (!response.ok) throw new Error('داگرتنی ڤیدیۆ سەرکەوتوو نەبوو.');
       const blob = await response.blob(); if (session !== token() || version !== generation) return;
       if (output) URL.revokeObjectURL(output); output = URL.createObjectURL(blob);
       $('longVideo').src = $('longDownload').href = output;
+      $('longDownload').download = `KurdAI-${job.duration}s.mp4`;
       $('longVideo').hidden = $('longDownload').hidden = false;
     } else if (job.status === 'running') timer = setTimeout(() => refresh(id), 15000);
   } catch (e) { show(e.message); }
 }
 $('longStart').addEventListener('click', async () => {
   if (!quote?.canStart) return;
-  if (!window.confirm(`خەرجیی پێشبینیکراوی ${money(quote.totalEUR)} بۆ ٧٠ چرکەی بێ دەنگ قبوڵ دەکەیت؟ داواکارییەکان پارە خەرج دەکەن، ڕوخساری یەکسان گەرەنتی نییە.`)) return;
+  if (!window.confirm(`خەرجیی پێشبینیکراوی ${money(quote.totalEUR)} بۆ ${quote.outputSeconds} چرکەی بێ دەنگ قبوڵ دەکەیت؟ داواکارییەکان پارە خەرج دەکەن، ڕوخساری یەکسان گەرەنتی نییە.`)) return;
   $('longStart').disabled = true;
   try {
     const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR });
@@ -68,7 +71,7 @@ $('longStart').addEventListener('click', async () => {
 });
 $('longRefresh').addEventListener('click', async () => {
   try { const { jobs } = await call('jobs'); const job = jobs.find(j => j.status !== 'quoted');
-    if (job) await refresh(job.id); else show('هێشتا دروستکردنی ٧٠ چرکە دەستی پێ نەکردووە.');
+    if (job) await refresh(job.id); else show('هێشتا دروستکردنی ڤیدیۆ دەستی پێ نەکردووە.');
   } catch (e) { show(e.message); }
 });
 
@@ -81,7 +84,7 @@ $('longReadiness').addEventListener('click', async () => {
     if (session !== token() || version !== generation) return;
     show(state.processorReachable ?
       `سێرڤەر: بەردەستە.\nبە وێنەی خۆت: ${state.canStartWithReference ? 'ڕێکخراوە' : 'هێشتا ئامادە نییە'}. بە دەق: ${state.canStartFromText ? 'ڕێکخراوە' : 'هێشتا ئامادە نییە'}.\nدەنگی سۆرانی/بادینی: هێشتا چالاک نییە. ئەمە تەنها پشکنینی ڕێکخستنەکانە؛ تاقیکردنەوەی ڤیدیۆی AI نییە.` :
-      `سێرڤەری ٧٠ چرکە پەیوەست نەکراوە. ڕێکخستنە ونەکان: ${(state.missingConfiguration || []).join(', ')}. هیچ داواکارییەکی AI نەنێردراوە.`);
+      `سێرڤەری ڤیدیۆ پەیوەست نەکراوە. ڕێکخستنە ونەکان: ${(state.missingConfiguration || []).join(', ')}. هیچ داواکارییەکی AI نەنێردراوە.`);
   } catch (error) { if (session === token() && version === generation) show(error.message); }
   finally { button.disabled = false; }
 });

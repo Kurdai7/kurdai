@@ -16,7 +16,7 @@ test('empty cost settings never silently authorize zero-cost processing',()=>{
   }
 });
 
-test('Worker-to-private-processor HTTP workflow quotes, approves, assembles and downloads a real 70s MP4 using synthetic providers only',async t=>{
+for (const seconds of [60,70]) test(`Worker-to-private-processor HTTP workflow produces a real ${seconds}s MP4 using synthetic providers only`,async t=>{
   const root=await mkdtemp(join(tmpdir(),'kurdai-e2e-'));
   const run=promisify(execFile), source=join(root,'synthetic.mp4'), opening=join(root,'reference.png');
   await run('ffmpeg',['-loglevel','error','-y','-f','lavfi','-i','testsrc2=size=160x90:rate=30','-t','5','-c:v','libx264','-pix_fmt','yuv420p',source]);
@@ -51,10 +51,10 @@ test('Worker-to-private-processor HTTP workflow quotes, approves, assembles and 
   assert.equal(readiness.processorReachable,true);assert.equal(readiness.canStartWithReference,true);
   assert.equal(readiness.canStartFromText,false);assert.equal(readiness.providerConfigured.openingImage,false);
   assert.deepEqual(readiness.audioEnabled,{sorani:false,badini:false});assert.equal(submissions,0);
-  const body={prompt:'One cartoon character walks forward.',identity:'Blue jacket, same face.',aspectRatio:'16:9',resolution:'480p',language:'none',
+  const body={prompt:'One cartoon character walks forward.',identity:'Blue jacket, same face.',aspectRatio:'16:9',resolution:'480p',duration:seconds,language:'none',
     image:'data:image/png;base64,'+(await readFile(opening)).toString('base64')};
   const quote=await (await request('quote',body)).json();
-  assert.equal(quote.canStart,true);assert.equal(quote.apiUSD,1.05);assert.equal(submissions,0);
+  assert.equal(quote.canStart,true);assert.equal(quote.apiUSD,Number((seconds * 0.015).toFixed(6)));assert.equal(submissions,0);
   assert.equal((await request('start',{id:quote.id})).status,400);
   assert.equal((await request('start',{id:quote.id,approved:true,approvedTotalEUR:0})).status,400);assert.equal(submissions,0);
   const approval={id:quote.id,approved:true,approvedTotalEUR:quote.totalEUR};
@@ -62,13 +62,13 @@ test('Worker-to-private-processor HTTP workflow quotes, approves, assembles and 
   assert.equal((await request('start',approval)).status,200);
   for(let tick=0;tick<30;tick++)await processor.tick();
   const result=await (await request('status?id='+quote.id)).json();
-  assert.equal(result.status,'ready');assert.equal(result.duration,70);assert.equal(result.completedSegments,14);assert.equal(submissions,14);
+  assert.equal(result.status,'ready');assert.equal(result.duration,seconds);assert.equal(result.completedSegments,seconds/5);assert.equal(submissions,seconds/5);
   const file=await request('file?id='+quote.id);assert.equal(file.status,200);assert.equal(file.headers.get('content-type'),'video/mp4');
-  assert.match(file.headers.get('content-disposition'),/KurdAI-70s.mp4/);
+  assert.match(file.headers.get('content-disposition'),/KurdAI-video.mp4/);
   const downloaded=join(root,'downloaded.mp4');await writeFile(downloaded,new Uint8Array(await file.arrayBuffer()));
-  assert.equal(await duration(downloaded),70);
+  assert.equal(await duration(downloaded),seconds);
   assert.equal((await request('file?id='+quote.id,null,{...owner,email:'other@example.test',id:'other'})).status,403);
-  await request('start',approval);assert.equal(submissions,14);
+  await request('start',approval);assert.equal(submissions,seconds/5);
   assert.equal(JSON.stringify(result).includes(config.LONG_VIDEO_SERVICE_SECRET),false);
 });
 
@@ -79,14 +79,14 @@ test('missing processor configuration and network failure have explicit free dia
   assert.equal(data.processorReachable,false);assert.equal(data.paidProviderProbe,false);assert.equal(data.missingConfiguration.length,2);
   const original=globalThis.fetch;globalThis.fetch=async()=>{throw new TypeError('network failure with internal details');};
   try{
-    const response=await handleLong(request,{VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:'test-only'},owner);
+    const response=await handleLong(request,{VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:'test-only-secret-at-least-32-characters'},owner);
     assert.equal(response.status,503);assert.match((await response.json()).error,/unreachable/);
   }finally{globalThis.fetch=original;}
 });
 
 test('free readiness allows cold startup without extending or retrying paid POSTs', async () => {
   const owner={id:'owner',email:'owner@example.test',verified:true};
-  const env={VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:'test-only'};
+  const env={VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:'test-only-secret-at-least-32-characters'};
   const originalFetch=globalThis.fetch, originalTimeout=AbortSignal.timeout;
   const windows=[]; let calls=0;
   AbortSignal.timeout=ms=>{windows.push(ms);return new AbortController().signal;};
@@ -100,3 +100,15 @@ test('free readiness allows cold startup without extending or retrying paid POST
     assert.deepEqual(windows,[90000,30000]);
   } finally {globalThis.fetch=originalFetch;AbortSignal.timeout=originalTimeout;}
 });
+
+ test('processor diagnostics reject invalid secret headers without leaking values or submitting requests', async()=>{
+  const owner={id:'owner',email:'owner@example.test',verified:true};
+  const env={VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:'invalid\ncredential'};
+  const original=globalThis.fetch;let calls=0;
+  globalThis.fetch=async()=>{calls++;return Response.json({error:'Unauthorized.'},{status:401});};
+  try {
+    const req=()=>new Request('https://kurdai.net/api/long/capabilities');
+    const bad=await (await handleLong(req(),env,owner)).json();assert.equal(bad.code,'PROCESSOR_SECRET_FORMAT');assert.equal(calls,0);assert.equal(JSON.stringify(bad).includes(env.LONG_VIDEO_SERVICE_SECRET),false);
+    const auth=await (await handleLong(req(),{...env,LONG_VIDEO_SERVICE_SECRET:'  '+ 'valid-dummy-credential-'.repeat(3)+'\n'},owner)).json();assert.equal(auth.code,'PROCESSOR_AUTH_REJECTED');assert.equal(calls,1);
+  }finally{globalThis.fetch=original;}
+ });

@@ -26,13 +26,14 @@ export async function lastFrame(source, target) {
   await run(['-protocol_whitelist', 'file,pipe', '-sseof', '-0.033334', '-i', source, '-frames:v', '1', target]);
 }
 export async function assemble(directory, count = 14) {
-  if (count !== 14) throw new Error('All fourteen clips are required for 70 seconds.');
+  if (![12,14].includes(count)) throw new Error('Twelve or fourteen complete clips are required.');
+  const seconds = count * 5;
   const list = join(directory, 'concat.txt');
   await writeFile(list, Array.from({ length: count }, (_, i) => `file 'clip-${i}.mp4'`).join('\n'));
   const output = join(directory, 'final.mp4');
   await run(['-protocol_whitelist', 'file,pipe', '-f', 'concat', '-safe', '1', '-i', list,
-    '-map', '0:v:0', '-an', '-c', 'copy', '-t', '70', '-movflags', '+faststart', output]);
-  if (Math.abs(await duration(output) - 70) > 0.04) throw new Error('Final video failed the 70-second duration check.');
+    '-map', '0:v:0', '-an', '-c', 'copy', '-t', String(seconds), '-movflags', '+faststart', output]);
+  if (Math.abs(await duration(output) - seconds) > 0.04) throw new Error('Final video failed its duration check.');
   return output;
 }
 

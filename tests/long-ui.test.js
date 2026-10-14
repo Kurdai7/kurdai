@@ -8,11 +8,11 @@ test('70-second UI quotes freely, blocks unknown costs, requires approval, inval
   w.localStorage.setItem('kurdai_session_token', 'owner');
   w.HTMLMediaElement.prototype.pause = w.HTMLMediaElement.prototype.load = () => {};
   w.URL.createObjectURL = () => 'blob:70'; w.URL.revokeObjectURL = () => {};
-  let enabled = false, consent = false;
+  let enabled = false, consent = false, serverSeconds = 60;
   w.confirm = () => consent;
   w.fetch = async (path, options = {}) => {
     records.push({ path, options });
-    const q = { id: 'quote', apiUSD: 1.053, apiEUR: 1.053 / 1.1188, mediaEUR: enabled ? 0.01 : null,
+    const q = { id: 'quote', outputSeconds: serverSeconds, segments:serverSeconds/5, apiUSD: 1.053, apiEUR: 1.053 / 1.1188, mediaEUR: enabled ? 0.01 : null,
       fxEUR: enabled ? 0 : null, vatEUR: enabled ? 0 : null, totalEUR: enabled ? 0.9512 : null, canStart: enabled };
     if (path.endsWith('/capabilities')) return {ok:true,json:async()=>({processorReachable:false,missingConfiguration:['LONG_VIDEO_SERVICE_URL']})};
     if (path.endsWith('/quote')) return { ok: true, json: async () => q };
@@ -25,8 +25,12 @@ test('70-second UI quotes freely, blocks unknown costs, requires approval, inval
   w.eval(readFileSync(new URL('../public/long-app.js', import.meta.url), 'utf8'));
   $('longReadiness').click();await wait();assert.match($('longCost').textContent,/LONG_VIDEO_SERVICE_URL/);assert.equal(records.filter(x=>x.options.method==='POST').length,0);
   $('prompt').value = 'Kurdish animation';
+  assert.equal($('longDuration').value,'60');
   $('longQuote').click(); await wait(); assert.equal($('longStart').disabled, true);
   assert.match($('longCost').textContent, /0.9412/);
+  assert.equal(JSON.parse(records.find(x=>x.path.endsWith('/quote')).options.body).duration,60);
+  serverSeconds=70; $('longQuote').click(); await wait(); assert.equal($('longStart').disabled,true); assert.match($('longCost').textContent,/Deploy/);
+  serverSeconds=60;
   enabled = true; $('longQuote').click(); await wait(); assert.equal($('longStart').disabled, false);
   $('longStart').click(); await wait(); assert.equal(records.filter(x => x.path.endsWith('/start')).length, 0);
   $('prompt').dispatchEvent(new w.Event('input')); assert.equal($('longStart').disabled, true);

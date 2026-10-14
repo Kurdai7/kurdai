@@ -17,7 +17,7 @@ const dataImage = async path => {
 };
 export function publicLongJob(job) {
   return { id: job.id, status: job.status, completedSegments: job.completedSegments || 0,
-    totalSegments: 14, duration: job.status === 'ready' ? 70 : null, quote: job.quote,
+    totalSegments: (job.input.duration ?? 70) / 5, duration: job.status === 'ready' ? (job.input.duration ?? 70) : null, quote: job.quote,
     error: job.error || null, approvedAt: job.approvedAt || null,
     reservedAPIUSD: job.reservedAPIUSD || 0,
     // Reserved is a conservative list-price exposure, not proof of provider billing.
@@ -57,7 +57,7 @@ export async function advance(job, directory, config, dependencies = {}) {
       job.openingReady = true; job.inflight = null; await persist(); return;
     }
     const i = job.completedSegments || 0;
-    if (i < 14) {
+    if (i < (job.input.duration ?? 70) / 5) {
       if (!job.inflight) {
         const image = await dataImage(join(directory, i === 0 ? 'opening.png' : `frame-${i - 1}.png`));
         const cost = job.input.resolution === '720p' ? 0.18 : 0.075;
@@ -71,7 +71,7 @@ export async function advance(job, directory, config, dependencies = {}) {
       await m.lastFrame(clip, join(directory, `frame-${i}.png`));
       job.completedSegments = i + 1; job.inflight = null; await persist(); return;
     }
-    await m.assemble(directory); job.status = 'ready'; await persist();
+    await m.assemble(directory, (job.input.duration ?? 70) / 5); job.status = 'ready'; await persist();
   } catch (error) {
     job.status = job.inflight?.state === 'submitting' ? 'uncertain' : 'failed';
     job.error = error.message; await persist();

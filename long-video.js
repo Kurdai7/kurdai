@@ -24,13 +24,17 @@ export function longInput(body) {
   const dialogueText = String(body.dialogueText || '').trim();
   if (dialogueText.length > 5000) throw new Error('Dialogue exceeds 5000 characters.');
   if (language === 'none' && dialogueText) throw new Error('Choose a dialogue language before entering spoken lines.');
-  const input = { prompt, identity, image, language, dialogueText, aspectRatio: body.aspectRatio, resolution: body.resolution, duration: 70 };
-  if (segmentPrompt(input, 13).length > 800) throw new Error('Shorten the story and character description: the economy API allows 800 characters including continuity instructions.');
+  const duration = body.duration === undefined ? 70 : body.duration;
+  if (![60, 70].includes(duration)) throw new Error("Choose 60 or 70 seconds.");
+  const input = { prompt, identity, image, language, dialogueText, aspectRatio: body.aspectRatio, resolution: body.resolution, duration };
+  if (segmentPrompt(input, input.duration / 5 - 1).length > 800) throw new Error('Shorten the story and character description: the economy API allows 800 characters including continuity instructions.');
   return input;
 }
 export function quoteLong(input, costs = {}) {
-  const audioQuote = audioPreview(input.language || 'none', input.dialogueText || '', 70);
-  const apiUSD = 70 * (input.resolution === '720p' ? LONG_PRICES.wan720PerSecond : LONG_PRICES.wan480PerSecond)
+  const seconds = input.duration ?? 70;
+  if (![60, 70].includes(seconds)) throw new Error('Choose 60 or 70 seconds.');
+  const audioQuote = audioPreview(input.language || 'none', input.dialogueText || '', seconds);
+  const apiUSD = seconds * (input.resolution === '720p' ? LONG_PRICES.wan720PerSecond : LONG_PRICES.wan480PerSecond)
     + (input.image ? 0 : LONG_PRICES.firstImageUSD);
   const known = ['mediaEUR', 'fxPercent', 'vatPercent'].every(k =>
     ['number','string'].includes(typeof costs[k]) && String(costs[k]).trim() !== '' && Number.isFinite(Number(costs[k])) && Number(costs[k]) >= 0)
@@ -39,7 +43,7 @@ export function quoteLong(input, costs = {}) {
   const mediaEUR = known ? Number(costs.mediaEUR) : null;
   const fxEUR = known ? apiEUR * Number(costs.fxPercent) / 100 : null;
   const vatEUR = known ? (apiEUR + fxEUR + mediaEUR) * Number(costs.vatPercent) / 100 : null;
-  return { ...LONG_PRICES, model: 'wan2.2-i2v-flash', outputSeconds: 70, segments: 14,
+  return { ...LONG_PRICES, model: 'wan2.2-i2v-flash', outputSeconds: seconds, segments: seconds / 5,
     segmentSeconds: 5, imageAPIUSD: input.image ? 0 : LONG_PRICES.firstImageUSD,
     apiUSD: Number(apiUSD.toFixed(6)), apiEUR, mediaEUR, fxEUR, vatEUR,
     totalEUR: known && audioQuote.enabled ? apiEUR + mediaEUR + fxEUR + vatEUR : null,
@@ -52,7 +56,7 @@ export function quoteLong(input, costs = {}) {
       'No automatic paid retries. Failed jobs retain completed segments and may incur partial cost.'] };
 }
 export function segmentPrompt(input, index) {
-  return `Stylized animation. Continuous shot, same camera, light, face, clothing and proportions. No cuts or new characters. Continue motion from the supplied image. ${input.identity}\nStory: ${input.prompt}\nPart ${index + 1}/14, time ${index * 5}–${(index + 1) * 5}s. ${index === 13 ? 'End the action naturally.' : 'Progress the action gradually; do not end or recap.'}`;
+  return `Stylized animation. Continuous shot, same camera, light, face, clothing and proportions. No cuts or new characters. Continue motion from the supplied image. ${input.identity}\nStory: ${input.prompt}\nPart ${index + 1}/${(input.duration ?? 70) / 5}, time ${index * 5}–${(index + 1) * 5}s. ${index === (input.duration ?? 70) / 5 - 1 ? 'End the action naturally.' : 'Progress the action gradually; do not end or recap.'}`;
 }
 
 export async function handleLong(request, env, user) {
@@ -72,6 +76,9 @@ export async function handleLong(request, env, user) {
       return json({ ...quoteLong(input), blockedReason: 'Media processor, provider access and full processing/FX/tax costs are not configured. No paid call is enabled.' });
     }
     if (!configured) return json({ error: 'The 70-second processor is not configured. No paid request was sent.' }, 503);
+    const serviceSecret = String(env.LONG_VIDEO_SERVICE_SECRET).trim();
+    if (!/^[\x21-\x7e]{32,}$/.test(serviceSecret))
+      return json({error: 'Secret ـی Cloudflare شێوەی دروستی نییە؛ بەهای نوێی Render بە تەواوی کۆپی بکە، نەک ناوی خانەکە.', code: 'PROCESSOR_SECRET_FORMAT'}, 503);
     const base = new URL(env.LONG_VIDEO_SERVICE_URL);
     if (base.protocol !== 'https:' || base.username || base.password || base.search || base.hash) throw new Error('Processor requires HTTPS.');
     const path = url.pathname === '/api/long/capabilities' ? '/health' : url.pathname.slice('/api/long'.length);
@@ -82,17 +89,19 @@ export async function handleLong(request, env, user) {
     // Free staging can take over 50 seconds to wake. Only the read-only readiness
     // check gets a longer startup window; never retry a generation submission.
     const response = await fetch(upstream, { method: request.method, redirect: 'error', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 90000 : 30000),
-      headers: { Authorization: `Bearer ${env.LONG_VIDEO_SERVICE_SECRET}`, 'X-KurdAI-Owner': user.id,
+      headers: { Authorization: `Bearer ${serviceSecret}`, 'X-KurdAI-Owner': user.id,
         'Content-Type': 'application/json' },
       ...(request.method === 'POST' ? { body: await request.text() } : {}) });
+    if (path === '/health' && [401,403].includes(response.status))
+      return json({error: 'Render وەڵامی دا، بەڵام Secret ـی Cloudflare لەگەڵ Render یەکسان نییە.', code: 'PROCESSOR_AUTH_REJECTED'}, 503);
     return new Response(response.body, { status: response.status, headers: { 'Cache-Control': 'private, no-store',
       'Content-Type': response.headers.get('content-type') || 'application/json',
-      ...(path === '/file' ? { 'Content-Disposition': 'attachment; filename="KurdAI-70s.mp4"' } : {}) } });
+      ...(path === '/file' ? { 'Content-Disposition': 'attachment; filename="KurdAI-video.mp4"' } : {}) } });
   } catch (error) {
     if (['TimeoutError','AbortError'].includes(error.name) && request.method === 'GET' && new URL(request.url).pathname === '/api/long/capabilities')
       return json({error: 'The processor did not respond within 90 seconds. Free staging may be waking up. Run the free server check again. No generation request was sent.'}, 503);
     if (['TimeoutError','AbortError','TypeError'].includes(error.name))
-      return json({error: 'The private video processor is unreachable. No automatic generation retry was sent.'}, 503);
+      return json({error: 'The private video processor is unreachable. No automatic generation retry was sent.', code: 'PROCESSOR_NETWORK_ERROR', diagnosticVersion: 3}, 503);
     return json({ error: error.message }, 400);
   }
 }
