@@ -1,6 +1,8 @@
 name = "kurdai"
 main = "worker.js"
 compatibility_date = "2026-10-10"
+# Preserve runtime variables configured in the dashboard during Git deployments.
+keep_vars = true
 
 # Worker Previews do not inherit production bindings or secrets.
 # Keep billable generation disabled until a separate test database is configured.

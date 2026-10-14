@@ -1,11 +1,12 @@
 // Official API contracts: https://ai.google.dev/gemini-api/docs/veo
 // No provider keys, generated URIs, or uploaded image data are returned to clients.
+import { nativeCost, inputHash } from './native-cost.js';
 import { DIALECTS, dialogueInstruction } from './dialogue.js';
-export const MODELS = ['veo-3.1-fast-generate-preview', 'veo-3.1-generate-preview'];
+export const MODELS = ['veo-3.1-fast-generate-preview', 'veo-3.1-generate-preview', 'veo-3.1-lite-generate-preview'];
 const API = 'https://generativelanguage.googleapis.com/v1beta/';
 const MAX_BODY = 18 * 1024 * 1024;
 const MAX_VIDEO = 12 * 1024 * 1024;
-const OPERATION = /^models\/veo-3\.1(?:-fast)?-generate-preview\/operations\/[a-zA-Z0-9_-]+$/;
+const OPERATION = /^models\/veo-3\.1(?:-fast|-lite)?-generate-preview\/operations\/[a-zA-Z0-9_-]+$/;
 export const VIDEO_SCHEMA = [
   `CREATE TABLE IF NOT EXISTS video_jobs (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -15,7 +16,9 @@ export const VIDEO_SCHEMA = [
     created_at TEXT NOT NULL, updated_at TEXT NOT NULL, language TEXT NOT NULL DEFAULT 'unknown', UNIQUE(user_id, request_id))`,
   `CREATE UNIQUE INDEX IF NOT EXISTS video_jobs_active_user ON video_jobs(user_id)
     WHERE status IN ('submitting', 'running', 'uncertain')`,
-  'CREATE INDEX IF NOT EXISTS video_jobs_history ON video_jobs(user_id, created_at DESC)'
+  'CREATE INDEX IF NOT EXISTS video_jobs_history ON video_jobs(user_id, created_at DESC)',
+  `CREATE TABLE IF NOT EXISTS video_quotes (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, request_id TEXT NOT NULL,
+    input_hash TEXT NOT NULL, cost_json TEXT NOT NULL, expires_at TEXT NOT NULL, UNIQUE(user_id,request_id))`
 ];
 const json = (data, status = 200) => Response.json(data, { status, headers: {
   'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff'
@@ -77,6 +80,8 @@ export function validateInput(body) {
   if (body.referenceImages !== undefined && !Array.isArray(body.referenceImages)) fail('Invalid reference images.');
   const references = body.referenceImages || [];
   if (references.length > 3) fail('Use at most three reference images.');
+  if (model.includes('-lite-') && (references.length || mode === 'extend'))
+    fail('Veo Lite supports text and first-frame images, but not reference images or native extension.');
   const images = references.map(image => ({ image: validateImage(image), referenceType: 'asset' }));
   const frame = body.firstFrame ? validateImage(body.firstFrame) : null;
   if (mode === 'frame' && !frame) fail('Choose the previous final frame.');
@@ -101,10 +106,11 @@ export function publicJob(job) {
   const ready = job.status === 'ready';
   return { id: job.id, operation: job.operation, status: job.status, ready,
     done: ['ready', 'failed', 'uncertain'].includes(job.status), error: job.error || null,
+    apiCost: job.cost_json ? JSON.parse(job.cost_json) : null,
     model: job.model, mode: job.mode, aspectRatio: job.aspect_ratio, language: job.language || 'unknown',
     resolution: job.resolution, duration: job.duration, createdAt: job.created_at,
     expired: ready && expired(job),
-    canExtend: ready && !expired(job) && job.resolution === '720p' && job.duration <= 141 && job.extension_count < 20 && ['sorani', 'badini', 'none'].includes(job.language),
+    canExtend: ready && !expired(job) && job.resolution === '720p' && job.duration <= 141 && job.extension_count < 20 && !job.model.includes('-lite-') && ['sorani', 'badini', 'none'].includes(job.language),
     ...(ready ? { videoUrl: `/api/video-file?job=${encodeURIComponent(job.id)}` } : {}) };
 }
 
@@ -151,6 +157,13 @@ async function ensureSchema(db) {
     try { await db.prepare("ALTER TABLE video_jobs ADD COLUMN language TEXT NOT NULL DEFAULT 'unknown'").run(); }
     catch (error) { if (!/duplicate column/i.test(error.message)) throw error; }
   }
+  for (const column of ['quote_id', 'cost_json']) {
+    if (!columns.results.some(c => c.name === column)) {
+      try { await db.prepare(`ALTER TABLE video_jobs ADD COLUMN ${column} TEXT`).run(); }
+      catch (error) { if (!/duplicate column/i.test(error.message)) throw error; }
+    }
+  }
+  await db.prepare('CREATE UNIQUE INDEX IF NOT EXISTS video_jobs_quote ON video_jobs(quote_id) WHERE quote_id IS NOT NULL').run();
 }
 async function ownedJob(db, user, jobId) {
   return db.prepare('SELECT * FROM video_jobs WHERE id=? AND user_id=?').bind(jobId, user.id).first();
@@ -162,7 +175,10 @@ export async function handleVideo(request, env, user) {
     if (url.pathname === '/api/video-capabilities' && request.method === 'GET') {
       const allowed = !!user && !!env.VIDEO_TEST_EMAIL && user.email.trim().toLowerCase() === env.VIDEO_TEST_EMAIL.trim().toLowerCase();
       return json({ configured: !!env.DB && !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true',
-        accountAllowed: allowed, models: MODELS, durations: [4, 6, 8], aspectRatios: ['16:9', '9:16'],
+        accountAllowed: allowed, accountVerified: !!user?.verified,
+        missingConfiguration: [!env.DB && 'DB', !env.GEMINI_API_KEY && 'GEMINI_API_KEY',
+          env.VIDEO_GENERATION_ENABLED !== 'true' && 'VIDEO_GENERATION_ENABLED', !env.VIDEO_TEST_EMAIL && 'VIDEO_TEST_EMAIL'].filter(Boolean),
+        costApprovalRequired: true, models: MODELS, durations: [4, 6, 8], aspectRatios: ['16:9', '9:16'],
         maxReferenceImages: 3, extensionSeconds: 7, soraniGuaranteed: false, badiniGuaranteed: false,
         dialogueLanguages: Object.entries(DIALECTS).map(([id, d]) => ({ id, label: d.label,
           nativeVideoVerified: false, ttsDocumented: d.ttsDocumented, ttsEnabled: false })),
@@ -176,7 +192,7 @@ export async function handleVideo(request, env, user) {
       const rows = await env.DB.prepare('SELECT * FROM video_jobs WHERE user_id=? ORDER BY created_at DESC LIMIT 30').bind(user.id).all();
       return json({ jobs: rows.results.map(publicJob) });
     }
-    if (url.pathname === '/api/generate' && request.method === 'POST') {
+    if (['/api/generate', '/api/video-quote'].includes(url.pathname) && request.method === 'POST') {
       if (env.VIDEO_GENERATION_ENABLED !== 'true' || !env.GEMINI_API_KEY)
         return json({ error: 'Video generation is not configured or enabled.' }, 503);
       // Preserve the existing owner's billing boundary. Public credit debiting is not implemented.
@@ -198,6 +214,28 @@ export async function handleVideo(request, env, user) {
         if (input.aspectRatio !== parent.aspect_ratio) fail('Extension must keep the original aspect ratio.');
         if (input.model !== parent.model) fail('Extension must keep the original Veo model.');
         if (parent.language !== input.language) fail('Extension must keep the original dialogue language. Older videos with unknown language require a new clip.');
+      }
+      const hash = await inputHash(input, body);
+      const cost = nativeCost(input, parent);
+      if (url.pathname === '/api/video-quote') {
+        const previous = await env.DB.prepare('SELECT * FROM video_quotes WHERE user_id=? AND request_id=?').bind(user.id, body.requestId).first();
+        if (previous) {
+          if (previous.input_hash !== hash) fail('Request changed. Request a new quote with a new request ID.', 409);
+          return json({ ...JSON.parse(previous.cost_json), id: previous.id, expiresAt: previous.expires_at });
+        }
+        const id = crypto.randomUUID(), expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
+        await env.DB.prepare('INSERT OR IGNORE INTO video_quotes (id,user_id,request_id,input_hash,cost_json,expires_at) VALUES (?,?,?,?,?,?)')
+          .bind(id, user.id, body.requestId, hash, JSON.stringify(cost), expiresAt).run();
+        const saved = await env.DB.prepare('SELECT * FROM video_quotes WHERE user_id=? AND request_id=?').bind(user.id, body.requestId).first();
+        if (saved.input_hash !== hash) fail('Request changed. Request a new quote with a new request ID.', 409);
+        return json({ ...JSON.parse(saved.cost_json), id: saved.id, expiresAt: saved.expires_at });
+      }
+      const quote = await env.DB.prepare('SELECT * FROM video_quotes WHERE id=? AND user_id=?').bind(body.quoteId || '', user.id).first();
+      if (!quote || quote.request_id !== body.requestId || quote.input_hash !== hash ||
+          Date.parse(quote.expires_at) <= Date.now() || quote.cost_json !== JSON.stringify(cost) || !cost.canStart ||
+          body.approved !== true || body.approvedAPIEUR !== cost.apiEUR)
+        fail('A current matching API cost quote and explicit approval are required. No paid request was sent.', 409);
+      if (parent) {
         // REST extension accepts inline video data. Use only a server-owned Veo output.
         const source = await downloadVideo(parent.video_uri, env.GEMINI_API_KEY);
         if (!source.ok) fail(await providerError(source, 'Could not read the source video.'), 502);
@@ -211,9 +249,9 @@ export async function handleVideo(request, env, user) {
       }
       const jobId = crypto.randomUUID(); const stamp = now();
       const claim = await env.DB.prepare(`INSERT OR IGNORE INTO video_jobs
-        (id,user_id,request_id,status,model,mode,aspect_ratio,resolution,duration,extension_count,parent_id,created_at,updated_at,language)
-        VALUES (?,?,?,'submitting',?,?,?,?,?,?,?,?,?,?)`).bind(jobId, user.id, body.requestId,
-        input.model, input.mode, input.aspectRatio, input.resolution, duration, extensionCount, parent?.id || null, stamp, stamp, input.language).run();
+        (id,user_id,request_id,status,model,mode,aspect_ratio,resolution,duration,extension_count,parent_id,created_at,updated_at,language,quote_id,cost_json)
+        VALUES (?,?,?,'submitting',?,?,?,?,?,?,?,?,?,?,?,?)`).bind(jobId, user.id, body.requestId,
+        input.model, input.mode, input.aspectRatio, input.resolution, duration, extensionCount, parent?.id || null, stamp, stamp, input.language, quote.id, quote.cost_json).run();
       if (!claim.meta?.changes) {
         const replay = await env.DB.prepare('SELECT * FROM video_jobs WHERE user_id=? AND request_id=?').bind(user.id, body.requestId).first();
         if (replay) return json(publicJob(replay));

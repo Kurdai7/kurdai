@@ -9,7 +9,7 @@ const w=dom.window; let generated; let records=[]; let mode='new';
 let urls=0;
 w.URL.createObjectURL=()=>`blob:test-${++urls}`;w.URL.revokeObjectURL=()=>{};
 w.HTMLMediaElement.prototype.pause=()=>{};w.HTMLMediaElement.prototype.load=()=>{};
-w.confirm=()=>true;
+let approvedByUser=true;w.confirm=()=>approvedByUser;
 const base={id:'job-1',status:'ready',ready:true,done:true,duration:8,aspectRatio:'9:16',resolution:'720p',model:'veo-3.1-fast-generate-preview',createdAt:new Date().toISOString(),canExtend:true,videoUrl:'/api/video-file?job=job-1'};
 w.fetch=async(path,opts={})=>{
  records.push({path,opts});
@@ -18,6 +18,7 @@ w.fetch=async(path,opts={})=>{
  if(path==='/api/me') data={email:'owner@example.com',dailyCredits:30};
  if(path==='/api/video-capabilities') data={configured:true,accountAllowed:true};
  if(path==='/api/video-jobs') data={jobs:generated?[base]:[]};
+ if(path==='/api/video-quote') data={id:'quote-1',apiEUR:.714605,apiUSD:.8,canStart:true};
  if(path==='/api/generate') {generated=JSON.parse(opts.body);mode=generated.mode;data={...base,status:'running',ready:false};}
  if(path.startsWith('/api/video-status')) data=base;
  if(path.startsWith('/api/video-file'))return{ok:true,blob:async()=>new w.Blob(['video-fixture'],{type:'video/mp4'})};
@@ -33,7 +34,8 @@ $('loginBtn').click();await wait();assert.equal(w.localStorage.getItem('kurdai_s
 $('languageToggle').click();assert.equal(w.document.documentElement.lang,'en');assert.ok(w.document.querySelector('h1 em'));
 $('languageToggle').click();assert.equal(w.document.documentElement.dir,'rtl');assert.ok(w.document.querySelector('h1 em'));
 w.document.querySelector('[data-style="Cartoon"]').click();
-$('aspectRatio').value='9:16';$('prompt').value='کارتۆنێکی کوردی';$('generate').click();await wait();await wait();
+$('aspectRatio').value='9:16';$('prompt').value='کارتۆنێکی کوردی';$('nativeQuote').click();await wait();assert.equal(generated,undefined);assert.match($('nativeCost').textContent,/0.7146/);approvedByUser=false;$('generate').click();await wait();assert.equal(generated,undefined);approvedByUser=true;$('generate').click();await wait();await wait();
+assert.equal(generated.quoteId,'quote-1');assert.equal(generated.approved,true);assert.equal(generated.approvedAPIEUR,.714605);
 assert.equal(generated.aspectRatio,'9:16');assert.equal(generated.style,'Cartoon');assert.equal(generated.language,'sorani');
 assert.equal($('resultVideo').hidden,false);assert.match($('resultVideo').src,/blob:test-/);assert.equal($('downloadVideo').hidden,false);
 assert.equal($('extendResult').hidden,false);

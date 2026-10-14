@@ -95,15 +95,15 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
         <div><label class="field-label" for="resolution">کوالێتی</label><select id="resolution"><option value="720p">720p — گونجاو بۆ Extension</option><option value="1080p">1080p — ٨ چرکە</option></select></div>
       </div>
       <label class="field-label" for="model">مۆدێلی ڤیدیۆ</label>
-      <select id="model"><option value="veo-3.1-fast-generate-preview">Veo 3.1 Fast</option><option value="veo-3.1-generate-preview">Veo 3.1</option></select>
+      <select id="model"><option value="veo-3.1-fast-generate-preview">Veo 3.1 Fast</option><option value="veo-3.1-generate-preview">Veo 3.1</option><option value="veo-3.1-lite-generate-preview">Veo 3.1 Lite — هەرزانتر، بێ Reference/Extension</option></select>
       <label class="field-label" for="videoMode">جۆری دروستکردن</label>
-      <select id="videoMode"><option value="new">ڤیدیۆی نوێ / Reference Images</option><option value="extend">Video Extension — زیادکردنی ٧ چرکە</option><option value="frame">کلیپی نوێ لە دوا فڕەیمەوە</option></select>
+      <select id="videoMode"><option value="new">ڤیدیۆی نوێ / Reference Images</option><option value="extend">Video Extension — زیادکردنی ٧ چرکە</option><option value="frame">Image to Video / وێنە یان دوا فڕەیم</option></select>
       <div id="sourceFields" hidden>
         <label class="field-label" for="sourceJob">ڤیدیۆی پێشووی ئەم ئەکاونتە</label><select id="sourceJob"><option value="">ڤیدیۆیەکی ئامادە هەڵبژێرە</option></select>
         <p class="note">Extension تەنها بۆ ڤیدیۆی Veo بە 720p ـە کە لەم ئەکاونتە دروست کراوە و لە ٤٨ کاتژمێری ڕابردوودا هێشتا بەردەستە.</p>
       </div>
       <div id="frameFields" hidden>
-        <label class="field-label" for="previousFrame">وێنەی دوا فڕەیم (PNG / JPEG)</label><input id="previousFrame" type="file" accept="image/png,image/jpeg">
+        <label class="field-label" for="previousFrame">وێنەی سەرەتا یان دوا فڕەیم (PNG / JPEG)</label><input id="previousFrame" type="file" accept="image/png,image/jpeg">
         <button type="button" class="chip" id="captureFrame">وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو</button>
         <p class="note">ئەمە کلیپێکی نوێ لەو وێنەیەوە دەست پێ دەکات؛ بە خۆکار لەگەڵ ڤیدیۆی پێشوو یەک ناخات.</p>
       </div>
@@ -120,6 +120,8 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
         <button type="button" class="chip" data-style="Realistic">واقعی</button>
       </div>
       <p class="note" id="billingNote">دروستکردنی ڤیدیۆ خەرجی Google API هەیە. کرێدیتی ڕۆژانەی پیشاندراو لێرە پارەی Google نادات. ئێستا دروستکردن بۆ ئەکاونتی تاقیکردنەوەی ڕێکخراوە.</p>
+      <button class="chip" id="nativeQuote" type="button">پیشاندانی خەرجی API — بێ پارە</button>
+      <div class="toast" id="nativeCost" role="status" aria-live="polite"></div>
       <button class="generate" id="generate" type="button">🎬 دروستکردنی ڤیدیۆ</button>
       <button class="chip" id="resumeJob" type="button" hidden>بەردەوامبوون لە پشکنینی داواکاریی پێشوو</button>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>

@@ -170,7 +170,7 @@ export default {
 
       if (url.pathname === '/api/health' && request.method === 'GET') {
         return json({ ok: !!env.DB && !!env.ASSETS, service: 'KurdAI API',
-          version: 'veo-workflow-v1', databaseConfigured: !!env.DB,
+          version: 'owner-cost-approval-v2', databaseConfigured: !!env.DB,
           assetsConfigured: !!env.ASSETS,
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true'
         }, env.DB && env.ASSETS ? 200 : 503);
@@ -179,7 +179,7 @@ export default {
         const user = env.DB ? await currentUser(request, env) : null;
         return handleLong(request, env, user);
       }
-      if (['/api/generate', '/api/video-status', '/api/video-file', '/api/video-jobs', '/api/video-capabilities'].includes(url.pathname)) {
+      if (['/api/generate', '/api/video-quote', '/api/video-status', '/api/video-file', '/api/video-jobs', '/api/video-capabilities'].includes(url.pathname)) {
         const user = env.DB ? await currentUser(request, env) : null;
         return handleVideo(request, env, user);
       }

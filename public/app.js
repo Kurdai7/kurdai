@@ -19,6 +19,8 @@ function updateDialogueSupport() {
 }
 $('language').addEventListener('change', updateDialogueSupport);
 const errors = new Map([
+  ['Veo Lite supports text and first-frame images, but not reference images or native extension.', 'Veo Lite تەنها دەق و وێنەی سەرەتا وەردەگرێت؛ بۆ Reference Images یان Extension مۆدێلی Fast یان Standard هەڵبژێرە.'],
+  ['A current matching API cost quote and explicit approval are required. No paid request was sent.', 'نرخنامەی نوێ و ڕەزامەندی بۆ هەمان داواکاری پێویستە؛ هیچ داواکارییەکی پارەدار نەنێردراوە.'],
   ['Please log in.', 'تکایە سەرەتا بچۆ ژوورەوە.'],
   ['Verify your email first.', 'سەرەتا ئیمەیڵەکەت پشتڕاست بکەرەوە.'],
   ['Video generation is not configured or enabled.', 'بەشی ڤیدیۆ هێشتا لەلایەن بەڕێوەبەرەوە چالاک نەکراوە.'],
@@ -37,6 +39,7 @@ async function api(path, options = {}) {
   if (token()) headers.Authorization = `Bearer ${token()}`;
   const response = await fetch(path, { ...options, headers });
   const data = await response.json().catch(() => ({}));
+  if (!response.ok && response.status === 403 && !data.error) data.error = ku('دەستگەیشتن بە وێبسایت ڕەت کرایەوە (403)؛ ئەمە وەڵامی Google بۆ دروستکردنی ڤیدیۆ نییە.', 'Website access was denied (403); this is not a Google video-generation response.');
   if (!response.ok) throw Object.assign(new Error(data.error || ku('پەیوەندی سەرکەوتوو نەبوو.', 'Request failed.')), { status: response.status, jobId: data.jobId });
   return data;
 }
@@ -48,7 +51,7 @@ function clearOutput() {
   for (const id of ['resultVideo', 'downloadVideo', 'extendResult']) $(id).hidden = true;
   document.querySelector('.preview-screen').hidden = false;
 }
-function setBusy(value) { busy = value; $('generate').disabled = value; }
+function setBusy(value) { busy = value; $('generate').disabled = value; $('nativeQuote').disabled = value; }
 function stateLabel(job) {
   return ({ ready: ku('ئامادەیە', 'Ready'), running: ku('دروست دەکرێت', 'Generating'),
     submitting: ku('دەنیردرێت', 'Submitting'), failed: ku('سەرکەوتوو نەبوو', 'Failed'),
@@ -86,7 +89,8 @@ async function refreshAccount() {
     $('creditStatus').textContent = ku(`ئەکاونت: ${data.email} · کرێدیتی ئەمڕۆ: ${data.dailyCredits} (بۆ پارەدانی Google نییە)`, `Account: ${data.email} · Daily credits: ${data.dailyCredits} (not Google billing)`);
     const capability = await api('/api/video-capabilities');
     if (token() !== expected) return;
-    if (!capability.configured) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.'), true);
+    if (!capability.configured) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.') + (capability.missingConfiguration?.length ? ` (${capability.missingConfiguration.join(', ')})` : ''), true);
+    else if (!capability.accountVerified && capability.accountVerified !== undefined) message('toast', 'Verify your email first.', true);
     else if (!capability.accountAllowed) message('toast', 'Generation is currently available only to the configured test account.', true);
     await refreshJobs();
   } catch (error) { message('accountMessage', error.message, true); }
@@ -136,7 +140,7 @@ function updateControls() {
   updateDialogueSupport();
   $('previewDuration').textContent = extension && parent ? `${parent.duration} → ${parent.duration + 7}s` : `${$('duration').value}s`;
 }
-for (const id of ['videoMode', 'resolution', 'duration', 'sourceJob', 'aspectRatio']) $(id).addEventListener('change', updateControls);
+for (const id of ['videoMode', 'resolution', 'duration', 'sourceJob', 'aspectRatio', 'model']) $(id).addEventListener('change', updateControls);
 async function imageData(file) {
   if (!file || !['image/png', 'image/jpeg'].includes(file.type) || file.size > 4 * 1024 * 1024)
     throw new Error(ku('PNG یان JPEG هەڵبژێرە؛ تا ٤ MiB بۆ هەر وێنەیەک.', 'Use PNG or JPEG images, up to 4 MiB each.'));
@@ -217,7 +221,7 @@ async function trackJob(jobId) {
   } catch (error) { if (epoch === expectedEpoch) message('toast', error.message, true); }
   finally { if (epoch === expectedEpoch) { setBusy(false); await refreshJobs().catch(() => {}); } }
 }
-$('generate').addEventListener('click', async () => {
+async function prepareNative(quoteOnly = false) {
   if (busy) return;
   if (!token()) return message('toast', 'Please log in.', true);
   const prompt = $('prompt').value.trim();
@@ -230,17 +234,29 @@ $('generate').addEventListener('click', async () => {
     if (mode === 'frame' && !firstFrame) throw new Error(ku('وێنەی دوا فڕەیم هەڵبژێرە یان لە ڤیدیۆکە وەریبگرە.', 'Choose or capture the previous final frame.'));
     if (mode === 'extend' && !$('sourceJob').value) throw new Error(ku('ڤیدیۆیەکی ئامادە بۆ Extension هەڵبژێرە.', 'Choose a ready video to extend.'));
     if (epoch !== expectedEpoch) return;
-    // The user makes one explicit billable request. Polling and resume never submit generation.
-    if (!confirm(ku('ئەم داواکارییە خەرجی Google API هەیە. بەردەوام دەبیت؟', 'This request incurs Google API charges. Continue?'))) return;
     let pending = JSON.parse(localStorage.getItem(requestKey) || 'null');
     if (pending?.token !== token()) pending = null;
     const requestId = pending?.id || crypto.randomUUID();
-    localStorage.setItem(requestKey, JSON.stringify({ id: requestId, token: token() }));
-    const result = await api('/api/generate', { method: 'POST', body: JSON.stringify({ requestId, prompt, mode,
+    const payload = { requestId, prompt, mode,
       model: $('model').value, duration: Number($('duration').value), resolution: $('resolution').value,
       aspectRatio: $('aspectRatio').value, language: $('language').value, style: selectedStyle,
       referenceImages: references, ...(mode === 'frame' ? { firstFrame } : {}),
-      ...(mode === 'extend' ? { parentJobId: $('sourceJob').value } : {}) }) });
+      ...(mode === 'extend' ? { parentJobId: $('sourceJob').value } : {}) };
+    const quote = await api('/api/video-quote', { method: 'POST', body: JSON.stringify(payload) });
+    if (epoch !== expectedEpoch) return;
+    if (quote.status) { if (!quoteOnly) await trackJob(quote.id); return; }
+    const costText = ku(
+      `خەرجی API بۆ Admin: نزیکەی €${quote.apiEUR.toFixed(4)} ($${quote.apiUSD.toFixed(4)}). دەنگ لە نرخەکەدایە؛ قازانجی فرۆشتن زیاد نەکراوە. باج، کرێی گۆڕینی دراو و سێرڤەر لەم ژمارەیەدا نین. نرخەکە خەمڵاندنە، نەک پسوولەی کۆتایی.`,
+      `Admin API estimate: €${quote.apiEUR.toFixed(4)} ($${quote.apiUSD.toFixed(4)}). Includes native audio, no retail markup. Excludes tax, bank FX spread and hosting. This is an estimate, not the final invoice.`)
+      + (mode === 'extend' ? ku(' بۆ Extension بودجە بە پارێزەوە بۆ هەموو ماوەی دەرئەنجامەکە حساب کراوە؛ بنەمای پارەدانی زیادکردن پشتڕاست نەکراوەتەوە.', ' Extension uses a conservative full-output budget; incremental extension billing is unverified.') : '');
+    message('nativeCost', costText, !quote.canStart);
+    if (!quote.canStart) throw new Error(ku('نرخنامەکە پێویستی بە نوێکردنەوە هەیە؛ هیچ داواکارییەکی پارەدار نەنێردرا.', 'Price review expired. No paid request was sent.'));
+    if (quoteOnly) return;
+    if (!confirm(costText + ku('\nئەم خەرجییە قبوڵ دەکەیت و داواکارییەکە دەنێریت؟', '\nApprove this API cost and submit this request?'))) return;
+    if (epoch !== expectedEpoch) return;
+    localStorage.setItem(requestKey, JSON.stringify({ id: requestId, token: token() }));
+    const result = await api('/api/generate', { method: 'POST', body: JSON.stringify({ ...payload,
+      quoteId: quote.id, approved: true, approvedAPIEUR: quote.apiEUR }) });
     if (epoch !== expectedEpoch) return;
     await trackJob(result.id);
   } catch (error) {
@@ -249,7 +265,9 @@ $('generate').addEventListener('click', async () => {
     if (error.jobId) { $('resumeJob').dataset.job = error.jobId; $('resumeJob').hidden = false; }
     message('toast', error.message, true);
   } finally { setBusy(false); await refreshJobs().catch(() => {}); }
-});
+}
+$('generate').addEventListener('click', () => prepareNative(false));
+$('nativeQuote').addEventListener('click', () => prepareNative(true));
 $('resumeJob').addEventListener('click', () => { if (!busy && $('resumeJob').dataset.job) trackJob($('resumeJob').dataset.job); });
 $('loadJob').addEventListener('click', () => { if (!busy && $('jobHistory').value) trackJob($('jobHistory').value); });
 $('extendResult').addEventListener('click', () => {
@@ -268,8 +286,8 @@ const translations = new Map([
   ['٣D ئەنیمەیشن', '3D Animation'], ['🎬 دروستکردنی ڤیدیۆ', '🎬 Generate video'], ['داگرتنی ڤیدیۆ', 'Download video'],
   ['بەردەوامکردنی ئەم ڤیدیۆیە', 'Extend this video'], ['داواکارییەکانی پێشوو', 'Previous requests'], ['پیشاندان / پشکنین', 'Load / check status'],
   ['بەردەوامبوون لە پشکنینی داواکاریی پێشوو', 'Resume previous request'], ['ڤیدیۆی نوێ / Reference Images', 'New video / Reference Images'],
-  ['Video Extension — زیادکردنی ٧ چرکە', 'Video Extension — add 7 seconds'], ['کلیپی نوێ لە دوا فڕەیمەوە', 'New clip from final frame'],
-  ['وێنەی دوا فڕەیم (PNG / JPEG)', 'Previous final frame (PNG / JPEG)'], ['وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو', 'Capture final frame from loaded video'],
+  ['Video Extension — زیادکردنی ٧ چرکە', 'Video Extension — add 7 seconds'], ['Image to Video / وێنە یان دوا فڕەیم', 'New clip from final frame'],
+  ['وێنەی سەرەتا یان دوا فڕەیم (PNG / JPEG)', 'Previous final frame (PNG / JPEG)'], ['وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو', 'Capture final frame from loaded video'],
   ['وێنەکانی کارەکتەر و جل‌وبەرگ (تا ٣ وێنە)', 'Character and clothing references (up to 3 images)'], ['ڤیدیۆی پێشووی ئەم ئەکاونتە', 'Previous video from this account'],
   ['٤ چرکە', '4 seconds'], ['٦ چرکە', '6 seconds'], ['٨ چرکە', '8 seconds'], ['16:9 — ئاسۆیی', '16:9 — landscape'], ['9:16 — ستوونی / Reels', '9:16 — portrait / Reels'],
   ['720p — گونجاو بۆ Extension', '720p — supports extension'], ['1080p — ٨ چرکە', '1080p — 8 seconds']
@@ -283,3 +301,5 @@ $('languageToggle').addEventListener('click', () => {
   $('languageToggle').textContent = english ? '🌐 EN / KU' : '🌐 KU / EN';
 });
 updateControls(); updateDialogueSupport(); refreshAccount();
+
+for (const id of ['prompt','language','videoMode','resolution','duration','sourceJob','aspectRatio','model','referenceImages','previousFrame']) $(id).addEventListener('input', () => { $('nativeCost').textContent = ''; $('nativeCost').classList.remove('show'); });

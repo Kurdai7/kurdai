@@ -62,3 +62,12 @@ PREVIEW BUILD FIX — 2026-10-14
 - Verified `npx wrangler preview --help` now recognizes the command. Syntax checks and 23 tests PASS; production dry-run PASS with Wrangler 4.135.0, bundle 40.82 KiB.
 - Full Cloudflare error log has not been read, so this does not rule out additional account/binding errors. Remote rebuild result must be checked after push.
 - A preview without a configured test DB intentionally reports unavailable account/video APIs. A successful preview does not mean kurdai.net production was deployed or that AI generation was tested.
+
+OWNER QUOTE ENFORCEMENT — 2026-10-14
+- Confirmed remote main 466c1f6 tree matches local prepared source before editing. Prior main production Cloudflare check SUCCESS, Version 454c64c1-66c4-4887-814d-7326f8910e8f.
+- Live kurdai.net UI loaded in Cloud Browser. Separate /api/health navigation returned ERR_BLOCKED_BY_CLIENT, so production API and authenticated account behavior are not independently verified. No new Cloudflare sign-in or paid generation attempted.
+- Added free native video quote endpoint, immutable owner/request/input binding, 15-minute expiry, exact EUR approval, job cost snapshot and unique quote/job constraint. Unapproved/stale/changed/wrong-owner calls never reach mocked Google. UI cancel and quote-only paths send no generation request.
+- Added Veo Lite with documented first-frame/T2V support and explicit rejection of references/native extension. Google prices and ECB FX verified 2026-10-14. Dated API estimates exclude tax, bank spread and infrastructure. Extension uses a conservative full-output budget, not a verified incremental bill.
+- keep_vars preserves dashboard controls. New schema columns are nullable for old jobs and initialized idempotently, retaining owner/history locks.
+- 25 automated tests PASS, syntax PASS, Worker dry-run PASS. Real local FFmpeg assembly now verifies both landscape and portrait 70-second outputs. Provider responses are mocked. No real AI, speech, bank charge, top-up, purchase or hosting deployment was performed.
+- 70-second processor hosting/access and TTS remain absent; full-cost and audio gates stay closed. Faces/voices/continuous motion are not guaranteed or independently quality-tested.

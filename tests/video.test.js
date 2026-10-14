@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import { handleVideo, validateInput, downloadVideo, VIDEO_SCHEMA } from '../video.js';
+import { handleVideo as rawHandleVideo, validateInput, downloadVideo, VIDEO_SCHEMA } from '../video.js';
 import worker from '../worker.js';
 
 function d1() {
@@ -33,6 +33,16 @@ const originalFetch = globalThis.fetch;
 function mockFetch(t, fn) { globalThis.fetch = fn; t.after(() => { globalThis.fetch = originalFetch; }); }
 const png = { mimeType: 'image/png', data: Buffer.from('\x89PNG\r\n\x1a\nfixture', 'latin1').toString('base64') };
 
+// Existing generation tests exercise the approved flow. Boundary tests below
+// deliberately use rawHandleVideo to verify bypass attempts cannot spend.
+async function handleVideo(request, config, user) {
+  if (new URL(request.url).pathname !== '/api/generate') return rawHandleVideo(request, config, user);
+  const body = await request.clone().json();
+  const q = await (await rawHandleVideo(new Request('https://kurdai.net/api/video-quote', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body:JSON.stringify(body)
+  }), config, user)).json();
+  return rawHandleVideo(post({...body, quoteId:q.id, approved:true, approvedAPIEUR:q.apiEUR}), config, user);
+}
 test('validates aspect ratios, durations, reference limits and contradictory combinations', () => {
   const input = validateInput(fresh({ aspectRatio: '9:16', referenceImages: [png] }));
   assert.equal(input.aspectRatio, '9:16'); assert.equal(input.instance.referenceImages.length, 1);
@@ -160,4 +170,33 @@ test('Worker health reports missing bindings and API does not fall through to st
   const payload = await response.json(); assert.equal(payload.videoConfigured, false);
   const missing = await worker.fetch(get('/api/video-status?job=x'), {}); assert.equal(missing.status, 401);
   const asset = await worker.fetch(get('/'), { ASSETS: { fetch: () => new Response('site') } }); assert.equal(await asset.text(), 'site');
+});
+
+test('native quotes are free, owner-bound, immutable and required before paid generation', async t => {
+  const config = env(); let calls = 0;
+  mockFetch(t, async () => { calls++; return Response.json({ name: operation }); });
+  const body = fresh();
+  const quoteRequest = b => new Request('https://kurdai.net/api/video-quote', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+  assert.equal((await rawHandleVideo(post(body), config, owner)).status, 409);
+  const q = await (await rawHandleVideo(quoteRequest(body), config, owner)).json();
+  assert.equal(q.apiUSD, .8); assert.equal(q.apiEUR, Number((.8/1.1195).toFixed(6))); assert.equal(q.totalInvoiceEUR, null);
+  assert.equal(calls, 0);
+  const approved = {...body,quoteId:q.id,approved:true,approvedAPIEUR:q.apiEUR};
+  for (const changed of [{approved:false},{approvedAPIEUR:0},{prompt:'Changed prompt'},{language:'badini'},{aspectRatio:'9:16'},{requestId:crypto.randomUUID()}])
+    assert.equal((await rawHandleVideo(post({...approved,...changed}),config,owner)).status,409);
+  assert.equal((await rawHandleVideo(post(approved),config,other)).status,403);
+  assert.equal(calls,0);
+  config.DB.raw.prepare('UPDATE video_quotes SET expires_at=? WHERE id=?').run('2020-01-01',q.id);
+  assert.equal((await rawHandleVideo(post(approved),config,owner)).status,409); assert.equal(calls,0);
+  config.DB.raw.prepare('UPDATE video_quotes SET expires_at=? WHERE id=?').run(new Date(Date.now()+60000).toISOString(),q.id);
+  const made = await (await rawHandleVideo(post(approved),config,owner)).json();
+  assert.equal(made.apiCost.apiUSD,.8); assert.equal(calls,1);
+  await rawHandleVideo(post(approved),config,owner); assert.equal(calls,1);
+});
+
+test('Lite accepts first-frame input and blocks unsupported references and extension', () => {
+  const model='veo-3.1-lite-generate-preview';
+  assert.equal(validateInput(fresh({model,mode:'frame',firstFrame:png})).model,model);
+  assert.throws(()=>validateInput(fresh({model,referenceImages:[png]})),/not reference/);
+  assert.throws(()=>validateInput(fresh({model,mode:'extend'})),/not reference/);
 });

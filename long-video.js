@@ -1,7 +1,7 @@
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
 import { audioPreview } from './dialogue.js';
-export const LONG_PRICES = Object.freeze({ reviewed: '2026-10-14', fxDate: '2026-10-13',
-  usdPerEUR: 1.1188, wan480PerSecond: 0.015, wan720PerSecond: 0.036, firstImageUSD: 0.003 });
+export const LONG_PRICES = Object.freeze({ reviewed: '2026-10-14', fxDate: '2026-10-14',
+  usdPerEUR: 1.1195, wan480PerSecond: 0.015, wan720PerSecond: 0.036, firstImageUSD: 0.003 });
 export function longInput(body) {
   const prompt = String(body.prompt || '').trim();
   if (!prompt || prompt.length > 650) throw new Error('Use a prompt of 1–650 characters for the economy model.');

@@ -111,9 +111,14 @@ test('provider adapter sends documented parameters and uses returned fal queue U
 test('real FFmpeg normalizes media, extracts final frame and muxes a verified 70-second MP4 without paid AI', async t => {
   const directory = await temp(t); const source = join(directory, 'source.mp4');
   await promisify(execFile)('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc2=size=160x90:rate=30', '-t', '5', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', source]);
-  await normalize(source, join(directory, 'clip-0.mp4'), '16:9', '480p');
-  await lastFrame(join(directory, 'clip-0.mp4'), join(directory, 'frame.png')); await access(join(directory, 'frame.png'));
-  await prepareOpening(join(directory, 'frame.png'), join(directory, 'portrait.png'), '9:16');
-  for (let i = 1; i < 14; i++) await copyFile(join(directory, 'clip-0.mp4'), join(directory, `clip-${i}.mp4`));
-  const final = await assemble(directory); assert.equal(await duration(final), 70);
+  for (const ratio of ['16:9','9:16']) {
+    await normalize(source, join(directory, 'clip-0.mp4'), ratio, '480p');
+    await lastFrame(join(directory, 'clip-0.mp4'), join(directory, 'frame.png')); await access(join(directory, 'frame.png'));
+    await prepareOpening(join(directory, 'frame.png'), join(directory, 'portrait.png'), '9:16');
+    for (let i = 1; i < 14; i++) await copyFile(join(directory, 'clip-0.mp4'), join(directory, `clip-${i}.mp4`));
+    const final = await assemble(directory); assert.equal(await duration(final), 70);
+    const {stdout}=await promisify(execFile)('ffprobe',['-v','error','-select_streams','v:0','-show_entries','stream=width,height','-of','json',final]);
+    const stream=JSON.parse(stdout).streams[0];
+    assert.deepEqual([stream.width,stream.height],ratio==='16:9'?[848,480]:[480,848]);
+  }
 });
