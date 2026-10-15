@@ -36,7 +36,7 @@ for(const seconds of [5,60,70]) test(`Omni signed-in Worker HTTP, approval and v
   const root=await mkdtemp(join(tmpdir(),'kurdai-omni-http-')),run=promisify(execFile),source=join(root,'source.mp4');
   await run('ffmpeg',['-loglevel','error','-y','-f','lavfi','-i','color=c=blue:s=160x90:r=30','-f','lavfi','-i','sine=frequency=440:sample_rate=48000','-t','5','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac',source]);
   const bytes=await readFile(source);
-  const config={LONG_DATA_DIR:join(root,'jobs'),LONG_VIDEO_SERVICE_SECRET:'synthetic-only-secret-'.repeat(3),
+  const config={BILLABLE_REQUESTS_ENABLED:'true',API_MAX_JOB_USD:'100',API_MAX_DAY_USD:'1000',LONG_DATA_DIR:join(root,'jobs'),LONG_VIDEO_SERVICE_SECRET:'synthetic-only-secret-'.repeat(3),
     GEMINI_API_KEY:'dummy-not-a-real-key',OMNI_GENERATION_ENABLED:'true',OMNI_BILLING_VERIFIED:'true',LONG_DURABLE_STORAGE:'true',
     OMNI_INPUT_TOKENS_PER_SEGMENT:'10000',OMNI_TEXT_TOKENS_PER_SEGMENT:'1000',LONG_MEDIA_EUR:'0.01',LONG_FX_PERCENT:'0',LONG_VAT_PERCENT:'0'};
   let submissions=0;
