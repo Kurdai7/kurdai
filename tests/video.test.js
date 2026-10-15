@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { handleVideo as rawHandleVideo, validateInput, downloadVideo, VIDEO_SCHEMA } from '../video.js';
 import worker from '../worker.js';
+import { authLimit } from '../auth-guard.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');
@@ -24,7 +25,7 @@ function d1() {
 const owner = { id: 'owner', email: ' OWNER@example.com ', verified: 1 };
 const other = { id: 'other', email: 'other@example.com', verified: 1 };
 const fresh = overrides => ({ requestId: crypto.randomUUID(), prompt: 'کارتۆنێکی کوردی، سڵاو.', duration: 8, ...overrides });
-function env() { return { DB: d1(), GEMINI_API_KEY: 'test-secret', VIDEO_GENERATION_ENABLED: 'true', VIDEO_TEST_EMAIL: 'owner@example.com' }; }
+function env() { return { DB: d1(), BILLABLE_REQUESTS_ENABLED:'true', API_MAX_JOB_USD:'100', API_MAX_DAY_USD:'1000', GEMINI_API_KEY: 'test-secret', VIDEO_GENERATION_ENABLED: 'true', VIDEO_TEST_EMAIL: 'owner@example.com' }; }
 function post(body) { return new Request('https://kurdai.net/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
 const get = path => new Request(`https://kurdai.net${path}`);
 const operation = 'models/veo-3.1-fast-generate-preview/operations/test123';
@@ -107,7 +108,7 @@ test('extension uses an owned generated video, retains ratio, and combines durat
   assert.equal((await handleVideo(post(fresh({ mode: 'extend', parentJobId: 'parent', aspectRatio: '9:16' })), config, owner)).status, 400);
   config.DB.raw.prepare('UPDATE video_jobs SET updated_at=?,resolution=? WHERE id=?').run(stamp, '1080p', 'parent');
   assert.equal((await handleVideo(post(fresh({ mode: 'extend', parentJobId: 'parent', aspectRatio: '9:16' })), config, owner)).status, 400);
-  config.DB.raw.prepare('UPDATE video_jobs SET resolution=? WHERE id=?').run('720p', 'parent');
+  config.DB.raw.prepare('UPDATE video_jobs SET resolution=?,cost_json=? WHERE id=?').run('720p', JSON.stringify({apiUSD:0.8}), 'parent');
   const mixed = await handleVideo(post(fresh({ mode: 'extend', parentJobId: 'parent', aspectRatio: '9:16', language: 'badini' })), config, owner);
   assert.equal(mixed.status, 400); assert.match((await mixed.json()).error, /dialogue language/); assert.equal(sent, undefined);
   const response = await handleVideo(post(fresh({ mode: 'extend', parentJobId: 'parent', aspectRatio: '9:16' })), config, owner);
@@ -199,4 +200,37 @@ test('Lite accepts first-frame input and blocks unsupported references and exten
   assert.equal(validateInput(fresh({model,mode:'frame',firstFrame:png})).model,model);
   assert.throws(()=>validateInput(fresh({model,referenceImages:[png]})),/not reference/);
   assert.throws(()=>validateInput(fresh({model,mode:'extend'})),/not reference/);
+});
+
+
+test('zero or invalid spending limits block Google even when older generation flags are enabled', async t => {
+  let calls=0; mockFetch(t,async()=>{calls++;throw Error('No provider call permitted');});
+  for (const overrides of [{BILLABLE_REQUESTS_ENABLED:undefined},{API_MAX_JOB_USD:'0'},
+    {API_MAX_DAY_USD:'NaN'},{API_MAX_JOB_USD:'0.79'}]) {
+    const config={...env(),...overrides};
+    assert.equal((await handleVideo(post(fresh()),config,owner)).status,503);
+  }
+  assert.equal(calls,0);
+});
+
+test('native daily reservations survive terminal failures and concurrent requests',async t=>{
+  const config=env();config.API_MAX_DAY_USD='0.8';let calls=0;
+  mockFetch(t,async()=>{calls++;return new Response('{}',{status:400});});
+  const first=await handleVideo(post(fresh()),config,owner);
+  assert.equal((await first.json()).status,'failed');
+  const results=await Promise.all([handleVideo(post(fresh()),config,owner),handleVideo(post(fresh()),config,owner)]);
+  assert.deepEqual(results.map(r=>r.status),[409,409]);assert.equal(calls,1);
+  assert.equal(config.DB.raw.prepare('SELECT COUNT(*) AS n FROM video_jobs').get().n,1);
+});
+
+
+test('video write quota shares an atomic D1 counter and stores no raw IP',async()=>{
+  const db=d1(),ip='192.0.2.17';
+  const req=()=>new Request('https://kurdai.net/api/long/quote',{headers:{'CF-Connecting-IP':ip}});
+  const results=await Promise.all(Array.from({length:12},()=>authLimit(req(),db,'video-write')));
+  assert.equal(results.filter(n=>n===0).length,10);
+  assert.equal(results.filter(n=>n>0).length,2);
+  const rows=db.raw.prepare('SELECT * FROM auth_attempts').all();
+  assert.equal(rows.length,1);assert.equal(rows[0].attempts,10);
+  assert.ok(!JSON.stringify(rows).includes(ip));
 });
