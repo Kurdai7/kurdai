@@ -18,7 +18,7 @@ A real Stripe test Checkout Session was created on 2026-10-15 for EUR 2.00. It r
 
 Routes: GET `/api/billing/capabilities`, GET `/api/billing/balance`, GET `/api/billing/order?id=...`, POST `/api/billing/checkout`, POST `/api/billing/webhook`. All authenticated operations use the existing bearer session. Checkout accepts only `packId` and UUID `requestId`.
 
-## Secret configuration still required
+## Runtime configuration
 
 The ChatGPT Stripe connection does not place credentials in Cloudflare. Store the restricted key and webhook signing secret only in Cloudflare Worker secrets, never in chat, source control, client JavaScript or logs.
 
@@ -52,10 +52,18 @@ Created live endpoint for this application at `https://kurdai.net/api/billing/we
 
 At this checkpoint, actual public HTTPS checks returned health 200, billing capabilities 404 and video capabilities 200 with generation/spending disabled and provider verification false. PR #4 remains draft and unmerged at the time of verification; Render remains live on main `9cd2116cfca709c5289d49c55d4a72985fd42692`. No paid API request or live charge was made.
 
-Protected handoff still required: the endpoint signing secret must be copied directly from Stripe Dashboard into the Worker secret `STRIPE_WEBHOOK_SECRET`. The connected Stripe admin API cannot write Cloudflare secrets, and this workspace has no authenticated Cloudflare deployment access. Do not publish or paste signing secrets into chat or git. Enable this endpoint only after the application handler is deployed and can validate its signature.
+The owner reports completing the protected signing-secret handoff; do not repeat it. The connected Stripe admin API cannot verify Cloudflare secret bindings, and this workspace has no authenticated Cloudflare configuration access. Do not publish or paste signing secrets into chat or git. Enable this endpoint only after the application handler is deployed and can validate its signature.
 
 ## Owner configuration and concurrency follow-up
 
 The owner reports saving `STRIPE_RESTRICTED_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_MODE=live` in Cloudflare on 2026-10-15. Do not repeat those completed UI steps. These remain owner-reported until the billing handler is deployed and its safe capabilities endpoint can be checked. The subsequent public billing capabilities request still returned 404; health returned 200.
+
+## Release verification update, 2026-10-15
+
+All 65 repository tests pass, including Worker/D1 authentication, signed billing fulfillment, concurrent webhook delivery, UI account isolation, request spending limits and synthetic video assembly. Syntax checks, Worker dry-run build and diff checks pass. Provider transports remain mocked or synthetic; these results do not verify a real AI output or payment delivery.
+
+GitHub reports this pull request mergeable with no conflicts. Cloudflare's build bot reports a successful preview deployment of commit `449b749bc355f08b6f9903a43a91c33faf91388c`. This verifies the GitHub deployment path, not authenticated Dashboard access or production payment readiness. Release remains blocked by the commercial and real-provider acceptance requirements above.
+
+A Python HTTP client received 403/1010 while curl received 200 from the same production health route. Treat this as client-dependent edge filtering; do not infer an application-wide outage or disable security globally. Cloudflare configuration access is required to inspect the applicable security event before changing a rule.
 
 The Worker/D1/Stripe SDK harness now also passes pending-payment delivery followed by eight concurrent signed events with distinct event IDs for the same paid Checkout session: actual D1 contains exactly one fulfillment and one credit ledger entry. Provider HTTP remains mocked; this does not claim a live payment or hosted webhook test. Committed in `6afd4b73492e8224785f652640a31a9c429edb55`.
