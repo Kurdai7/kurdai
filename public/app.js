@@ -85,6 +85,7 @@ async function refreshJobs() {
   updateControls();
 }
 async function refreshAccount() {
+  document.dispatchEvent(new Event('kurdai-account-change'));
   generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
   $('logoutBtn').hidden = !token();
   if (!token()) { $('creditStatus').textContent = ku('تکایە بچۆ ژوورەوە.', 'Please log in.'); return; }
