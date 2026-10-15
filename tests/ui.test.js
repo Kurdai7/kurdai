@@ -27,7 +27,7 @@ w.fetch=async(path,opts={})=>{
 const wait=()=>new Promise(r=>setTimeout(r,15));
 const $=id=>w.document.getElementById(id);
 w.eval(app);
-$('generate').click();await wait();assert.match($('toast').textContent,/چو|ژوور/);
+$('generate').click();await wait();assert.equal($('generate').disabled,true);assert.equal($('longPanel').hidden,true);assert.equal(records.some(r=>r.path==='/api/generate'),false);
 $('accountEmail').value='owner@example.com';$('accountPassword').value='abcdefghijkl';
 $('registerBtn').click();await wait();assert.ok(records.some(r=>r.path==='/api/register'));
 $('loginBtn').click();await wait();assert.equal(w.localStorage.getItem('kurdai_session_token'),'owner-token');assert.equal($('logoutBtn').hidden,false);

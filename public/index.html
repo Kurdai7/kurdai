@@ -51,7 +51,7 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
     </svg>
     <div><div class="brand-name">Kurd<span>AI</span></div><div class="tagline">داهێنان بە زمانی کوردی</div></div>
   </div>
-  <div class="nav-pill">Veo · Video Extension</div>
+  <div class="nav-pill">وەشانی سەرەتایی</div>
 <div class="language-switcher">
   <button type="button" id="languageToggle">🌐 KU / EN</button>
 </div>
@@ -61,6 +61,7 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
     <div class="eyebrow"><span class="sun">☀</span> هەنگاوێکی نوێ بۆ داهێنانی کوردی</div>
     <h1>بیرۆکەکەت بکە بە <em>ڤیدیۆ</em></h1>
     <p>چیرۆکەکەت بنووسە، شێوەزاری کوردی هەڵبژێرە و ئامادەبە بۆ دروستکردنی ڤیدیۆی AI.</p>
+    <p id="launchStatus" class="toast show" role="status">دروستکردنی ڤیدیۆی AI بۆ خەڵک هێشتا چالاک نییە. کوالێتی سۆرانی و بادینی و دروستکردنی ٧٠ چرکە هێشتا پشتڕاست نەکراونەتەوە. هیچ پارەیەک بۆ دروستکردنی ڤیدیۆ لێرە وەرناگیرێت.</p>
   </section>
 
   <section class="panel account-panel" aria-labelledby="accountTitle">
@@ -120,9 +121,9 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
         <button type="button" class="chip" data-style="Realistic">واقعی</button>
       </div>
       <p class="note" id="billingNote">دروستکردنی ڤیدیۆ خەرجی Google API هەیە. کرێدیتی ڕۆژانەی پیشاندراو لێرە پارەی Google نادات. ئێستا دروستکردن بۆ ئەکاونتی تاقیکردنەوەی ڕێکخراوە.</p>
-      <button class="chip" id="nativeQuote" type="button">پیشاندانی خەرجی API — بێ پارە</button>
+      <button class="chip" id="nativeQuote" type="button" disabled>پیشاندانی خەرجی API — بێ پارە</button>
       <div class="toast" id="nativeCost" role="status" aria-live="polite"></div>
-      <button class="generate" id="generate" type="button">🎬 دروستکردنی ڤیدیۆ</button>
+      <button class="generate" id="generate" type="button" disabled>🎬 دروستکردنی ڤیدیۆ</button>
       <button class="chip" id="resumeJob" type="button" hidden>بەردەوامبوون لە پشکنینی داواکاریی پێشوو</button>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
       <p class="note">کلیپی نوێ: ٤، ٦ یان ٨ چرکە؛ وێنەی ڕەفەرەنس و 1080p پێویستیان بە ٨ چرکە هەیە. Extension هەر جار ٧ چرکە زیاد دەکات. دیالۆگی سۆرانی داوا دەکرێت، بەڵام Google کوالێتییەکەی مسۆگەر ناکات.</p>
@@ -138,10 +139,10 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
       <div class="account-actions"><a class="chip" id="downloadVideo" download="kurdai-video.mp4" hidden>داگرتنی ڤیدیۆ</a><button type="button" class="chip" id="extendResult" hidden>بەردەوامکردنی ئەم ڤیدیۆیە</button></div>
       <p class="note">ڤیدیۆکە لە ماوەی ٤٨ کاتژمێردا دابگرە. دەنگ و بەردەوامیی کارەکتەرەکان پێش بڵاوکردنەوە بپشکنە.</p>
       <label class="field-label" for="jobHistory">داواکارییەکانی پێشوو</label><select id="jobHistory"><option value="">هێشتا داواکاری نییە</option></select><button type="button" class="chip" id="loadJob">پیشاندان / پشکنین</button>
-      <div class="preview-footer"><span class="status"><span class="dot"></span><span id="previewStatus">ئامادەی تاقیکردنەوە</span></span><span id="previewDuration">٨ چرکە</span></div>
+      <div class="preview-footer"><span class="status"><span class="dot"></span><span id="previewStatus">ڤیدیۆی AI هێشتا پشتڕاست نەکراوەتەوە</span></span><span id="previewDuration">٨ چرکە</span></div>
     </div>
   </section>
-  <section class="panel account-panel" aria-labelledby="longTitle">
+  <section id="longPanel" class="panel account-panel" aria-labelledby="longTitle" hidden>
     <h2 id="longTitle">Omni 1.1 Flash — بە یەک پرۆمپت</h2>
     <p class="sub">پرۆمپتی سەرەوە بەکاردێت. Omni دیمەنەکان بە ناسنامەی ڤیدیۆی پێشوو بەردەوام دەکات و دەبنە یەک MP4 بە دەنگەوە. کوالێتی شێوەزار و جێگیری ڕوخسار و دەنگ هێشتا بە API تاقی نەکراونەتەوە.</p>
     <label class="field-label" for="longModel">مۆدێلی ڤیدیۆ</label><select id="longModel"><option value="gemini-omni-1.1-flash">Omni 1.1 Flash — دەنگ و ڤیدیۆ</option><option value="wan2.2-i2v-flash">Wan — هەرزان، بێ دیالۆگ</option></select>
@@ -163,7 +164,7 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
   </section>
   <section class="features">
     <div class="feature"><div class="ico">🗣️</div><h3>سۆرانی و بادینی</h3><p>داواکردنی دیالۆگی کوردی لەگەڵ ڤیدیۆ. کوالێتی دەنگ و زمان پێویستی بە پشکنین هەیە.</p></div>
-    <div class="feature"><div class="ico">🎬</div><h3>ڤیدیۆی درێژتر</h3><p>بە Video Extension ڤیدیۆی Veo بە هەنگاوی ٧ چرکەیی بەردەوام بکە؛ دەرئەنجامەکە یەک فایلی ڤیدیۆیە.</p></div>
+    <div class="feature"><div class="ico">🎬</div><h3>Extension — لە تاقیکردنەوەدایە</h3><p>بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.</p></div>
     <div class="feature"><div class="ico">☀️</div><h3>بە ناسنامەی کوردی</h3><p>لۆگۆی KurdAI بە ئاڵای کوردستان و دیزاینێکی مۆدێرن.</p></div>
   </section>
 </main>

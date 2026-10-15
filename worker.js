@@ -1,5 +1,6 @@
 import { handleVideo } from './video.js';
 import { handleLong } from './long-video.js';
+import { authLimit, authBody } from './auth-guard.js';
 
 /**
  * KurdAI API for Cloudflare Workers + D1.
@@ -12,8 +13,8 @@ import { handleLong } from './long-video.js';
  * EMAIL_API_KEY - Resend API key
  * EMAIL_FROM - Verified sender email
  *
- * Before public launch, add rate limiting,
- * abuse prevention and security testing.
+ * Public generation is blocked by the verified-owner boundary in each video API.
+ * Auth requests have bounded bodies and shared D1 rate limits.
  */
 
 const corsHeaders = {
@@ -170,8 +171,10 @@ export default {
 
       if (url.pathname === '/api/health' && request.method === 'GET') {
         return json({ ok: !!env.DB && !!env.ASSETS, service: 'KurdAI API',
-          version: 'owner-cost-approval-v2', databaseConfigured: !!env.DB,
+          version: 'public-readiness-v3', databaseConfigured: !!env.DB,
           assetsConfigured: !!env.ASSETS,
+          registrationConfigured:!!env.DB && !!env.EMAIL_API_KEY && !!env.EMAIL_FROM,
+          publicVideoEnabled:false,
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true'
         }, env.DB && env.ASSETS ? 200 : 503);
       }
@@ -190,12 +193,18 @@ export default {
         }, 503);
       }
 
+      if(request.method==='POST' && ['/api/register','/api/login'].includes(url.pathname)) {
+        const retry=await authLimit(request,env.DB,url.pathname);
+        if(retry) return new Response(JSON.stringify({error:'Too many attempts. Try again later.'}),{
+          status:429,headers:{...corsHeaders,'Retry-After':String(retry)}});
+      }
+
       // Register.
       if (
         url.pathname === '/api/register' &&
         request.method === 'POST'
       ) {
-        const body = await request.json();
+        const body = await authBody(request);
 
         const email = String(body.email || '')
           .trim()
@@ -284,7 +293,7 @@ export default {
           );
 
         } catch (e) {
-          console.error('Registration failed:', e);
+          console.error('Registration failed', {errorType:e.name});
 
           await env.DB.prepare(
             'DELETE FROM users WHERE id=? AND verified=0'
@@ -373,7 +382,7 @@ export default {
         url.pathname === '/api/login' &&
         request.method === 'POST'
       ) {
-        const body = await request.json();
+        const body = await authBody(request);
 
         const email = String(body.email || '')
           .trim()
@@ -520,7 +529,8 @@ export default {
       }, 404);
 
     } catch (e) {
-      console.error('KurdAI server error:', e);
+      if([400,413,415].includes(e.status)) return json({error:e.message},e.status);
+      console.error('KurdAI server error', {route:url.pathname,errorType:e.name});
 
       return json({
         error: 'Unexpected server error.'

@@ -178,6 +178,8 @@ export async function handleVideo(request, env, user) {
         accountAllowed: allowed, accountVerified: !!user?.verified,
         missingConfiguration: [!env.DB && 'DB', !env.GEMINI_API_KEY && 'GEMINI_API_KEY',
           env.VIDEO_GENERATION_ENABLED !== 'true' && 'VIDEO_GENERATION_ENABLED', !env.VIDEO_TEST_EMAIL && 'VIDEO_TEST_EMAIL'].filter(Boolean),
+        publicGenerationEnabled:false,providerGenerationVerified:false,
+        featureStatus:{textToVideo:'owner-test-only',imageToVideo:'owner-test-only',referenceImages:'owner-test-only',extension:'owner-test-only',longVideo:'not-ready'},
         costApprovalRequired: true, models: MODELS, durations: [4, 6, 8], aspectRatios: ['16:9', '9:16'],
         maxReferenceImages: 3, extensionSeconds: 7, soraniGuaranteed: false, badiniGuaranteed: false,
         dialogueLanguages: Object.entries(DIALECTS).map(([id, d]) => ({ id, label: d.label,

@@ -9,6 +9,7 @@ let firstFrame = null;
 let busy = false;
 let epoch = 0;
 let previewURLs = [];
+let generationAllowed=false;
 const token = () => localStorage.getItem(tokenKey);
 const ku = (sorani, english) => document.documentElement.lang === 'en' ? english : sorani;
 function updateDialogueSupport() {
@@ -19,6 +20,10 @@ function updateDialogueSupport() {
 }
 $('language').addEventListener('change', updateDialogueSupport);
 const errors = new Map([
+  ['Too many attempts. Try again later.', 'هەوڵدانەوەکان زۆرن؛ دوای ١٥ خولەک دووبارە هەوڵ بدەرەوە.'],
+  ['Email or password is incorrect.', 'ئیمەیڵ یان وشەی نهێنی هەڵەیە.'],
+  ['Verify your email before logging in.', 'پێش چوونەژوورەوە ئیمەیڵەکەت پشتڕاست بکەرەوە.'],
+  ['Registration is not available yet. Email verification is not configured.', 'تۆمارکردن هێشتا بەردەست نییە؛ خزمەتگوزاری پشتڕاستکردنەوەی ئیمەیڵ ڕێکنەخراوە.'],
   ['Veo Lite supports text and first-frame images, but not reference images or native extension.', 'Veo Lite تەنها دەق و وێنەی سەرەتا وەردەگرێت؛ بۆ Reference Images یان Extension مۆدێلی Fast یان Standard هەڵبژێرە.'],
   ['A current matching API cost quote and explicit approval are required. No paid request was sent.', 'نرخنامەی نوێ و ڕەزامەندی بۆ هەمان داواکاری پێویستە؛ هیچ داواکارییەکی پارەدار نەنێردراوە.'],
   ['Please log in.', 'تکایە سەرەتا بچۆ ژوورەوە.'],
@@ -51,7 +56,7 @@ function clearOutput() {
   for (const id of ['resultVideo', 'downloadVideo', 'extendResult']) $(id).hidden = true;
   document.querySelector('.preview-screen').hidden = false;
 }
-function setBusy(value) { busy = value; $('generate').disabled = value; $('nativeQuote').disabled = value; }
+function setBusy(value) { busy = value; $('generate').disabled = value || !generationAllowed; $('nativeQuote').disabled = value || !generationAllowed; }
 function stateLabel(job) {
   return ({ ready: ku('ئامادەیە', 'Ready'), running: ku('دروست دەکرێت', 'Generating'),
     submitting: ku('دەنیردرێت', 'Submitting'), failed: ku('سەرکەوتوو نەبوو', 'Failed'),
@@ -76,10 +81,11 @@ async function refreshJobs() {
   const active = jobs.find(job => ['running', 'submitting', 'uncertain'].includes(job.status));
   $('resumeJob').hidden = !active;
   $('resumeJob').dataset.job = active?.id || '';
-  $('generate').disabled = busy || !!active;
+  $('generate').disabled = busy || !!active || !generationAllowed;
   updateControls();
 }
 async function refreshAccount() {
+  generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
   $('logoutBtn').hidden = !token();
   if (!token()) { $('creditStatus').textContent = ku('تکایە بچۆ ژوورەوە.', 'Please log in.'); return; }
   const expected = token();
@@ -89,11 +95,18 @@ async function refreshAccount() {
     $('creditStatus').textContent = ku(`ئەکاونت: ${data.email} · کرێدیتی ئەمڕۆ: ${data.dailyCredits} (بۆ پارەدانی Google نییە)`, `Account: ${data.email} · Daily credits: ${data.dailyCredits} (not Google billing)`);
     const capability = await api('/api/video-capabilities');
     if (token() !== expected) return;
+    generationAllowed=capability.configured===true && capability.accountAllowed===true && capability.accountVerified!==false;
+    $('longPanel').hidden=!(capability.accountAllowed===true && capability.accountVerified!==false);
+    setBusy(busy);
     if (!capability.configured) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.') + (capability.missingConfiguration?.length ? ` (${capability.missingConfiguration.join(', ')})` : ''), true);
     else if (!capability.accountVerified && capability.accountVerified !== undefined) message('toast', 'Verify your email first.', true);
     else if (!capability.accountAllowed) message('toast', 'Generation is currently available only to the configured test account.', true);
     await refreshJobs();
-  } catch (error) { message('accountMessage', error.message, true); }
+  } catch (error) {
+    generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
+    if(error.status===401){localStorage.removeItem(tokenKey);$('logoutBtn').hidden=true;}
+    message('accountMessage', error.message, true);
+  }
 }
 for (const action of ['register', 'login']) {
   $(`${action}Btn`).addEventListener('click', async () => {
@@ -301,5 +314,11 @@ $('languageToggle').addEventListener('click', () => {
   $('languageToggle').textContent = english ? '🌐 EN / KU' : '🌐 KU / EN';
 });
 updateControls(); updateDialogueSupport(); refreshAccount();
+api('/api/health').then(state=>{
+  if(state.registrationConfigured===false) {
+    $('registerBtn').disabled=true;
+    message('accountMessage','Registration is not available yet. Email verification is not configured.',true);
+  }
+}).catch(()=>{});
 
 for (const id of ['prompt','language','videoMode','resolution','duration','sourceJob','aspectRatio','model','referenceImages','previousFrame']) $(id).addEventListener('input', () => { $('nativeCost').textContent = ''; $('nativeCost').classList.remove('show'); });
