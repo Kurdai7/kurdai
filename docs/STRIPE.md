@@ -1,6 +1,6 @@
 # Stripe integration checkpoint
 
-The owner selected the existing King Style account `acct_1Nx98dLYuEhQ3izY` for KurdAI. Both test and live access were confirmed through the Stripe connector on 2026-10-15. At 18:37 UTC the live account reported `charges_enabled=true`, `payouts_enabled=true`, no currently due or past due account requirements, and the owner's updated bank account was present. These flags do not verify a bank payout, a successful website payment, or website-to-Stripe integration. No full bank details or credentials are recorded here.
+This document records implementation and application verification only. Account identifiers, banking details and account-verification results must not be published in this repository.
 
 A real Stripe test Checkout Session was created on 2026-10-15 for EUR 2.00. It remains unpaid, creates no real charge, grants no app credits, and verifies only test Checkout API access. This was a direct connector test, not an end-to-end website payment. Its metadata deliberately uses `app=kurdai-integration-test` so the application's fulfillment handler cannot grant credits for it.
 
@@ -40,7 +40,7 @@ This branch does not claim a finished commercial release. Website-to-Stripe Chec
 - Main remains `9cd2116cfca709c5289d49c55d4a72985fd42692`. Cloudflare Workers Builds reports success at 14:27:32 UTC; Render deploy `dep-db8e56uk1f9s73eg3k2g` is live on that commit.
 - Actual HTTPS GET `/api/health` returns 200 with database, assets and registration configured. This is configuration evidence, not a new successful signup/login. The owner's earlier screenshots show a successful site login and delivered verification emails.
 - Actual HTTPS GET `/api/video-capabilities` returns 200, but public generation and provider verification are false, spending disabled with zero per-job/day allowance. Sorani and Badini native-video verification are false.
-- Actual HTTPS GET `/api/billing/capabilities` returns 404: this draft branch is not deployed to production. The live catalog was empty at the earlier check. The owner reports adding the runtime restricted key in Cloudflare; this agent has not independently verified that secret binding.
+- Actual HTTPS GET `/api/billing/capabilities` returns 404: this draft branch is not deployed to production. The owner reports adding the runtime restricted key in Cloudflare; this agent has not independently verified that secret binding.
 - Local registration/verify/login/logout tests use real Worker and D1 with mocked email transport. Video assembly tests use synthetic media; neither establishes real AI quality or provider access.
 - The focused billing rerun passes seven tests, including the actual Worker/D1/SDK harness (mocked Stripe transport) and the unsigned-webhook database isolation check. A real paid Checkout, webhook credit delivery, real AI output, Sorani/Badini quality, image references, extension continuity and a real AI 70-second MP4 remain unverified.
 
@@ -48,8 +48,14 @@ The next focused rerun passes 13 checks across billing backend, Worker/D1 harnes
 
 ## Webhook preparation, 2026-10-15 20:05 UTC
 
-Created live endpoint `we_1UQuuBLYuEhQ3izYfIrZx9kD` at `https://kurdai.net/api/billing/webhook`, API version `2026-09-30.endive`, with exactly the four Checkout events listed above. Stripe returned success. The endpoint is deliberately disabled until the handler is deployed and the signing secret installed; it is not evidence of successful delivery. No secret value is recorded here.
+Created live endpoint for this application at `https://kurdai.net/api/billing/webhook`, API version `2026-09-30.endive`, with exactly the four Checkout events listed above. Stripe returned success. The endpoint is deliberately disabled until the handler is deployed and the signing secret installed; it is not evidence of successful delivery. No secret value is recorded here.
 
 At this checkpoint, actual public HTTPS checks returned health 200, billing capabilities 404 and video capabilities 200 with generation/spending disabled and provider verification false. PR #4 remains draft and unmerged at the time of verification; Render remains live on main `9cd2116cfca709c5289d49c55d4a72985fd42692`. No paid API request or live charge was made.
 
 Protected handoff still required: the endpoint signing secret must be copied directly from Stripe Dashboard into the Worker secret `STRIPE_WEBHOOK_SECRET`. The connected Stripe admin API cannot write Cloudflare secrets, and this workspace has no authenticated Cloudflare deployment access. Do not publish or paste signing secrets into chat or git. Enable this endpoint only after the application handler is deployed and can validate its signature.
+
+## Owner configuration and concurrency follow-up
+
+The owner reports saving `STRIPE_RESTRICTED_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_MODE=live` in Cloudflare on 2026-10-15. Do not repeat those completed UI steps. These remain owner-reported until the billing handler is deployed and its safe capabilities endpoint can be checked. The subsequent public billing capabilities request still returned 404; health returned 200.
+
+The Worker/D1/Stripe SDK harness now also passes pending-payment delivery followed by eight concurrent signed events with distinct event IDs for the same paid Checkout session: actual D1 contains exactly one fulfillment and one credit ledger entry. Provider HTTP remains mocked; this does not claim a live payment or hosted webhook test. Committed in `6afd4b73492e8224785f652640a31a9c429edb55`.
