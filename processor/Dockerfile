@@ -1,6 +1,7 @@
 FROM node:24-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+COPY spending.js ./spending.js
 COPY long-video.js ./long-video.js
 COPY omni-cost.js ./omni-cost.js
 COPY dialogue.js ./dialogue.js
