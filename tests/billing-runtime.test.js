@@ -40,7 +40,23 @@ test('actual Worker SDK signs and verifies an isolated test Checkout workflow ag
  const response=await signed('checkout',{method:'POST',headers:{'content-type':'application/json'},body});assert.equal(response.status,201);
  const checkout=await response.json();assert.ok(checkout.orderId);
  await signed('checkout',{method:'POST',headers:{'content-type':'application/json'},body});assert.equal(providerCreates,1);
- const session=sessions.get('cs_test_worker1');session.payment_status='paid';session.status='complete';
+ // A valid signed completion event while payment is pending must not grant credits.
+ const session=sessions.get('cs_test_worker1');
+ const stripe=new Stripe('rk_test_syntheticOnly');
+ const deliver=async(eventId)=>{
+  const raw=JSON.stringify({id:eventId,livemode:false,type:'checkout.session.completed',data:{object:session}});
+  const sig=await stripe.webhooks.generateTestHeaderStringAsync({payload:raw,secret,cryptoProvider:Stripe.createSubtleCryptoProvider()});
+  return mf.dispatchFetch('https://kurdai.net/api/billing/webhook',{method:'POST',body:raw,headers:{'stripe-signature':sig}});
+ };
+ assert.equal((await deliver('evt_pending')).status,200);
+ assert.equal((await(await signed('balance')).json()).credits,0);
+ session.payment_status='paid';session.status='complete';
+ // Stripe may deliver different events for one session concurrently. Use actual D1
+ // batches and SDK signature validation; only the provider HTTP transport is mocked.
+ const deliveries=await Promise.all(Array.from({length:8},(_,i)=>deliver('evt_concurrent'+i)));
+ assert.ok(deliveries.every(r=>r.status===200));
+ assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM billing_fulfillments').first()).n,1);
+ assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM billing_ledger').first()).n,1);
  const payload=JSON.stringify({id:'evt_synthetic',livemode:false,type:'checkout.session.completed',data:{object:session}});
  const signature=await new Stripe('rk_test_syntheticOnly').webhooks.generateTestHeaderStringAsync({payload,secret,cryptoProvider:Stripe.createSubtleCryptoProvider()});
  for(let i=0;i<2;i++) {
