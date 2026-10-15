@@ -13,6 +13,20 @@ import { advanceOmni } from './omni-engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
 import { advanceSmoke, SMOKE_MODEL } from './smoke.js';
 
+// Fixed, non-secret configuration summary for operators. Never log env values.
+export function configurationStatus(config) {
+  const costSettings = ['OMNI_INPUT_TOKENS_PER_SEGMENT', 'OMNI_TEXT_TOKENS_PER_SEGMENT',
+    'LONG_MEDIA_EUR', 'LONG_FX_PERCENT', 'LONG_VAT_PERCENT'];
+  return {
+    geminiConfigured: typeof config.GEMINI_API_KEY === 'string' && !!config.GEMINI_API_KEY.trim(),
+    durableStorageConfirmed: config.LONG_DURABLE_STORAGE === 'true',
+    omniEnabled: config.OMNI_GENERATION_ENABLED === 'true',
+    billingVerified: config.OMNI_BILLING_VERIFIED === 'true',
+    missingCostSettings: costSettings.filter(key => config[key] === undefined ||
+      String(config[key]).trim() === '' || !Number.isFinite(Number(config[key])) || Number(config[key]) < 0)
+  };
+}
+
 export async function createProcessor(config, dependencies = {}) {
   const mediaTools = await verifyRuntime();
   const root = resolve(config.LONG_DATA_DIR || './long-video-data');
@@ -147,7 +161,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const port = Number(process.env.PORT || 8788);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be an integer from 1 to 65535.');
   const processor = await createProcessor(process.env);
-  processor.server.listen(port, host); processor.start();
+  processor.server.listen(port, host, () => {
+    if (process.env.PROCESSOR_DIAGNOSTICS === 'true') {
+      console.info('processor_listening', JSON.stringify({host, port}));
+      console.info('processor_configuration', JSON.stringify(configurationStatus(process.env)));
+    }
+  });
+  processor.start();
   const shutdown = () => processor.server.close(async () => { await processor.close(); process.exit(0); });
   process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 }
