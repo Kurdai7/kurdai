@@ -96,14 +96,15 @@ export async function handleBilling(request,env,user,dependencies={}) {
     if(!config.configured)return json({error:'Stripe is not configured. No payment was created.'},503);
     // Process already-created payments even when creation has been disabled.
     const client=dependencies.client || stripeClient(env);
-    await env.DB.batch(BILLING_SCHEMA.map(sql=>env.DB.prepare(sql)));
     if(webhook) {
       const raw=await bodyText(request,262144);
       let event;
       try {event=await client.webhooks.constructEventAsync(raw,request.headers.get('stripe-signature') || '',env.STRIPE_WEBHOOK_SECRET,300,Stripe.createSubtleCryptoProvider());}
       catch {return json({error:'Invalid Stripe signature.'},400);}
+      await env.DB.batch(BILLING_SCHEMA.map(sql=>env.DB.prepare(sql)));
       await fulfill(env.DB,client,event,config.mode);return json({received:true});
     }
+    await env.DB.batch(BILLING_SCHEMA.map(sql=>env.DB.prepare(sql)));
     if(url.pathname==='/api/billing/balance' && request.method==='GET') {
       const row=await env.DB.prepare('SELECT COALESCE(SUM(amount),0) AS credits FROM billing_ledger WHERE user_id=? AND mode=?').bind(user.id,config.mode).first();
       return json({mode:config.mode,credits:row.credits});
