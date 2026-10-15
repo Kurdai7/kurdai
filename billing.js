@@ -88,6 +88,7 @@ export async function handleBilling(request,env,user,dependencies={}) {
     const allowed=!!user?.verified && (config.mode==='live' || (!!env.VIDEO_TEST_EMAIL && user.email.trim().toLowerCase()===env.VIDEO_TEST_EMAIL.trim().toLowerCase()));
     if(url.pathname==='/api/billing/capabilities' && request.method==='GET')
       return json({mode:config.mode,configured:config.configured,enabled:config.enabled && allowed,
+        accountId:allowed?user.id:null,
         publicPaymentsEnabled:config.enabled && config.mode==='live',
         packs:config.enabled && allowed?config.packs.map(({priceId,...p})=>p):[],currency:'eur'});
     const webhook=url.pathname==='/api/billing/webhook' && request.method==='POST';
