@@ -22,7 +22,7 @@ export function publicLongJob(job) {
     reservedAPIUSD: job.reservedAPIUSD || 0,
     ...(job.input.model ? {providerUsage:job.providerUsage || {},invoiceReconciled:false} : {}),
     // Reserved is a conservative list-price exposure, not proof of provider billing.
-    costStatus: 'List-price exposure only; reconcile the actual invoice.',
+    costStatus: job.input.model==='synthetic-test-no-ai' ? 'Synthetic media test; no provider calls or AI generation.' : 'List-price exposure only; reconcile the actual invoice.',
     ...(job.status === 'ready' ? { videoUrl: `/api/long/file?id=${job.id}` } : {}) };
 }
 export async function advance(job, directory, config, dependencies = {}) {

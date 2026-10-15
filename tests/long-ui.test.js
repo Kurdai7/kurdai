@@ -41,6 +41,20 @@ test('70-second UI quotes freely, blocks unknown costs, requires approval, inval
   assert.equal($('longVideo').hidden, false); assert.equal($('longDownload').hidden, false);
   $('longRefresh').click(); await wait(); assert.equal(records.filter(x => x.path.endsWith('/start')).length, 1);
   $('logoutBtn').click(); assert.equal($('longVideo').hidden, true);
+  // The explicit free test bypasses the paid quote/approval path and labels the result.
+  const starts=records.filter(x=>x.path.endsWith('/start')).length;
+  const originalFetch=w.fetch;
+  w.fetch=async(path,options)=>{
+    if(path.endsWith('/smoke') || path.includes('/status')) {
+      records.push({path,options});return {ok:true,json:async()=>({id:'smoke',model:'synthetic-test-no-ai',status:'ready',
+        completedSegments:14,totalSegments:14,duration:70,reservedAPIUSD:0,videoUrl:'/api/long/file?id=smoke'})};
+    }
+    return originalFetch(path,options);
+  };
+  $('longSmoke').click();await wait();await wait();
+  assert.equal(records.filter(x=>x.path.endsWith('/start')).length,starts);
+  assert.match($('longCost').textContent,/€0/);assert.equal($('longStart').disabled,true);
+  assert.equal($('longDownload').download,'KurdAI-70s.mp4');
   dom.window.close();
 });
 

@@ -92,13 +92,13 @@ export async function handleLong(request, env, user) {
     const base = new URL(env.LONG_VIDEO_SERVICE_URL);
     if (base.protocol !== 'https:' || base.username || base.password || base.search || base.hash) throw new Error('Processor requires HTTPS.');
     const path = url.pathname === '/api/long/capabilities' ? '/health' : url.pathname.slice('/api/long'.length);
-    if (!((request.method === 'POST' && ['/quote', '/start'].includes(path)) ||
+    if (!((request.method === 'POST' && ['/quote', '/start', '/smoke'].includes(path)) ||
       (request.method === 'GET' && ['/health', '/status', '/file', '/jobs'].includes(path)))) return json({ error: 'Unknown route.' }, 404);
     const upstream = new URL(`/v1${path}`, base);
     if (url.searchParams.has('id')) upstream.searchParams.set('id', url.searchParams.get('id'));
     // Free staging can take over 50 seconds to wake. Only the read-only readiness
-    // check gets a longer startup window; never retry a generation submission.
-    const response = await fetch(upstream, { method: request.method, redirect: 'manual', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 90000 : 30000),
+    // check and synthetic-only test get a longer window; never retry a paid submission.
+    const response = await fetch(upstream, { method: request.method, redirect: 'manual', signal: AbortSignal.timeout(path === '/file' ? 120000 : ['/health','/smoke'].includes(path) ? 90000 : 30000),
       headers: { Authorization: `Bearer ${serviceSecret}`, 'X-KurdAI-Owner': user.id,
         'Content-Type': 'application/json' },
       ...(request.method === 'POST' ? { body: await request.text() } : {}) });

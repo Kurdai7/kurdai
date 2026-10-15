@@ -11,6 +11,7 @@ import { verifyRuntime } from './media.js';
 import { advance, save, load, publicLongJob } from './engine.js';
 import { advanceOmni } from './omni-engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
+import { advanceSmoke, SMOKE_MODEL } from './smoke.js';
 
 export async function createProcessor(config, dependencies = {}) {
   const mediaTools = await verifyRuntime();
@@ -56,6 +57,7 @@ export async function createProcessor(config, dependencies = {}) {
           providerConfigured: {wan: !!config.DASHSCOPE_API_KEY, openingImage: !!config.FAL_KEY},
           missingCosts: ['LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT'].filter(k => config[k] === undefined || config[k] === ''),
           audioEnabled: {sorani: false, badini: false},
+          syntheticTest:{available:true,duration:70,providerRequests:0,aiGenerated:false},
           models:{[OMNI_MODEL]:{configured:!!config.GEMINI_API_KEY,canStart:omni.canStart,
             blockedReasons:omni.blockedReasons,nativeAudio:true,speechQualityVerified:false}},paidProviderProbe: false});
       }
@@ -79,6 +81,17 @@ export async function createProcessor(config, dependencies = {}) {
       let body;
       try { body = JSON.parse(raw); } catch { return send(res, {error: 'Invalid JSON request.', code: 'PROCESSOR_INVALID_INPUT'}, 400); }
       await serial(async () => {
+        if (url.pathname === '/v1/smoke') {
+          if(!['16:9','9:16'].includes(body.aspectRatio)) return send(res,{error:'Invalid aspect ratio.'},400);
+          // One reusable test per owner and ratio bounds disk use and makes replay harmless.
+          const existing=[...jobs.values()].find(j=>j.owner===owner && j.input.model===SMOKE_MODEL && j.input.aspectRatio===body.aspectRatio);
+          if(existing) return send(res,publicLongJob(existing));
+          if([...jobs.values()].some(j=>['running','uncertain'].includes(j.status))) return send(res,{error:'Another job is active; finish it first.'},409);
+          const id=randomUUID(),job={id,owner,input:{model:SMOKE_MODEL,duration:70,aspectRatio:body.aspectRatio},
+            status:'running',completedSegments:0,reservedAPIUSD:0,
+            quote:{model:SMOKE_MODEL,totalEUR:0,apiUSD:0,retailMarkupEUR:0,aiGenerated:false}};
+          await save(job,join(root,id));jobs.set(id,job);return send(res,publicLongJob(job),202);
+        }
         if (url.pathname === '/v1/quote') {
           let input;
           try { input = longInput(body); } catch (error) { return send(res, {error: error.message, code: 'PROCESSOR_INVALID_INPUT'}, 400); }
@@ -114,7 +127,8 @@ export async function createProcessor(config, dependencies = {}) {
   let timer, closed = false;
   const tick = () => serial(async () => {
     const job = [...jobs.values()].find(j => j.status === 'running');
-    if (job?.input.model===OMNI_MODEL) {
+    if (job?.input.model===SMOKE_MODEL) await advanceSmoke(job,join(root,job.id));
+    else if (job?.input.model===OMNI_MODEL) {
       // A later configuration change must not silently unlock or reprice a job.
       if(!job.inflight && job.completedSegments<job.input.duration/5 && !quoteLong(job.input,costs(job.input)).canStart) {
         job.status='failed';job.error='Omni configuration changed; no new generation request was sent.';

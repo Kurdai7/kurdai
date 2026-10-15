@@ -67,6 +67,13 @@ export function quoteOmni(input,costs={}) {
   if(new Date().toISOString().slice(0,10)>OMNI_PRICES.expires) blockers.push('نرخەکان پێویستیان بە نوێکردنەوە هەیە.');
   return {...OMNI_PRICES,model:OMNI_MODEL,outputSeconds:input.duration,segments:count,segmentSeconds:5,
     apiMinimumUSD:Number(minimum.toFixed(6)),apiMinimumEUR:minimum/OMNI_PRICES.usdPerEUR,
+    serviceCostBreakdown:{currency:'EUR',outputOnly:true,
+      firstSegmentVideoEUR:5*perSecond/OMNI_PRICES.usdPerEUR,
+      continuationVideoEUR:(input.duration-5)*perSecond/OMNI_PRICES.usdPerEUR,
+      inputAndHistoryEUR:null,textOutputEUR:null,
+      nativeAudioAdditionalEUR:0,stitchingEUR:media,
+      mode:input.image?'image-to-video':'text-to-video',
+      note:'Continuation output is included, not added again to the requested-duration video total. Input/history and generated text remain additional unknown costs.'},
     apiUSD,apiEUR,mediaEUR:media,fxEUR,vatEUR,totalEUR:complete?apiEUR+media+fxEUR+vatEUR:null,
     segmentBudgetsUSD:step===null?[]:Array(count).fill(Number(step.toFixed(6))),
     retailMarkupEUR:0,audio:input.language!=='none',nativeAudio:true,audioAPIUSD:0,

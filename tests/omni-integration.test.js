@@ -16,6 +16,10 @@ test('Omni quotes distinguish output cost from unknown context and never borrow 
   const input=longInput(body),q=quoteLong(input);
   assert.equal(q.model,OMNI_MODEL);assert.equal(q.apiMinimumUSD,0.5068);assert.equal(q.apiUSD,null);
   assert.equal(q.totalEUR,null);assert.equal(q.canStart,false);assert.equal(q.audioQuote.native,true);
+  assert.equal(q.serviceCostBreakdown.continuationVideoEUR,0);
+  assert.equal(q.serviceCostBreakdown.inputAndHistoryEUR,null);
+  const long=quoteLong({...input,duration:70}).serviceCostBreakdown;
+  assert.ok(Math.abs(long.firstSegmentVideoEUR+long.continuationVideoEUR-7.0952/1.1195)<1e-9);
   assert.equal(input.dialogueSegments[0],body.dialogueText);
   for(const language of ['sorani','badini']) assert.equal(longInput({...body,language}).language,language);
   for(const duration of [0,6,71,'5'])assert.throws(()=>longInput({...body,duration}));

@@ -46,6 +46,10 @@ $('longQuote').addEventListener('click', async () => {
       throw new Error('سێرڤەری Render هێشتا ماوەی هەڵبژێردراو پشتگیری ناکات؛ پێویستی بە Deploy ـی کۆدی نوێ هەیە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
     show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ٥ · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ لە دەرئەنجامی Omni دایە؛ کوالێتی زمان تاقی نەکراوەتەوە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
+    if(data.serviceCostBreakdown) {
+      const b=data.serviceCostBreakdown;
+      show(`${$('longCost').textContent}\n${b.mode==='image-to-video'?'بە وێنە':'بە دەق'} — دەرئەنجامی دیمەنی یەکەم: ${money(b.firstSegmentVideoEUR)}\nدەرئەنجامی بەردەوامکردن: ${money(b.continuationVideoEUR)}؛ لە کۆی دەرئەنجامەکەدا هەژمار کراوە.\nتۆکنی چوونەژوورەوە/مێژوو: دیاری نەکراوە · تێکستی دەرچوو: دیاری نەکراوە\nدەنگی ناوخۆی Omni: خەرجی جیاوازی نییە؛ کوالێتی سۆرانی/بادینی تاقی نەکراوەتەوە.`);
+    }
     $('longCost').style.whiteSpace = 'pre-line'; $('longStart').disabled = !(data.canStart && Number.isFinite(data.totalEUR) && data.totalEUR>0 && Number.isFinite(data.apiUSD));
     if (data.audioQuote && !data.audioQuote.native && data.audioQuote.language !== 'none') {
       const a = data.audioQuote;
@@ -58,7 +62,7 @@ async function refresh(id) {
   try {
     const job = await call(`status?id=${encodeURIComponent(id)}`);
     if (session !== token() || version !== generation) return;
-    show(`${job.status} · ${job.completedSegments}/${job.totalSegments}\n${job.error || ''}\nخەرجیی API ـی تەرخانکراو (پسوڵە نییە): $${job.reservedAPIUSD.toFixed(3)}`);
+    show(`${job.model==='synthetic-test-no-ai'?'تاقیکردنەوەی دەستکرد؛ AI و قسەکردنی کوردی نییە. خەرجی API: €0\n':''}${job.status} · ${job.completedSegments}/${job.totalSegments}\n${job.error || ''}\nخەرجیی API ـی تەرخانکراو (پسوڵە نییە): $${job.reservedAPIUSD.toFixed(3)}`);
     if (job.status === 'ready') {
       const response = await fetch(job.videoUrl, { headers: { Authorization: `Bearer ${session}` } });
       if (!response.ok) throw new Error('داگرتنی ڤیدیۆ سەرکەوتوو نەبوو.');
@@ -78,6 +82,17 @@ $('longStart').addEventListener('click', async () => {
     const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR });
     await refresh(job.id);
   } catch (e) { show(e.message); }
+});
+
+$('longSmoke').addEventListener('click',async()=>{
+  const button=$('longSmoke');button.disabled=true;invalidate();
+  const session=token(),version=generation;
+  show('تاقیکردنەوەی دەستکردی ٧٠ چرکە؛ هیچ API ـێکی پارەدار بانگ ناکرێت. نزیکەی ٤ خولەک چاوەڕێ بکە.');
+  try {
+    const job=await call('smoke',{aspectRatio:$('aspectRatio').value});
+    if(session===token() && version===generation) await refresh(job.id);
+  } catch(error) { if(session===token() && version===generation) show(error.message); }
+  finally {button.disabled=false;}
 });
 $('longRefresh').addEventListener('click', async () => {
   try { const { jobs } = await call('jobs'); const job = jobs.find(j => j.status !== 'quoted');
