@@ -44,6 +44,12 @@ test('billing config fails closed and live credentials require independent relea
  assert.equal(billingConfiguration({...config,STRIPE_MODE:'live',STRIPE_RESTRICTED_KEY:'rk_live_syntheticOnly'}).enabled,false);
  for(const packs of ['bad','{}','[{"id":"unsafe"}]'])assert.equal(billingConfiguration({...config,STRIPE_CREDIT_PACKS:packs}).enabled,false);
 });
+test('unsigned public webhooks cannot trigger database work or provider calls',async()=>{
+ const config=env(),client=mockClient();let databaseCalls=0;
+ config.DB={prepare(){databaseCalls++;throw Error('Unsigned webhook reached database');},batch(){databaseCalls++;throw Error('Unsigned webhook reached database');}};
+ const response=await handleBilling(request('webhook',{type:'checkout.session.completed'}),config,null,{client});
+ assert.equal(response.status,400);assert.equal(databaseCalls,0);assert.equal(client.submissions,0);
+});
 test('Checkout binds one immutable order to a verified user and survives concurrent replay',async()=>{
  const config=env(),client=mockClient(),body={requestId:crypto.randomUUID(),packId:'small',amountCents:1,credits:999999};
  assert.equal((await handleBilling(request('checkout',body),config,null,{client})).status,401);
