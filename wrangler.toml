@@ -5,8 +5,11 @@ compatibility_date = "2026-10-10"
 keep_vars = true
 
 # Public staging origin only; its shared credential belongs in Worker secrets.
-# The Render service has paid generation disabled and no provider credentials.
+# Provider credentials are runtime secrets. Spending stays disabled.
 [vars]
+BILLABLE_REQUESTS_ENABLED = "false"
+API_MAX_JOB_USD = "0"
+API_MAX_DAY_USD = "0"
 LONG_VIDEO_SERVICE_URL = "https://kurdai-processor-staging.onrender.com"
 
 # Worker Previews do not inherit production bindings or secrets.
