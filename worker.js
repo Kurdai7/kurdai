@@ -1,3 +1,4 @@
+import { spendingPolicy } from './spending.js';
 import { handleVideo } from './video.js';
 import { handleLong } from './long-video.js';
 import { authLimit, authBody } from './auth-guard.js';
@@ -175,8 +176,13 @@ export default {
           assetsConfigured: !!env.ASSETS,
           registrationConfigured:!!env.DB && !!env.EMAIL_API_KEY && !!env.EMAIL_FROM,
           publicVideoEnabled:false,
-          videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true'
+          videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled
         }, env.DB && env.ASSETS ? 200 : 503);
+      }
+      if (env.DB && request.method === 'POST' && ['/api/generate','/api/video-quote','/api/long/quote','/api/long/start','/api/long/smoke'].includes(url.pathname)) {
+        const retry = await authLimit(request,env.DB,'video-write');
+        if (retry) return new Response(JSON.stringify({error:'Too many video requests. Try again later.'}), {
+          status:429,headers:{...corsHeaders,'Retry-After':String(retry)}});
       }
       if (url.pathname.startsWith('/api/long/')) {
         const user = env.DB ? await currentUser(request, env) : null;
