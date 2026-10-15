@@ -1,3 +1,4 @@
+import { handleBilling } from './billing.js';
 import { spendingPolicy } from './spending.js';
 import { handleVideo } from './video.js';
 import { handleLong } from './long-video.js';
@@ -178,6 +179,10 @@ export default {
           publicVideoEnabled:false,
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled
         }, env.DB && env.ASSETS ? 200 : 503);
+      }
+      if (url.pathname.startsWith('/api/billing/')) {
+        const user=url.pathname==='/api/billing/webhook'?null:env.DB?await currentUser(request,env):null;
+        return handleBilling(request,env,user);
       }
       if (env.DB && request.method === 'POST' && ['/api/generate','/api/video-quote','/api/long/quote','/api/long/start','/api/long/smoke'].includes(url.pathname)) {
         const retry = await authLimit(request,env.DB,'video-write');
