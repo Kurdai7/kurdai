@@ -34,10 +34,11 @@ The Admin quote keeps unknown input/history, generated text, processing, FX and 
 | --- | --- | --- | --- |
 | Wan 2.2 I2V Flash 480p | USD 0.015/sec | USD 1.05 / EUR 0.937919 | Silent, needs a starting image; lower resolution |
 | Wan 2.2 I2V Flash 720p | USD 0.036/sec | USD 2.52 / EUR 2.251005 | Silent, needs a starting image |
+| fal Wan 2.2 A14B I2V Turbo 480p | USD 0.05 per generated clip | No verified 70-second total | Lower-priced candidate; the reviewed API schema does not specify an output-duration control, so do not assume fourteen clips yield 70 seconds |
 | Veo 3.1 Lite 720p with audio | USD 0.05/sec | USD 3.50 / EUR 3.126396 | Unit comparison only; supported clip lengths/extension and final billed seconds must be checked before a quote |
 | Omni 1.1 Flash 720p | USD 0.10136/sec of video output, plus tokens above | USD 7.0952 / EUR 6.337829 output only | No free API tier; context costs additional |
 
-Wan 480p is the lowest verified video-output rate in this reviewed set, not a claim about every model on the market or proven Kurdish dialogue quality. It is the low-cost silent test candidate. Omni remains the selected primary model; no automatic substitution. No model here has been quality-tested using this project's paid API account. Google Flow experience does not by itself verify this API integration or its billing.
+Alibaba Wan 480p has the lowest verified per-second price in this comparison. fal's Turbo is an additional potentially cheaper candidate with per-clip pricing; its generated duration and total billed clip count need verification before quoting a 70-second output. Neither statement establishes best quality or a universal cheapest model. Omni remains the selected primary model; no automatic substitution. No model here has been quality-tested using this project's paid API account. Google Flow experience does not by itself verify this API integration or its billing.
 
 ## Storage and stable hosting
 
@@ -57,6 +58,8 @@ Public paid launch still requires: owner-approved paid API probe and measured to
 
 - https://ai.google.dev/gemini-api/docs/pricing
 - https://www.alibabacloud.com/help/en/model-studio/wan2-2-i2v-flash
+- https://fal.ai/models/fal-ai/wan/v2.2-a14b/image-to-video/turbo
+- https://fal.ai/models/fal-ai/wan/v2.2-a14b/image-to-video/turbo/api
 - https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html
 - https://developers.cloudflare.com/r2/pricing/
 - https://render.com/docs/free
