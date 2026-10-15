@@ -6,6 +6,8 @@ A real Stripe test Checkout Session was created on 2026-10-15 for EUR 2.00. It r
 
 ## Implemented
 
+- Gated account billing panel shows purchased credits separately from daily credits, uses server-approved packs and hosted Stripe Checkout, retains the same request ID across retries, rejects off-domain redirects and discards responses from a previous login. It stays hidden when runtime billing is not configured; return-page parameters never grant credits or automatically start payment.
+
 - Hosted one-time Checkout Sessions using Stripe SDK 23.0.0 and its default stable API version. No card data enters KurdAI.
 - An immutable D1 order snapshots user, environment, price ID, amount, and credits. Concurrent/lost-response retries reuse a stable Stripe idempotency key, with a one-hour reconciliation window. Client-supplied prices or credit quantities are ignored.
 - Required raw-body webhook signature verification before any database access, five-minute timestamp tolerance, and test/live environment checks. Unsigned public requests cannot trigger billing schema writes.
@@ -41,3 +43,5 @@ This branch does not claim a finished commercial release. Website-to-Stripe Chec
 - Actual HTTPS GET `/api/billing/capabilities` returns 404: this draft branch is not deployed to production. Live catalog and webhook endpoint lists were empty at the last check. No Worker Stripe credentials have been installed by this work.
 - Local registration/verify/login/logout tests use real Worker and D1 with mocked email transport. Video assembly tests use synthetic media; neither establishes real AI quality or provider access.
 - The focused billing rerun passes seven tests, including the actual Worker/D1/SDK harness (mocked Stripe transport) and the unsigned-webhook database isolation check. A real paid Checkout, webhook credit delivery, real AI output, Sorani/Badini quality, image references, extension continuity and a real AI 70-second MP4 remain unverified.
+
+The next focused rerun passes 13 checks across billing backend, Worker/D1 harness, billing UI and existing public UI. Four new DOM tests verify hidden unconfigured checkout, forged return URLs, duplicate-click/lost-response retry identity and logout races. These use mocked HTTP and do not establish actual hosted Checkout payment or webhook delivery.
