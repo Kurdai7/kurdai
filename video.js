@@ -1,5 +1,6 @@
 // Official API contracts: https://ai.google.dev/gemini-api/docs/veo
 // No provider keys, generated URIs, or uploaded image data are returned to clients.
+import { spendingPolicy, budgetAllows } from './spending.js';
 import { nativeCost, inputHash } from './native-cost.js';
 import { DIALECTS, dialogueInstruction } from './dialogue.js';
 export const MODELS = ['veo-3.1-fast-generate-preview', 'veo-3.1-generate-preview', 'veo-3.1-lite-generate-preview'];
@@ -174,7 +175,7 @@ export async function handleVideo(request, env, user) {
   try {
     if (url.pathname === '/api/video-capabilities' && request.method === 'GET') {
       const allowed = !!user && !!env.VIDEO_TEST_EMAIL && user.email.trim().toLowerCase() === env.VIDEO_TEST_EMAIL.trim().toLowerCase();
-      return json({ configured: !!env.DB && !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true',
+      return json({ spending:spendingPolicy(env), configured: !!env.DB && !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled,
         accountAllowed: allowed, accountVerified: !!user?.verified,
         missingConfiguration: [!env.DB && 'DB', !env.GEMINI_API_KEY && 'GEMINI_API_KEY',
           env.VIDEO_GENERATION_ENABLED !== 'true' && 'VIDEO_GENERATION_ENABLED', !env.VIDEO_TEST_EMAIL && 'VIDEO_TEST_EMAIL'].filter(Boolean),
@@ -219,6 +220,8 @@ export async function handleVideo(request, env, user) {
       }
       const hash = await inputHash(input, body);
       const cost = nativeCost(input, parent);
+      if (!budgetAllows(spendingPolicy(env), cost.apiUSD))
+        return json({error:'API spending is disabled or the request exceeds its limit. No paid request was sent.'},503);
       if (url.pathname === '/api/video-quote') {
         const previous = await env.DB.prepare('SELECT * FROM video_quotes WHERE user_id=? AND request_id=?').bind(user.id, body.requestId).first();
         if (previous) {
@@ -252,13 +255,16 @@ export async function handleVideo(request, env, user) {
       const jobId = crypto.randomUUID(); const stamp = now();
       const claim = await env.DB.prepare(`INSERT OR IGNORE INTO video_jobs
         (id,user_id,request_id,status,model,mode,aspect_ratio,resolution,duration,extension_count,parent_id,created_at,updated_at,language,quote_id,cost_json)
-        VALUES (?,?,?,'submitting',?,?,?,?,?,?,?,?,?,?,?,?)`).bind(jobId, user.id, body.requestId,
-        input.model, input.mode, input.aspectRatio, input.resolution, duration, extensionCount, parent?.id || null, stamp, stamp, input.language, quote.id, quote.cost_json).run();
+        SELECT ?,?,?,'submitting',?,?,?,?,?,?,?,?,?,?,?,?
+        WHERE (SELECT COALESCE(SUM(CASE WHEN json_valid(cost_json) AND json_type(cost_json,'$.apiUSD') IN ('integer','real')
+          AND json_extract(cost_json,'$.apiUSD') > 0 THEN json_extract(cost_json,'$.apiUSD') ELSE 1e99 END),0)
+          FROM video_jobs WHERE created_at >= ?) + ? <= ?`).bind(jobId, user.id, body.requestId,
+        input.model, input.mode, input.aspectRatio, input.resolution, duration, extensionCount, parent?.id || null, stamp, stamp, input.language, quote.id, quote.cost_json, stamp.slice(0,10), cost.apiUSD, spendingPolicy(env).perDayUSD).run();
       if (!claim.meta?.changes) {
         const replay = await env.DB.prepare('SELECT * FROM video_jobs WHERE user_id=? AND request_id=?').bind(user.id, body.requestId).first();
         if (replay) return json(publicJob(replay));
         const active = await env.DB.prepare("SELECT id FROM video_jobs WHERE user_id=? AND status IN ('submitting','running','uncertain')").bind(user.id).first();
-        return json({ error: 'A video request is already active. Resume its status instead of sending another paid request.', jobId: active?.id }, 409);
+        return json({ error: 'An active request or the daily API reservation limit blocks generation. No new paid request was sent.', jobId: active?.id }, 409);
       }
       let result;
       try {

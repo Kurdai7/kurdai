@@ -1,5 +1,6 @@
 // Separate FFmpeg host, NOT a Cloudflare Worker. One process per durable data directory.
 import http from 'node:http';
+import { spendingPolicy, budgetAllows } from '../spending.js';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readdir, readFile, access, rm } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
@@ -22,6 +23,7 @@ export function configurationStatus(config) {
     durableStorageConfirmed: config.LONG_DURABLE_STORAGE === 'true',
     omniEnabled: config.OMNI_GENERATION_ENABLED === 'true',
     billingVerified: config.OMNI_BILLING_VERIFIED === 'true',
+    apiSpendingEnabled: spendingPolicy(config).enabled,
     missingCostSettings: costSettings.filter(key => config[key] === undefined ||
       String(config[key]).trim() === '' || !Number.isFinite(Number(config[key])) || Number(config[key]) < 0)
   };
@@ -41,6 +43,17 @@ export async function createProcessor(config, dependencies = {}) {
   for (const id of await readdir(root)) if (/^[a-f0-9-]{36}$/.test(id)) {
     const job = await load(join(root, id)); jobs.set(id, job);
   }
+  const policy = () => spendingPolicy(config);
+  const quote = input => {
+    const result = quoteLong(input, costs(input));
+    if (!budgetAllows(policy(), result.apiUSD)) {
+      result.canStart = false;
+      result.blockedReasons = [...(result.blockedReasons || []), 'API spending is disabled or exceeds the configured per-job/day limit.'];
+    }
+    return result;
+  };
+  // One bounded, global write counter also protects disk and FFmpeg from repeated requests.
+  let writeWindow = 0, writes = 0;
   const costs = input => ({ mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
     vatPercent: config.LONG_VAT_PERCENT,
     omniInputTokensPerSegment: config.OMNI_INPUT_TOKENS_PER_SEGMENT,
@@ -64,9 +77,9 @@ export async function createProcessor(config, dependencies = {}) {
       if (config.PROCESSOR_DIAGNOSTICS === 'true') console.info('processor_request', JSON.stringify({method: req.method,
         route: ['/v1/health','/v1/quote','/v1/start','/v1/jobs','/v1/status','/v1/file'].includes(url.pathname) ? url.pathname : 'unknown'}));
       if (req.method === 'GET' && url.pathname === '/v1/health') {
-        const ready = image => quoteLong({resolution:'480p',image,language:'none'}, costs({image})).canStart;
-        const omni=quoteLong({model:OMNI_MODEL,duration:5,language:'sorani',resolution:'720p'},costs({}));
-        return send(res, {processorReachable: true, mediaTools, outputDurations: Array.from({length:14},(_,i)=>(i+1)*5), protocolVersion: 4,
+        const ready = image => quote({resolution:'480p',image,language:'none'}).canStart;
+        const omni=quote({model:OMNI_MODEL,duration:5,language:'sorani',resolution:'720p'});
+        return send(res, {spending:policy(), processorReachable: true, mediaTools, outputDurations: Array.from({length:14},(_,i)=>(i+1)*5), protocolVersion: 4,
           canStartWithReference: ready(true), canStartFromText: ready(false),
           providerConfigured: {wan: !!config.DASHSCOPE_API_KEY, openingImage: !!config.FAL_KEY},
           missingCosts: ['LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT'].filter(k => config[k] === undefined || config[k] === ''),
@@ -89,6 +102,10 @@ export async function createProcessor(config, dependencies = {}) {
         return send(res, { error: 'Not ready or unknown route.' }, 404);
       }
       if (req.method !== 'POST') return send(res, { error: 'Method not allowed.' }, 405);
+      const window = Math.floor(Date.now() / 60000);
+      if (window !== writeWindow) { writeWindow = window; writes = 0; }
+      if (++writes > 20) { res.setHeader('Retry-After', '60'); return send(res,{error:'Too many requests. Wait before retrying.'},429); }
+      if (Number(req.headers['content-length']) > 17000000) return send(res,{error:'Request too large.'},413);
       const decoder=new StringDecoder('utf8');let raw = '',rawBytes=0;
       for await (const chunk of req) { rawBytes+=chunk.length; if(rawBytes>17000000) { send(res,{error:'Request too large.'},413);return; } raw+=decoder.write(chunk); }
       raw+=decoder.end();
@@ -109,23 +126,35 @@ export async function createProcessor(config, dependencies = {}) {
         if (url.pathname === '/v1/quote') {
           let input;
           try { input = longInput(body); } catch (error) { return send(res, {error: error.message, code: 'PROCESSOR_INVALID_INPUT'}, 400); }
-          const quote = quoteLong(input, costs(input));
+          const costQuote = quote(input);
+          // Keep at most ten unstarted quotes, including uploaded reference images.
+          const pending = [...jobs.values()].filter(j => j.owner === owner && j.status === 'quoted')
+            .sort((a,b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
+          for (const stale of pending.slice(0, Math.max(0, pending.length - 9))) {
+            await rm(join(root, stale.id), {recursive:true,force:true}); jobs.delete(stale.id);
+          }
           const id = randomUUID(), expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
-          const job = { id, owner, input, quote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0 };
+          const job = { id, owner, input, quote:costQuote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0 };
           await save(job, join(root, id)); jobs.set(id, job);
-          return send(res, { ...quote, id, expiresAt });
+          return send(res, { ...costQuote, id, expiresAt });
         }
         if (url.pathname !== '/v1/start') return send(res, { error: 'Unknown route.' }, 404);
         const job = jobs.get(body.id);
         if (!job || job.owner !== owner) return send(res, { error: 'Not found.' }, 404);
         if (job.status !== 'quoted') return send(res, publicLongJob(job)); // Replay never generates again.
-        const current = quoteLong(job.input, costs(job.input));
+        const current = quote(job.input);
         if (!current.canStart || JSON.stringify(current) !== JSON.stringify(job.quote)) return send(res, { error: 'Processor or costs changed; request a new quote.' }, 409);
         if (Date.parse(job.expiresAt) < Date.now()) return send(res, { error: 'Quote expired.' }, 409);
         if (body.approved !== true || body.approvedTotalEUR !== job.quote.totalEUR)
           return send(res, { error: 'Explicit approval of the quoted total is required.' }, 400);
         if ([...jobs.values()].some(j => ['running', 'uncertain'].includes(j.status)))
           return send(res, { error: 'An active or uncertain job must be resolved first.' }, 409);
+        const day = new Date().toISOString().slice(0,10);
+        const reserved = [...jobs.values()].filter(j => j.approvedAt?.startsWith(day))
+          .reduce((sum,j) => sum + (Number.isFinite(j.quote?.apiUSD) ? j.quote.apiUSD : Infinity), 0);
+        if (!budgetAllows(policy(), job.quote.apiUSD, reserved))
+          return send(res,{error:'Daily API reservation limit reached. No paid request was sent.'},409);
+        // Approval and its full reservation are saved together before any provider submission.
         job.status = 'running'; job.approvedAt = new Date().toISOString(); job.approvedTotalEUR=body.approvedTotalEUR;
         await save(job, join(root, job.id)); send(res, publicLongJob(job), 202);
       });
@@ -138,11 +167,15 @@ export async function createProcessor(config, dependencies = {}) {
       if (!res.headersSent) send(res, {error: 'Processor request failed. Check server logs and stored job status.', code: 'PROCESSOR_INTERNAL_ERROR'}, 500);
     }
   });
+  server.requestTimeout = 30000; server.headersTimeout = 15000;
   let timer, closed = false;
   const tick = () => serial(async () => {
     const job = [...jobs.values()].find(j => j.status === 'running');
     if (job?.input.model===SMOKE_MODEL) await advanceSmoke(job,join(root,job.id));
-    else if (job?.input.model===OMNI_MODEL) {
+    else if (job && !job.inflight && !budgetAllows(policy(),job.quote.apiUSD)) {
+      job.status='failed';job.error='API spending was disabled; no new provider request was sent.';
+      await save(job,join(root,job.id));
+    } else if (job?.input.model===OMNI_MODEL) {
       // A later configuration change must not silently unlock or reprice a job.
       if(!job.inflight && job.completedSegments<job.input.duration/5 && !quoteLong(job.input,costs(job.input)).canStart) {
         job.status='failed';job.error='Omni configuration changed; no new generation request was sent.';

@@ -21,7 +21,7 @@ for (const seconds of [60,70]) test(`Worker-to-private-processor HTTP workflow p
   const run=promisify(execFile), source=join(root,'synthetic.mp4'), opening=join(root,'reference.png');
   await run('ffmpeg',['-loglevel','error','-y','-f','lavfi','-i','testsrc2=size=160x90:rate=30','-t','5','-c:v','libx264','-pix_fmt','yuv420p',source]);
   await run('ffmpeg',['-loglevel','error','-y','-i',source,'-frames:v','1',opening]);
-  const config={LONG_DATA_DIR:join(root,'private'),LONG_VIDEO_SERVICE_SECRET:'test-only-credential-'.repeat(3),
+  const config={BILLABLE_REQUESTS_ENABLED:'true',API_MAX_JOB_USD:'100',API_MAX_DAY_USD:'1000',LONG_DATA_DIR:join(root,'private'),LONG_VIDEO_SERVICE_SECRET:'test-only-credential-'.repeat(3),
     LONG_VIDEO_ENABLED:'true',LONG_MEDIA_EUR:'0.01',LONG_FX_PERCENT:'0',LONG_VAT_PERCENT:'0',DASHSCOPE_API_KEY:'dummy-not-a-key'};
   let submissions=0;
   const processor=await createProcessor(config,{providers:{
