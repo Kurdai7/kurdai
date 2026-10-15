@@ -66,4 +66,12 @@ GitHub reports this pull request mergeable with no conflicts. Cloudflare's build
 
 A Python HTTP client received 403/1010 while curl received 200 from the same production health route. Treat this as client-dependent edge filtering; do not infer an application-wide outage or disable security globally. Cloudflare configuration access is required to inspect the applicable security event before changing a rule.
 
+## EUR reservation controls
+
+The processor supports optional positive-decimal `PROCESSOR_MAX_MONTH_EUR` and `PROCESSOR_MAX_TOTAL_EUR` limits. Before approving any job, it sums persisted approved EUR estimates, including failed and uncertain jobs. It reserves the complete approved total before submission, under the existing serial execution lock. Months follow Europe/Helsinki. The total allowance never resets automatically. Missing historical amounts are treated as unknown exposure and block spending when the relevant limit is configured.
+
+The owner's approved values have been staged in Render without enabling paid generation. Render triggered a redeploy of existing main; the new enforcement code remains in this draft branch until released. Three new reservation tests and the three existing spending tests pass; 12 affected long-video/provider tests and syntax/build/diff checks also pass. Provider calls remain synthetic or mocked.
+
+These are processor-local estimated reservations, not provider invoice caps, not a shared allowance with the native Worker video backend, and not enforcement against use of the same key elsewhere. Durable job storage is required to preserve them across host deploys. Google documents possible overspend during billing latency even with project spend caps or prepayment. Render bandwidth can incur usage charges beyond compute and disk fees. Do not enable paid requests or upgrade hosting under a strict invoice ceiling until those limitations are resolved or explicitly accepted by the owner.
+
 The Worker/D1/Stripe SDK harness now also passes pending-payment delivery followed by eight concurrent signed events with distinct event IDs for the same paid Checkout session: actual D1 contains exactly one fulfillment and one credit ledger entry. Provider HTTP remains mocked; this does not claim a live payment or hosted webhook test. Committed in `6afd4b73492e8224785f652640a31a9c429edb55`.
