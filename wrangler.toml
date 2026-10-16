@@ -13,11 +13,22 @@ API_MAX_JOB_USD = "0"
 API_MAX_DAY_USD = "0"
 LONG_VIDEO_SERVICE_URL = "https://kurdai-processor-staging.onrender.com"
 
-# Worker Previews do not inherit production bindings or secrets.
-# Keep billable generation disabled until a separate test database is configured.
+# Preview configuration is independent of production. Existing preview secrets
+# stay in Cloudflare; never copy their values into this file.
 [previews.vars]
+STRIPE_MODE = "test"
+STRIPE_CHECKOUT_ENABLED = "false"
+BILLABLE_REQUESTS_ENABLED = "false"
+API_MAX_JOB_USD = "0"
+API_MAX_DAY_USD = "0"
 VIDEO_GENERATION_ENABLED = "false"
 LONG_VIDEO_ENABLED = "false"
+LONG_VIDEO_SERVICE_URL = "https://kurdai-processor-staging.onrender.com"
+
+[[previews.d1_databases]]
+binding = "DB"
+database_name = "kurdai-test-db"
+database_id = "8c01cc6c-b25a-4a48-9f6a-48ecb9cad943"
 
 [assets]
 directory = "./public"
