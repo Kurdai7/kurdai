@@ -75,3 +75,9 @@ The owner's approved values have been staged in Render without enabling paid gen
 These are processor-local estimated reservations, not provider invoice caps, not a shared allowance with the native Worker video backend, and not enforcement against use of the same key elsewhere. Durable job storage is required to preserve them across host deploys. Google documents possible overspend during billing latency even with project spend caps or prepayment. Render bandwidth can incur usage charges beyond compute and disk fees. Do not enable paid requests or upgrade hosting under a strict invoice ceiling until those limitations are resolved or explicitly accepted by the owner.
 
 The Worker/D1/Stripe SDK harness now also passes pending-payment delivery followed by eight concurrent signed events with distinct event IDs for the same paid Checkout session: actual D1 contains exactly one fulfillment and one credit ledger entry. Provider HTTP remains mocked; this does not claim a live payment or hosted webhook test. Committed in `6afd4b73492e8224785f652640a31a9c429edb55`.
+
+## Preview setup checkpoint, 2026-10-16
+
+The owner confirmed a separate preview D1 binding `DB` to `kurdai-test-db`, preview-only `STRIPE_MODE=test`, a restricted test key, and the test webhook signing secret. Secret values are intentionally absent here. The test webhook destination subscribes to the four Checkout events above at `https://codex-stripe-checkout-kurdai.kurdai.workers.dev/api/billing/webhook`.
+
+The existing branch preview still returned `mode:null`, `configured:false` and `enabled:false` after these settings were saved. Rebuild the preview to pick up its base configuration, then inspect the safe capabilities route again. Configuration entered in the Dashboard is not runtime verification. Production remains unchanged, and public payments and paid generation remain disabled.
