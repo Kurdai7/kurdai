@@ -62,6 +62,20 @@ test('Checkout binds one immutable order to a verified user and survives concurr
  assert.equal((await handleBilling(request('order?id='+row.id),config,{...owner,id:'another'},{client})).status,404);
  const balance=await(await handleBilling(request('balance'),config,owner,{client})).json();assert.equal(balance.credits,0);
 });
+test('sandbox returns stay on the exact preview and reject caller-controlled destinations',async()=>{
+ for(const origin of ['https://codex-stripe-checkout-kurdai.kurdai.workers.dev','https://kurdai.net','https://attacker.example']) {
+  const config=env(),client=mockClient();let captured;
+  const create=client.checkout.sessions.create;
+  client.checkout.sessions.create=async(params,options)=>{captured=params;return create(params,options);};
+  const req=new Request(origin+'/api/billing/checkout',{method:'POST',headers:{'content-type':'application/json',Origin:'https://attacker.example'},body:JSON.stringify({requestId:crypto.randomUUID(),packId:'small',returnUrl:'https://attacker.example'})});
+  const result=await handleBilling(req,config,owner,{client});
+  assert.equal(result.status,201);
+  const expected=origin.includes('codex-stripe-checkout-kurdai.')?origin:'https://kurdai.net';
+  assert.equal(new URL(captured.success_url).origin,expected);
+  assert.equal(new URL(captured.cancel_url).origin,expected);
+  assert.equal(config.DB.raw.prepare('SELECT COUNT(*) AS n FROM billing_ledger').get().n,0);
+ }
+});
 test('signed webhook fulfills paid sessions exactly once across delayed, duplicate, concurrent and cross-mode events',async()=>{
  const config=env(),client=mockClient();
  await handleBilling(request('checkout',{requestId:crypto.randomUUID(),packId:'small'}),config,owner,{client});
