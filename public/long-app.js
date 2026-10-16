@@ -6,8 +6,9 @@ const money = amount => amount == null ? 'دیاری نەکراوە' : `€${amo
 async function call(path, body) {
   const response = await fetch(`/api/long/${path}`, { method: body ? 'POST' : 'GET',
     headers: { Authorization: `Bearer ${token() || ''}`, 'Content-Type': 'application/json' },
+    ...(path === 'capabilities' ? {signal: AbortSignal.timeout(12000)} : {}),
     ...(body ? { body: JSON.stringify(body) } : {}) });
-  const data = await response.json(); if (!response.ok) throw new Error((data.error || 'داواکاری سەرکەوتوو نەبوو.') + (data.code ? ` [${data.code} · v${data.diagnosticVersion || 3}]` : '')); return data;
+  const data = await response.json(); if (!response.ok) throw Object.assign(new Error((data.error || 'داواکاری سەرکەوتوو نەبوو.') + (data.code ? ` [${data.code} · v${data.diagnosticVersion || 3}]` : '')), {code: data.code}); return data;
 }
 function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
 for (const id of ['prompt', 'aspectRatio', 'longModel', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
@@ -103,9 +104,20 @@ $('longRefresh').addEventListener('click', async () => {
 $('longReadiness').addEventListener('click', async () => {
   const button = $('longReadiness'); button.disabled = true;
   const session = token(), version = generation;
-  show('پشکنینی سێرڤەر… Render ـی بەخۆڕایی لەوانەیە خەوتبێت؛ تا ٩٠ چرکە چاوەڕێ بکە. هیچ داواکارییەکی ڤیدیۆ نەنێردراوە.');
+  show('پشکنینی پەیوەندی Cloudflare بە Render… هیچ داواکارییەکی ڤیدیۆ نەنێردراوە.');
   try {
-    const state = await call('capabilities');
+    let state;
+    // Retry only the read-only probe. Never repeat quote/start/smoke submissions.
+    for (let attempt = 1; attempt <= 6; attempt++) {
+      if (session !== token() || version !== generation) return;
+      try { state = await call('capabilities'); break; }
+      catch (error) {
+        const retryable = ['TypeError','TimeoutError','AbortError'].includes(error.name) || ['PROCESSOR_READINESS_TIMEOUT','PROCESSOR_NETWORK_ERROR'].includes(error.code);
+        if (!retryable || attempt === 6) throw error;
+        show(`پەیوەندی هێشتا پشتڕاست نەکراوەتەوە؛ هەوڵی ${attempt + 1}/6 بۆ پشکنینی بێ پارە. هیچ ڤیدیۆیەک داوا نەکراوە.`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     if (session !== token() || version !== generation) return;
     if(state.processorReachable && $('longModel').value==='gemini-omni-1.1-flash') {
       const model=state.models?.['gemini-omni-1.1-flash'];
