@@ -32,8 +32,13 @@ export function billingConfiguration(env) {
     }
   } catch {packs=[];}
   const keyValid=['test','live'].includes(mode) && new RegExp(`^rk_${mode}_[A-Za-z0-9]+$`).test(env.STRIPE_RESTRICTED_KEY || '');
+  const missingConfiguration=[];
+  if(!env.DB)missingConfiguration.push('DB');
+  if(!['test','live'].includes(mode))missingConfiguration.push('STRIPE_MODE');
+  if(!keyValid)missingConfiguration.push('STRIPE_RESTRICTED_KEY');
+  if(!/^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || ''))missingConfiguration.push('STRIPE_WEBHOOK_SECRET');
   const liveApproved=mode==='test' || (env.STRIPE_LIVE_APPROVED==='true' && env.PUBLIC_RELEASE_VERIFIED==='true' && env.STRIPE_CATALOG_APPROVED==='true');
-  return {mode:['test','live'].includes(mode)?mode:null,packs,
+  return {mode:['test','live'].includes(mode)?mode:null,packs,missingConfiguration,
     configured:!!env.DB && keyValid && /^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || ''),
     enabled:env.STRIPE_CHECKOUT_ENABLED==='true' && keyValid && liveApproved && packs.length>0 && !!env.DB && /^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || '')};
 }
@@ -94,7 +99,7 @@ export async function handleBilling(request,env,user,dependencies={}) {
   try {
     const allowed=!!user?.verified && (config.mode==='live' || (!!env.VIDEO_TEST_EMAIL && user.email.trim().toLowerCase()===env.VIDEO_TEST_EMAIL.trim().toLowerCase()));
     if(url.pathname==='/api/billing/capabilities' && request.method==='GET')
-      return json({mode:config.mode,configured:config.configured,enabled:config.enabled && allowed,
+      return json({mode:config.mode,configured:config.configured,missingConfiguration:config.missingConfiguration,enabled:config.enabled && allowed,
         accountId:allowed?user.id:null,
         publicPaymentsEnabled:config.enabled && config.mode==='live',
         packs:config.enabled && allowed?config.packs.map(({priceId,...p})=>p):[],currency:'eur'});
