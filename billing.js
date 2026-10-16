@@ -49,6 +49,13 @@ async function bodyText(request,limit) {
 function stripeClient(env) {
   return new Stripe(env.STRIPE_RESTRICTED_KEY,{httpClient:Stripe.createFetchHttpClient(),maxNetworkRetries:0,timeout:20000});
 }
+function checkoutOrigin(requestUrl,mode) {
+  const origin=new URL(requestUrl).origin;
+  // Only this project's exact test origin may receive sandbox returns.
+  // Never trust Origin/Host headers or a return URL supplied in the request body.
+  return mode==='test' && origin==='https://codex-stripe-checkout-kurdai.kurdai.workers.dev'
+    ? origin : 'https://kurdai.net';
+}
 function sessionMatches(s,order) {
   return s.livemode===(order.mode==='live') && s.mode==='payment' &&
     s.metadata?.app==='kurdai' && s.metadata?.order_id===order.id && s.client_reference_id===order.id &&
@@ -131,12 +138,13 @@ export async function handleBilling(request,env,user,dependencies={}) {
     if(order.session_id)return json({orderId:order.id,url:order.checkout_url,status:order.status});
     if(stamp-order.created_at>3600)fail('Checkout outcome needs reconciliation; do not retry payment.',409);
     // Stable values and provider idempotency survive concurrent POSTs or a lost response.
+    const returnOrigin=checkoutOrigin(request.url,config.mode);
     const session=await client.checkout.sessions.create({mode:'payment',adaptive_pricing:{enabled:false},
       integration_identifier:'kurdai_checkout_rhvtzqmp',
       line_items:[{price:order.price_id,quantity:1}],client_reference_id:order.id,
       metadata:{app:'kurdai',order_id:order.id},expires_at:order.created_at+7200,
-      success_url:'https://kurdai.net/?checkout=returned&order='+order.id,
-      cancel_url:'https://kurdai.net/?checkout=cancelled&order='+order.id
+      success_url:returnOrigin+'/?checkout=returned&order='+order.id,
+      cancel_url:returnOrigin+'/?checkout=cancelled&order='+order.id
     },{idempotencyKey:`kurdai:${config.mode}:${order.id}`});
     if(!sessionMatches(session,order))fail('Stripe checkout configuration does not match.',502);
     const target=new URL(session.url);
