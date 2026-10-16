@@ -44,6 +44,15 @@ test('billing config fails closed and live credentials require independent relea
  assert.equal(billingConfiguration({...config,STRIPE_MODE:'live',STRIPE_RESTRICTED_KEY:'rk_live_syntheticOnly'}).enabled,false);
  for(const packs of ['bad','{}','[{"id":"unsafe"}]'])assert.equal(billingConfiguration({...config,STRIPE_CREDIT_PACKS:packs}).enabled,false);
 });
+test('capabilities identify missing bindings without exposing secret values',async()=>{
+ const config=env();delete config.STRIPE_WEBHOOK_SECRET;
+ const data=await(await handleBilling(request('capabilities'),config,null)).json();
+ assert.equal(data.configured,false);
+ assert.deepEqual(data.missingConfiguration,['STRIPE_WEBHOOK_SECRET']);
+ assert.ok(!JSON.stringify(data).includes(config.STRIPE_RESTRICTED_KEY));
+ assert.deepEqual(billingConfiguration({...config,STRIPE_WEBHOOK_SECRET:secret,STRIPE_RESTRICTED_KEY:'rk_live_wrongMode'}).missingConfiguration,['STRIPE_RESTRICTED_KEY']);
+ assert.deepEqual(billingConfiguration(env()).missingConfiguration,[]);
+});
 test('unsigned public webhooks cannot trigger database work or provider calls',async()=>{
  const config=env(),client=mockClient();let databaseCalls=0;
  config.DB={prepare(){databaseCalls++;throw Error('Unsigned webhook reached database');},batch(){databaseCalls++;throw Error('Unsigned webhook reached database');}};
