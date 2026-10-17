@@ -56,3 +56,11 @@ export async function checkR2Object(env,key) {
   await response.body?.cancel();
   return response.status===200;
 }
+
+export async function deleteR2Object(env,key) {
+  const req=requestParts(env,'DELETE',key);
+  const response=await fetch(req.url,{method:'DELETE',headers:req.headers,redirect:'error',
+    signal:AbortSignal.timeout(15000)});
+  await response.body?.cancel();
+  if(!response.ok) throw new Error('R2 delete failed (HTTP '+response.status+')');
+}
