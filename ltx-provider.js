@@ -24,3 +24,34 @@ export function parseLtxStatus(response) {
   return Object.freeze({id:data.id,status,terminal:['completed','failed','cancelled','timeout','deleted'].includes(status),
     outputs:status==='completed'&&Array.isArray(data.outputs)?data.outputs:[]});
 }
+
+/**
+ * Transport primitives. The authenticated processor must persist an approved,
+ * single-use reservation before invoking submitLtxOnce. No automatic retries.
+ * An ambiguous timeout MUST be reconciled in the vendor dashboard.
+ */
+export async function submitLtxOnce({apiKey,request,approved=false,fetchImpl=fetch}) {
+  if (approved !== true || request?.canSubmit !== true)
+    throw new Error('Paid LTX submission is disabled until approved quote and durable reservation are verified.');
+  if (typeof apiKey !== 'string' || !apiKey.trim()) throw new Error('Missing WaveSpeed API key.');
+  if (request.url !== LTX_SUBMIT_URL || request.body?.duration !== 5 ||
+      request.body?.resolution !== '720p') throw new Error('Unexpected LTX request.');
+  const response = await fetchImpl(request.url,{
+    method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},
+    body:JSON.stringify(request.body),signal:AbortSignal.timeout(30000)
+  });
+  if (!response.ok) throw new Error(`WaveSpeed submit returned HTTP ${response.status}; do not retry automatically.`);
+  const payload=await response.json();
+  const id=payload?.data?.id;
+  if(typeof id!=='string'|| !/^[a-zA-Z0-9_-]{1,128}$/.test(id))
+    throw new Error('WaveSpeed submission returned no valid prediction ID; reconcile provider dashboard.');
+  return Object.freeze({id,status:payload.data.status||'created'});
+}
+export async function pollLtx({apiKey,predictionId,fetchImpl=fetch}) {
+  if(typeof apiKey!=='string'||!apiKey.trim()) throw new Error('Missing WaveSpeed API key.');
+  const response=await fetchImpl(ltxResultUrl(predictionId),{
+    method:'GET',headers:{Authorization:`Bearer ${apiKey}`},signal:AbortSignal.timeout(20000)
+  });
+  if(!response.ok) throw new Error(`WaveSpeed status returned HTTP ${response.status}.`);
+  return parseLtxStatus(await response.json());
+}
