@@ -81,7 +81,7 @@ export async function createProcessor(config, dependencies = {}) {
         const omni=quote({model:OMNI_MODEL,duration:5,language:'sorani',resolution:'720p'});
         return send(res, {spending:policy(), processorReachable: true, mediaTools, outputDurations: Array.from({length:14},(_,i)=>(i+1)*5), protocolVersion: 4,
           canStartWithReference: ready(true), canStartFromText: ready(false),
-          providerConfigured: {wan: !!config.DASHSCOPE_API_KEY, openingImage: !!config.FAL_KEY},
+          providerConfigured: {wan: !!config.DASHSCOPE_API_KEY, openingImage: !!config.FAL_KEY, wavespeed: typeof config.WAVESPEED_API_KEY === 'string' && !!config.WAVESPEED_API_KEY.trim()},
           missingCosts: ['LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT'].filter(k => config[k] === undefined || config[k] === ''),
           audioEnabled: {sorani: false, badini: false},
           syntheticTest:{available:true,duration:70,providerRequests:0,aiGenerated:false},
