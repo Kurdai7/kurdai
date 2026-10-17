@@ -34,6 +34,8 @@ export async function createProcessor(config, dependencies = {}) {
   const mediaTools = await verifyRuntime();
   const root = resolve(config.LONG_DATA_DIR || './long-video-data');
   await mkdir(root, { recursive: true, mode: 0o700 });
+  // A writable local directory is not proof of durable storage across deploys.
+  const durableStorageAcknowledged = config.LONG_DURABLE_STORAGE === 'true';
   if (!config.LONG_VIDEO_SERVICE_SECRET || config.LONG_VIDEO_SERVICE_SECRET.length < 32)
     throw new Error('A service secret of at least 32 characters is required.');
   // Lock prevents a second processor from submitting duplicate jobs against the same files.
@@ -76,6 +78,7 @@ export async function createProcessor(config, dependencies = {}) {
         const flags=configurationStatus(config);
         return send(res,{
           processorOnline:true,
+          durableStorageAcknowledged,
           geminiKeyPresent:flags.geminiConfigured,
           omniVideoReady:flags.geminiConfigured && flags.durableStorageConfirmed &&
             flags.omniEnabled && flags.billingVerified && flags.apiSpendingEnabled &&
