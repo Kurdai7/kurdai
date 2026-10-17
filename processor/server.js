@@ -14,6 +14,7 @@ import { advance, save, load, publicLongJob } from './engine.js';
 import { advanceOmni } from './omni-engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
 import { advanceSmoke, SMOKE_MODEL } from './smoke.js';
+import { putR2Object, getR2Object } from './r2-storage.js';
 
 // Fixed, non-secret configuration summary for operators. Never log env values.
 export function configurationStatus(config) {
@@ -46,6 +47,20 @@ export async function createProcessor(config, dependencies = {}) {
     storageReadWriteOK = false;
   } finally {
     await unlink(storageProbe).catch(() => {});
+  }
+  // Optional, non-billable-provider R2 connectivity check using only a tiny random object.
+  // This does NOT certify job durability and never enables paid generation.
+  let r2StorageProbeOK = false;
+  if (config.R2_STORAGE_PROBE_ENABLED === 'true') {
+    const key = 'probes/' + randomUUID();
+    try {
+      const marker = Buffer.from(randomUUID());
+      await putR2Object(config, key, marker);
+      const recovered = await getR2Object(config, key);
+      r2StorageProbeOK = marker.equals(recovered);
+    } catch {
+      r2StorageProbeOK = false;
+    }
   }
   if (!config.LONG_VIDEO_SERVICE_SECRET || config.LONG_VIDEO_SERVICE_SECRET.length < 32)
     throw new Error('A service secret of at least 32 characters is required.');
@@ -91,6 +106,7 @@ export async function createProcessor(config, dependencies = {}) {
           processorOnline:true,
           durableStorageAcknowledged,
           storageReadWriteOK,
+          r2StorageProbeOK,
           geminiKeyPresent:flags.geminiConfigured,
           omniVideoReady:storageReadWriteOK && flags.geminiConfigured && flags.durableStorageConfirmed &&
             flags.omniEnabled && flags.billingVerified && flags.apiSpendingEnabled &&
