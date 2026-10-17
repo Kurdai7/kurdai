@@ -1,7 +1,7 @@
 // Separate FFmpeg host, NOT a Cloudflare Worker. One process per durable data directory.
 import http from 'node:http';
 import { spendingPolicy, budgetAllows } from '../spending.js';
-import { buildLtxRequest } from '../ltx-provider.js';
+import { buildLtxRequest, submitLtxOnce, pollLtx } from '../ltx-provider.js';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readdir, readFile, access, rm } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
@@ -144,6 +144,69 @@ export async function createProcessor(config, dependencies = {}) {
             });
           } catch (error) {
             return send(res,{error:'LTX preflight rejected the input.',code:'LTX_PREFLIGHT_INVALID'},400);
+          }
+        }
+        if (url.pathname === '/v1/ltx/start') {
+          // Single-use, durable, explicitly approved paid submission. No retry on uncertainty.
+          if (config.LTX_PAID_TEST_ENABLED !== 'true' ||
+              config.LONG_DURABLE_STORAGE !== 'true' ||
+              config.LTX_TOTAL_COST_VERIFIED !== 'true' ||
+              !config.WAVESPEED_API_KEY)
+            return send(res,{error:'Paid LTX test not enabled or storage/cost/key not verified.'},409);
+          if (body.approved !== true || body.approvedMaxEUR !== 0.20)
+            return send(res,{error:'Explicit approval of a maximum of 0.20 EUR required.'},400);
+          const extraEUR=Number(config.LTX_VERIFIED_EXTRA_EUR);
+          const usdPerEUR=Number(config.LTX_VERIFIED_USD_PER_EUR);
+          if (config.LTX_VERIFIED_EXTRA_EUR === undefined ||
+              config.LTX_VERIFIED_USD_PER_EUR === undefined ||
+              !Number.isFinite(extraEUR) || extraEUR < 0 ||
+              !Number.isFinite(usdPerEUR) || usdPerEUR <= 0)
+            return send(res,{error:'Missing verified total-cost inputs.'},409);
+          let candidate;
+          try {
+            candidate=buildLtxRequest({language:body.language,dialogueText:body.dialogueText,
+              visualPrompt:body.visualPrompt,aspectRatio:body.aspectRatio || '16:9',
+              extraEUR,maxEUR:0.20,usdPerEUR});
+          } catch { return send(res,{error:'Invalid LTX request.'},400); }
+          if (!candidate.budget.withinBudget || !candidate.budget.fullCostKnown ||
+              candidate.budget.estimatedTotalEUR > 0.20)
+            return send(res,{error:'Verified budget exceeds 0.20 EUR.'},409);
+          // At most one paid LTX test across all owners, including after a restart.
+          const marker=join(root,'ltx-single-paid-test');
+          try { await mkdir(marker); } catch (error) {
+            if (error.code === 'EEXIST') return send(res,{error:'Single paid test already reserved. Never retry automatically.'},409);
+            throw error;
+          }
+          const id=randomUUID(),job={id,owner,input:{model:'ltx-2.3',duration:5,
+            language:body.language,aspectRatio:body.aspectRatio || '16:9'},
+            quote:{totalEUR:candidate.budget.estimatedTotalEUR,apiUSD:0.15},
+            status:'uncertain',approvedAt:new Date().toISOString(),
+            reservedAPIUSD:0.15,completedSegments:0};
+          await save(job,join(root,id));jobs.set(id,job);
+          // Persist uncertain status BEFORE any billable POST. Never auto-resubmit.
+          try {
+            const result=await submitLtxOnce({apiKey:config.WAVESPEED_API_KEY,
+              request:{...candidate,canSubmit:true},approved:true});
+            job.predictionId=result.id;job.status='processing';await save(job,join(root,id));
+            return send(res,{id,status:job.status,providerPredictionId:result.id},202);
+          } catch {
+            job.status='uncertain';job.error='Provider submission uncertain. Check WaveSpeed dashboard; do not retry.';
+            await save(job,join(root,id));
+            return send(res,{id,status:'uncertain',error:job.error},202);
+          }
+        }
+        if (url.pathname === '/v1/ltx/poll') {
+          const job=jobs.get(body.id);
+          if (!job || job.owner!==owner || job.input.model!=='ltx-2.3')
+            return send(res,{error:'Not found.'},404);
+          if (!job.predictionId) return send(res,{id:job.id,status:job.status,error:job.error||null});
+          try {
+            const result=await pollLtx({apiKey:config.WAVESPEED_API_KEY,predictionId:job.predictionId});
+            job.status=result.status;job.providerOutputs=result.outputs;
+            await save(job,join(root,job.id));
+            return send(res,{id:job.id,status:job.status,outputs:result.outputs});
+          } catch {
+            return send(res,{id:job.id,status:job.status,error:'Polling failed; retry GET/status only, never resubmit.'},502);
           }
         }
         if (url.pathname === '/v1/quote') {
