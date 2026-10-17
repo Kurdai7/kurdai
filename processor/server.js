@@ -303,6 +303,27 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.info('processor_configuration', JSON.stringify(configurationStatus(process.env)));
     }
   });
+  // Single non-billable metadata probe at boot. Never generate content, log keys,
+  // or treat a model lookup as proof of working video generation.
+  if (process.env.GEMINI_API_KEY) {
+    void (async () => {
+      try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-omni-1.1-flash', {
+          method:'GET',headers:{'x-goog-api-key':process.env.GEMINI_API_KEY},
+          redirect:'manual',signal:AbortSignal.timeout(12000)
+        });
+        await response.body?.cancel();
+        console.info('gemini_model_metadata_probe',JSON.stringify({
+          model:'gemini-omni-1.1-flash',httpStatus:response.status,
+          accessible:response.ok,paidGenerationRequests:0
+        }));
+      } catch {
+        console.info('gemini_model_metadata_probe',JSON.stringify({
+          model:'gemini-omni-1.1-flash',reachable:false,paidGenerationRequests:0
+        }));
+      }
+    })();
+  }
   processor.start();
   const shutdown = () => processor.server.close(async () => { await processor.close(); process.exit(0); });
   process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
