@@ -84,7 +84,7 @@ test('missing processor configuration and network failure have explicit free dia
   }finally{globalThis.fetch=original;}
 });
 
-test('free readiness allows cold startup without extending or retrying paid POSTs', async () => {
+test('free readiness bounds each startup probe without extending or retrying paid POSTs', async () => {
   const owner={id:'owner',email:'owner@example.test',verified:true};
   const env={VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:'test-only-secret-at-least-32-characters'};
   const originalFetch=globalThis.fetch, originalTimeout=AbortSignal.timeout;
@@ -93,11 +93,11 @@ test('free readiness allows cold startup without extending or retrying paid POST
   globalThis.fetch=async()=>{calls++;throw new DOMException('simulated startup delay','TimeoutError');};
   try {
     const health=await handleLong(new Request('https://kurdai.net/api/long/capabilities'),env,owner);
-    assert.equal(health.status,503);assert.match((await health.json()).error,/90 seconds.*No generation request/);
+    assert.equal(health.status,503);assert.match((await health.json()).error,/10-second readiness probe.*No video request/);
     assert.equal(calls,1);
     const start=await handleLong(new Request('https://kurdai.net/api/long/start',{method:'POST',body:'{}'}),env,owner);
     assert.equal(start.status,503);assert.equal(calls,2);
-    assert.deepEqual(windows,[90000,30000]);
+    assert.deepEqual(windows,[10000,30000]);
   } finally {globalThis.fetch=originalFetch;AbortSignal.timeout=originalTimeout;}
 });
 
