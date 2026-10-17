@@ -3,7 +3,7 @@ import http from 'node:http';
 import { spendingPolicy, budgetAllows } from '../spending.js';
 import { buildLtxRequest, submitLtxOnce, pollLtx } from '../ltx-provider.js';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
-import { mkdir, readdir, readFile, access, rm } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile, unlink, access, rm } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +34,19 @@ export async function createProcessor(config, dependencies = {}) {
   const mediaTools = await verifyRuntime();
   const root = resolve(config.LONG_DATA_DIR || './long-video-data');
   await mkdir(root, { recursive: true, mode: 0o700 });
+  // A writable local directory is not proof of durable storage across deploys.
+  const durableStorageAcknowledged = config.LONG_DURABLE_STORAGE === 'true';
+  let storageReadWriteOK = false;
+  const storageProbe = join(root, '.probe-' + randomUUID());
+  try {
+    const value = randomUUID();
+    await writeFile(storageProbe, value, {flag:'wx',mode:0o600});
+    storageReadWriteOK = (await readFile(storageProbe,'utf8')) === value;
+  } catch {
+    storageReadWriteOK = false;
+  } finally {
+    await unlink(storageProbe).catch(() => {});
+  }
   if (!config.LONG_VIDEO_SERVICE_SECRET || config.LONG_VIDEO_SERVICE_SECRET.length < 32)
     throw new Error('A service secret of at least 32 characters is required.');
   // Lock prevents a second processor from submitting duplicate jobs against the same files.
@@ -76,11 +89,14 @@ export async function createProcessor(config, dependencies = {}) {
         const flags=configurationStatus(config);
         return send(res,{
           processorOnline:true,
+          durableStorageAcknowledged,
+          storageReadWriteOK,
           geminiKeyPresent:flags.geminiConfigured,
-          omniVideoReady:flags.geminiConfigured && flags.durableStorageConfirmed &&
+          omniVideoReady:storageReadWriteOK && flags.geminiConfigured && flags.durableStorageConfirmed &&
             flags.omniEnabled && flags.billingVerified && flags.apiSpendingEnabled &&
             flags.missingCostSettings.length===0,
           pendingSetup:[
+            ...(!storageReadWriteOK?['storage_read_write_failed']:[]),
             ...(!flags.durableStorageConfirmed?['durable_storage']:[]),
             ...(!flags.omniEnabled?['omni_generation_disabled']:[]),
             ...(!flags.billingVerified?['omni_billing_unverified']:[]),
