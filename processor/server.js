@@ -53,14 +53,20 @@ export async function createProcessor(config, dependencies = {}) {
   let r2StorageProbeOK = false;
   if (config.R2_STORAGE_PROBE_ENABLED === 'true') {
     const key = 'probes/' + randomUUID();
+    let uploaded = false;
     try {
       const marker = Buffer.from(randomUUID());
       await putR2Object(config, key, marker);
+      uploaded = true;
       const recovered = await getR2Object(config, key);
       r2StorageProbeOK = marker.equals(recovered);
-      await deleteR2Object(config, key);
     } catch {
       r2StorageProbeOK = false;
+    } finally {
+      if (uploaded) {
+        try { await deleteR2Object(config, key); }
+        catch { r2StorageProbeOK = false; }
+      }
     }
   }
   if (!config.LONG_VIDEO_SERVICE_SECRET || config.LONG_VIDEO_SERVICE_SECRET.length < 32)
