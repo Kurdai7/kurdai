@@ -295,7 +295,7 @@ export async function createProcessor(config, dependencies = {}) {
         if (Date.parse(job.expiresAt) < Date.now()) return send(res, { error: 'Quote expired.' }, 409);
         if (body.approved !== true || body.approvedTotalEUR !== job.quote.totalEUR)
           return send(res, { error: 'Explicit approval of the quoted total is required.' }, 400);
-        if ([...jobs.values()].some(j => ['running', 'uncertain'].includes(j.status)))
+        if ([...jobs.values()].some(j => ['running', 'uncertain', 'processing'].includes(j.status)))
           return send(res, { error: 'An active or uncertain job must be resolved first.' }, 409);
         const day = new Date().toISOString().slice(0,10);
         const reserved = [...jobs.values()].filter(j => j.approvedAt?.startsWith(day))
