@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {putR2Object,getR2Object,checkR2Object} from '../processor/r2-storage.js';
+import {putR2Object,getR2Object,checkR2Object,deleteR2Object} from '../processor/r2-storage.js';
 const env={R2_ENDPOINT:'https://6ce5ce0077cd8bab866c919a889bcb5e.r2.cloudflarestorage.com/',
   R2_BUCKET:'kurdai-videos',R2_ACCESS_KEY_ID:'test-access',R2_SECRET_ACCESS_KEY:'test-secret'};
 test('R2 requests use private SigV4 headers and bucket-scoped paths',async()=>{
@@ -34,5 +34,16 @@ test('R2 failed writes do not masquerade as success',async()=>{
   const original=globalThis.fetch;
   globalThis.fetch=async()=>({ok:false,status:403,body:{cancel:async()=>{}}});
   try {await assert.rejects(putR2Object(env,'jobs/a','x'),/HTTP 403/);}
+  finally {globalThis.fetch=original;}
+});
+
+test('R2 DELETE uses a signed request and rejects failed cleanup',async()=>{
+  const original=globalThis.fetch;
+  let method;
+  globalThis.fetch=async(_url,options)=>{method=options.method;return {ok:true,status:204,body:{cancel:async()=>{}}};};
+  try {await deleteR2Object(env,'probes/abc');assert.equal(method,'DELETE');}
+  finally {globalThis.fetch=original;}
+  globalThis.fetch=async()=>({ok:false,status:403,body:{cancel:async()=>{}}});
+  try {await assert.rejects(deleteR2Object(env,'probes/abc'),/HTTP 403/);}
   finally {globalThis.fetch=original;}
 });
