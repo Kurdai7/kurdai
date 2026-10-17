@@ -172,7 +172,7 @@ export async function createProcessor(config, dependencies = {}) {
           // One reusable test per owner and ratio bounds disk use and makes replay harmless.
           const existing=[...jobs.values()].find(j=>j.owner===owner && j.input.model===SMOKE_MODEL && j.input.aspectRatio===body.aspectRatio);
           if(existing) return send(res,publicLongJob(existing));
-          if([...jobs.values()].some(j=>['running','uncertain'].includes(j.status))) return send(res,{error:'Another job is active; finish it first.'},409);
+          if([...jobs.values()].some(j=>['running','uncertain','processing'].includes(j.status))) return send(res,{error:'Another job is active; finish it first.'},409);
           const id=randomUUID(),job={id,owner,input:{model:SMOKE_MODEL,duration:70,aspectRatio:body.aspectRatio},
             status:'running',completedSegments:0,reservedAPIUSD:0,
             quote:{model:SMOKE_MODEL,totalEUR:0,apiUSD:0,retailMarkupEUR:0,aiGenerated:false}};
