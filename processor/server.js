@@ -70,7 +70,8 @@ export async function createProcessor(config, dependencies = {}) {
   const server = http.createServer(async (req, res) => {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
-      if (req.method === 'GET' && req.url === '/readiness') {
+      const publicPath = new URL(req.url || '/', 'http://processor').pathname.replace(/\/+$/, '') || '/';
+      if (req.method === 'GET' && publicPath === '/readiness') {
         // Public diagnostic exposes no keys, billing details, owner IDs or file paths.
         const flags=configurationStatus(config);
         return send(res,{
