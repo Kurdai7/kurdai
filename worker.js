@@ -120,9 +120,9 @@ async function sendVerificationEmail(env, email, token, requestUrl) {
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Email provider rejected the message: ${response.status}`
-    );
+    const error = new Error('Email provider rejected the message');
+    error.providerStatus = response.status;
+    throw error;
   }
 }
 
@@ -171,13 +171,28 @@ export default {
       }
 
       if (url.pathname === '/api/health' && request.method === 'GET') {
-        return json({ ok: !!env.DB && !!env.ASSETS, service: 'KurdAI API',
-          version: 'public-readiness-v3', databaseConfigured: !!env.DB,
+        // A binding can exist while its database has no tables or an old schema.
+        // Validate column names without reading or returning any account records.
+        const missingSchema = [];
+        if (env.DB) for (const [table, columns] of [
+          ['users', 'id,email,password_hash,verified,created_at'],
+          ['verification_tokens', 'token_hash,user_id,expires_at,created_at'],
+          ['sessions', 'token_hash,user_id,expires_at,created_at'],
+          ['credit_ledger', 'id,user_id,amount,reason,local_day,created_at']
+        ]) {
+          try { await env.DB.prepare(`SELECT ${columns} FROM ${table} LIMIT 0`).first(); }
+          catch { missingSchema.push(table); }
+        }
+        const databaseReady = !!env.DB && missingSchema.length === 0;
+        return json({ ok: databaseReady && !!env.ASSETS, service: 'KurdAI API',
+          version: 'public-readiness-v4', databaseConfigured: !!env.DB,
+          databaseReady, missingSchema,
           assetsConfigured: !!env.ASSETS,
-          registrationConfigured:!!env.DB && !!env.EMAIL_API_KEY && !!env.EMAIL_FROM,
+          registrationConfigured:databaseReady && !!env.EMAIL_API_KEY && !!env.EMAIL_FROM,
+          emailDeliveryVerified:false,
           publicVideoEnabled:false,
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled
-        }, env.DB && env.ASSETS ? 200 : 503);
+        }, databaseReady && env.ASSETS ? 200 : 503);
       }
       if (env.DB && request.method === 'POST' && ['/api/generate','/api/video-quote','/api/long/quote','/api/long/start','/api/long/smoke'].includes(url.pathname)) {
         const retry = await authLimit(request,env.DB,'video-write');
@@ -261,9 +276,10 @@ export default {
         const tokenHash = await sha256(token);
         const created = nowIso();
 
+        let registrationStage = 'user';
         try {
-          await env.DB.prepare(`
-            INSERT INTO users
+          const inserted = await env.DB.prepare(`
+            INSERT OR IGNORE INTO users
             (id, email, password_hash, verified, created_at)
             VALUES (?, ?, ?, ?, ?)
           `)
@@ -276,6 +292,12 @@ export default {
             )
             .run();
 
+          if (inserted.meta.changes === 0) return json({
+            code:'ACCOUNT_ALREADY_EXISTS',
+            error:'An account already exists for this email. Sign in instead.'
+          },409);
+
+          registrationStage = 'verification_token';
           await env.DB.prepare(`
             INSERT INTO verification_tokens
             (token_hash, user_id, expires_at, created_at)
@@ -291,6 +313,7 @@ export default {
             )
             .run();
 
+          registrationStage = 'email';
           await sendVerificationEmail(
             env,
             email,
@@ -299,7 +322,9 @@ export default {
           );
 
         } catch (e) {
-          console.error('Registration failed', {errorType:e.name});
+          const code = registrationStage === 'email' ? 'REGISTRATION_EMAIL_FAILED' : 'REGISTRATION_DATABASE_FAILED';
+          console.error('Registration failed', {code,stage:registrationStage,errorType:e.name,
+            ...(Number.isInteger(e.providerStatus) ? {providerStatus:e.providerStatus} : {})});
 
           await env.DB.prepare(
             'DELETE FROM users WHERE id=? AND verified=0'
@@ -309,7 +334,10 @@ export default {
             .catch(() => {});
 
           return json({
-            error: 'Registration could not finish. Check the database and email-provider setup.'
+            code,
+            error:registrationStage === 'email'
+              ? 'Verification email could not be sent. The operator must check email delivery.'
+              : 'Account storage is unavailable. The operator must check the database schema.'
           }, 503);
         }
 
