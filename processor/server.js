@@ -224,6 +224,11 @@ export async function createProcessor(config, dependencies = {}) {
           if (!candidate.budget.withinBudget || !candidate.budget.fullCostKnown ||
               candidate.budget.estimatedTotalEUR > 0.20)
             return send(res,{error:'Verified budget exceeds 0.20 EUR.'},409);
+          // LTX must obey the same explicit global API spending policy as other paid routes.
+          const reservedLtxUSD = [...jobs.values()].filter(j => j.input?.model === 'ltx-2.3')
+            .reduce((sum, j) => sum + (Number(j.reservedAPIUSD) || 0), 0);
+          if (!budgetAllows(policy(), 0.15, reservedLtxUSD))
+            return send(res,{error:'API spending policy blocks this LTX test.'},409);
           // At most one paid LTX test across all owners, including after a restart.
           const marker=join(root,'ltx-single-paid-test');
           try { await mkdir(marker); } catch (error) {
