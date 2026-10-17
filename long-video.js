@@ -96,9 +96,9 @@ export async function handleLong(request, env, user) {
       (request.method === 'GET' && ['/health', '/status', '/file', '/jobs'].includes(path)))) return json({ error: 'Unknown route.' }, 404);
     const upstream = new URL(`/v1${path}`, base);
     if (url.searchParams.has('id')) upstream.searchParams.set('id', url.searchParams.get('id'));
-    // Free staging can take over 50 seconds to wake. Only the read-only readiness
-    // check and synthetic-only test get a longer window; never retry a paid submission.
-    const response = await fetch(upstream, { method: request.method, redirect: 'manual', signal: AbortSignal.timeout(path === '/file' ? 120000 : ['/health','/smoke'].includes(path) ? 90000 : 30000),
+    // Bound each readiness probe below client connection timeouts; the UI retries
+    // only this read. Synthetic media and downloads retain their longer windows.
+    const response = await fetch(upstream, { method: request.method, redirect: 'manual', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 10000 : path === '/smoke' ? 90000 : 30000),
       headers: { Authorization: `Bearer ${serviceSecret}`, 'X-KurdAI-Owner': user.id,
         'Content-Type': 'application/json' },
       ...(request.method === 'POST' ? { body: await request.text() } : {}) });
@@ -114,7 +114,7 @@ export async function handleLong(request, env, user) {
       ...(path === '/file' ? { 'Content-Disposition': 'attachment; filename="KurdAI-video.mp4"' } : {}) } });
   } catch (error) {
     if (['TimeoutError','AbortError'].includes(error.name) && request.method === 'GET' && new URL(request.url).pathname === '/api/long/capabilities')
-      return json({error: 'The processor did not respond within 90 seconds. Free staging may be waking up. Run the free server check again. No generation request was sent.'}, 503);
+      return json({error: 'Render did not answer this 10-second readiness probe. No video request was sent.', code: 'PROCESSOR_READINESS_TIMEOUT', diagnosticVersion: 4}, 503);
     if (['TimeoutError','AbortError','TypeError'].includes(error.name))
       return json({error: 'The private video processor is unreachable. No automatic generation retry was sent.', code: 'PROCESSOR_NETWORK_ERROR', diagnosticVersion: 3}, 503);
     return json({ error: error.message }, 400);
