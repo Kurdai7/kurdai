@@ -103,7 +103,8 @@ export async function createProcessor(config, dependencies = {}) {
             ...(!flags.apiSpendingEnabled?['api_spending_disabled']:[]),
             ...(flags.missingCostSettings.length?['cost_configuration_incomplete']:[])
           ],
-          paidGenerationRequests:0
+          // Do not report a fabricated paid-request count: this process cannot audit provider billing.
+          paidGenerationRequestsVerified:false
         });
       }
       if (req.method === 'GET' && req.url === '/healthz') return send(res, {ok: true, mediaTools, protocolVersion: 4, outputDurations: Array.from({length:14},(_,i)=>(i+1)*5)});
