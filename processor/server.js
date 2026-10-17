@@ -202,7 +202,7 @@ export async function createProcessor(config, dependencies = {}) {
         if (url.pathname === '/v1/ltx/start') {
           // Single-use, durable, explicitly approved paid submission. No retry on uncertainty.
           if (config.LTX_PAID_TEST_ENABLED !== 'true' ||
-              config.LONG_DURABLE_STORAGE !== 'true' ||
+              (config.LONG_DURABLE_STORAGE !== 'true' || !storageReadWriteOK) ||
               config.LTX_TOTAL_COST_VERIFIED !== 'true' ||
               !config.WAVESPEED_API_KEY)
             return send(res,{error:'Paid LTX test not enabled or storage/cost/key not verified.'},409);
