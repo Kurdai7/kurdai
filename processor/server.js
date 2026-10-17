@@ -360,11 +360,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         await response.body?.cancel();
         console.info('gemini_model_metadata_probe',JSON.stringify({
           model:'gemini-omni-1.1-flash',httpStatus:response.status,
-          accessible:response.ok,paidGenerationRequests:0
+          accessible:response.ok,paidGenerationRequestsVerified:false
         }));
       } catch {
         console.info('gemini_model_metadata_probe',JSON.stringify({
-          model:'gemini-omni-1.1-flash',reachable:false,paidGenerationRequests:0
+          model:'gemini-omni-1.1-flash',reachable:false,paidGenerationRequestsVerified:false
         }));
       }
     })();
