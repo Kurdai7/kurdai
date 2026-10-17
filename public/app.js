@@ -45,7 +45,12 @@ async function api(path, options = {}) {
   const response = await fetch(path, { ...options, headers });
   const data = await response.json().catch(() => ({}));
   if (!response.ok && response.status === 403 && !data.error) data.error = ku('دەستگەیشتن بە وێبسایت ڕەت کرایەوە (403)؛ ئەمە وەڵامی Google بۆ دروستکردنی ڤیدیۆ نییە.', 'Website access was denied (403); this is not a Google video-generation response.');
-  if (!response.ok) throw Object.assign(new Error(data.error || ku('پەیوەندی سەرکەوتوو نەبوو.', 'Request failed.')), { status: response.status, jobId: data.jobId });
+  const accountErrors = {
+    ACCOUNT_ALREADY_EXISTS: ku('بەم ئیمەیڵە ئەکاونت هەیە؛ «چوونەژوورەوە» هەڵبژێرە.', 'An account already exists for this email. Sign in instead.'),
+    REGISTRATION_EMAIL_FAILED: ku('ئیمەیڵی پشتڕاستکردنەوە نەنێردرا. پێویستە بەڕێوەبەری ماڵپەڕ پەیوەندی ئیمەیڵ چاک بکات.', 'Verification email could not be sent. The site operator must fix email delivery.'),
+    REGISTRATION_DATABASE_FAILED: ku('پاشەکەوتکردنی ئەکاونت سەرکەوتوو نەبوو. پێویستە بەڕێوەبەری ماڵپەڕ داتابەیس چاک بکات.', 'Account storage is unavailable. The site operator must fix the database.')
+  };
+  if (!response.ok) throw Object.assign(new Error(accountErrors[data.code] || data.error || ku('پەیوەندی سەرکەوتوو نەبوو.', 'Request failed.')), { status: response.status, jobId: data.jobId });
   return data;
 }
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
