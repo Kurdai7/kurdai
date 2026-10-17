@@ -69,6 +69,9 @@ export async function createProcessor(config, dependencies = {}) {
       }
     }
   }
+  if (config.R2_STORAGE_PROBE_ENABLED === 'true') {
+    console.info('r2_storage_probe', JSON.stringify({passed:r2StorageProbeOK}));
+  }
   if (!config.LONG_VIDEO_SERVICE_SECRET || config.LONG_VIDEO_SERVICE_SECRET.length < 32)
     throw new Error('A service secret of at least 32 characters is required.');
   // Lock prevents a second processor from submitting duplicate jobs against the same files.
