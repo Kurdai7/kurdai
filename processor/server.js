@@ -70,6 +70,25 @@ export async function createProcessor(config, dependencies = {}) {
   const server = http.createServer(async (req, res) => {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
+      if (req.method === 'GET' && req.url === '/readiness') {
+        // Public diagnostic exposes no keys, billing details, owner IDs or file paths.
+        const flags=configurationStatus(config);
+        return send(res,{
+          processorOnline:true,
+          geminiKeyPresent:flags.geminiConfigured,
+          omniVideoReady:flags.geminiConfigured && flags.durableStorageConfirmed &&
+            flags.omniEnabled && flags.billingVerified && flags.apiSpendingEnabled &&
+            flags.missingCostSettings.length===0,
+          pendingSetup:[
+            ...(!flags.durableStorageConfirmed?['durable_storage']:[]),
+            ...(!flags.omniEnabled?['omni_generation_disabled']:[]),
+            ...(!flags.billingVerified?['omni_billing_unverified']:[]),
+            ...(!flags.apiSpendingEnabled?['api_spending_disabled']:[]),
+            ...(flags.missingCostSettings.length?['cost_configuration_incomplete']:[])
+          ],
+          paidGenerationRequests:0
+        });
+      }
       if (req.method === 'GET' && req.url === '/healthz') return send(res, {ok: true, mediaTools, protocolVersion: 4, outputDurations: Array.from({length:14},(_,i)=>(i+1)*5)});
       if (!timingSafeEqual(hash(req.headers.authorization || ''), hash(`Bearer ${config.LONG_VIDEO_SERVICE_SECRET}`))) return send(res, { error: 'Unauthorized.' }, 401);
       const owner = req.headers['x-kurdai-owner'];
