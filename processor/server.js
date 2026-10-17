@@ -1,6 +1,7 @@
 // Separate FFmpeg host, NOT a Cloudflare Worker. One process per durable data directory.
 import http from 'node:http';
 import { spendingPolicy, budgetAllows } from '../spending.js';
+import { buildLtxRequest } from '../ltx-provider.js';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readdir, readFile, access, rm } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
@@ -122,6 +123,28 @@ export async function createProcessor(config, dependencies = {}) {
             status:'running',completedSegments:0,reservedAPIUSD:0,
             quote:{model:SMOKE_MODEL,totalEUR:0,apiUSD:0,retailMarkupEUR:0,aiGenerated:false}};
           await save(job,join(root,id));jobs.set(id,job);return send(res,publicLongJob(job),202);
+        }
+        if (url.pathname === '/v1/ltx/preflight') {
+          // Non-billable validation: never sends a provider request.
+          // Full EUR cost remains unknown until taxes/fees are verified.
+          if (!['sorani','badini'].includes(body.language)) return send(res,{error:'Choose Sorani or Badini.'},400);
+          if (typeof body.visualPrompt !== 'string' || body.visualPrompt.length > 2000 ||
+              typeof body.dialogueText !== 'string' || body.dialogueText.length > 500)
+            return send(res,{error:'Invalid prompt length.'},400);
+          try {
+            const candidate = buildLtxRequest({
+              language:body.language,dialogueText:body.dialogueText,visualPrompt:body.visualPrompt,
+              aspectRatio:body.aspectRatio || '16:9',maxEUR:0.20
+            });
+            return send(res,{
+              model:'ltx-2.3',duration:5,resolution:'720p',
+              providerKeyConfigured:typeof config.WAVESPEED_API_KEY==='string' && !!config.WAVESPEED_API_KEY.trim(),
+              budget:candidate.budget,canSubmit:false,
+              reason:'No paid submission: provider cost extras and Kurdish voice remain unverified.'
+            });
+          } catch (error) {
+            return send(res,{error:'LTX preflight rejected the input.',code:'LTX_PREFLIGHT_INVALID'},400);
+          }
         }
         if (url.pathname === '/v1/quote') {
           let input;
