@@ -17,7 +17,7 @@ function configOf(env) {
 }
 function requestParts(env,method,key,body) {
   const cfg=configOf(env);
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9/_-]{0,199}$/.test(key) || key.includes('..') || key.includes('//'))
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9/_.-]{0,199}$/.test(key) || key.includes('..') || key.includes('//'))
     throw new Error('Invalid object key');
   const encoded=key.split('/').map(encodeURIComponent).join('/');
   const path='/'+cfg.bucket+'/'+encoded;
