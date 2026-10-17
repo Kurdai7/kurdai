@@ -89,6 +89,23 @@ export async function createProcessor(config, dependencies = {}) {
           models:{[OMNI_MODEL]:{configured:!!config.GEMINI_API_KEY,canStart:omni.canStart,
             blockedReasons:omni.blockedReasons,nativeAudio:true,speechQualityVerified:false}},paidProviderProbe: false});
       }
+      if (req.method === 'GET' && url.pathname === '/v1/gemini/probe') {
+        // GET model metadata: no content generation, no billable inference.
+        // Never echo API credentials or vendor response body.
+        if (!config.GEMINI_API_KEY) return send(res,{configured:false,reachable:false,modelAvailable:false},503);
+        try {
+          const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-omni-1.1-flash',{
+            method:'GET',headers:{'x-goog-api-key':config.GEMINI_API_KEY},
+            redirect:'manual',signal:AbortSignal.timeout(12000)
+          });
+          await response.body?.cancel();
+          return send(res,{configured:true,reachable:true,modelAvailable:response.ok,
+            providerHTTPStatus:response.status,paidRequests:0},response.ok?200:424);
+        } catch {
+          return send(res,{configured:true,reachable:false,modelAvailable:false,
+            error:'Provider metadata request failed.',paidRequests:0},502);
+        }
+      }
       if (req.method === 'GET' && url.pathname === '/v1/jobs')
         return send(res, { jobs: [...jobs.values()].filter(j => j.owner === owner).map(publicLongJob).reverse().slice(0, 30) });
       if (req.method === 'GET') {
