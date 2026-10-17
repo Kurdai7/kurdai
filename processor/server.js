@@ -231,6 +231,8 @@ export async function createProcessor(config, dependencies = {}) {
             .reduce((sum, j) => sum + (Number.isFinite(j.quote?.apiUSD) ? j.quote.apiUSD : Infinity), 0);
           if (!budgetAllows(policy(), 0.15, reservedTodayUSD))
             return send(res,{error:'API spending policy blocks this LTX test.'},409);
+          if ([...jobs.values()].some(j => ['running', 'uncertain', 'processing'].includes(j.status)))
+            return send(res,{error:'Another video job is active or uncertain; resolve it before any paid LTX test.'},409);
           // At most one paid LTX test across all owners, including after a restart.
           const marker=join(root,'ltx-single-paid-test');
           try { await mkdir(marker); } catch (error) {
