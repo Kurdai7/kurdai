@@ -75,7 +75,7 @@ export async function createProcessor(config, dependencies = {}) {
     omniConfigured: !!config.GEMINI_API_KEY,
     omniEnabled: config.OMNI_GENERATION_ENABLED === 'true',
     omniBillingVerified: config.OMNI_BILLING_VERIFIED === 'true',
-    durableStorage: config.LONG_DURABLE_STORAGE === 'true',
+    durableStorage: config.LONG_DURABLE_STORAGE === 'true' && storageReadWriteOK,
     enabled: config.LONG_VIDEO_ENABLED === 'true' && !!config.DASHSCOPE_API_KEY && (!!input?.image || !!config.FAL_KEY)
       && new Date().toISOString().slice(0, 10) <= '2026-10-21' });
   const send = (res, data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
