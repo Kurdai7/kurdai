@@ -14,7 +14,7 @@ import { advance, save, load, publicLongJob } from './engine.js';
 import { advanceOmni } from './omni-engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
 import { advanceSmoke, SMOKE_MODEL } from './smoke.js';
-import { putR2Object, getR2Object } from './r2-storage.js';
+import { putR2Object, getR2Object, deleteR2Object } from './r2-storage.js';
 
 // Fixed, non-secret configuration summary for operators. Never log env values.
 export function configurationStatus(config) {
@@ -58,6 +58,7 @@ export async function createProcessor(config, dependencies = {}) {
       await putR2Object(config, key, marker);
       const recovered = await getR2Object(config, key);
       r2StorageProbeOK = marker.equals(recovered);
+      await deleteR2Object(config, key);
     } catch {
       r2StorageProbeOK = false;
     }
