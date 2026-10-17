@@ -4,7 +4,7 @@ import { mkdtemp, rm, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { spendingPolicy, budgetAllows } from '../spending.js';
+import { spendingPolicy, budgetAllows, euroBudgetAllows, budgetMonth } from '../spending.js';
 import { createProcessor } from '../processor/server.js';
 import { save } from '../processor/engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
@@ -56,4 +56,27 @@ test('processor restores reservations from persisted failed jobs before acceptin
   const q=await(await request('quote',input)).json();assert.equal(q.canStart,true);
   const response=await request('start',{id:q.id,approved:true,approvedTotalEUR:q.totalEUR});
   assert.equal(response.status,409);assert.match((await response.json()).error,/Daily API reservation/);
+});
+
+test('EUR reservation limits reject malformed caps, preserve the one-time total and use Helsinki months',()=>{
+  const caps={PROCESSOR_MAX_MONTH_EUR:'10',PROCESSOR_MAX_TOTAL_EUR:'5'};
+  assert.equal(euroBudgetAllows(caps,1,9,4),true);
+  assert.equal(euroBudgetAllows(caps,1,9.000001,4),false);
+  assert.equal(euroBudgetAllows(caps,1,0,4.000001),false);
+  for(const value of ['0','-1','Infinity','1e2','',true,null])
+    assert.equal(euroBudgetAllows({...caps,PROCESSOR_MAX_MONTH_EUR:value},1),false);
+  assert.equal(euroBudgetAllows(caps,1,Infinity,0),false);
+  assert.equal(budgetMonth('2026-10-31T22:30:00Z'),'2026-11');
+  assert.equal(budgetMonth('invalid'),null);
+});
+
+for(const exhausted of ['month','total']) test(`processor persists failed-job ${exhausted} EUR reservations across restarts`,async t=>{
+  const root=await mkdtemp(join(tmpdir(),'kurdai-eur-ledger-')),id=randomUUID();
+  await save({id,owner:'owner',input,status:'failed',approvedAt:new Date().toISOString(),approvedTotalEUR:4.5,quote:{apiUSD:0.1}},join(root,id));
+  const config={...configFor(root),BILLABLE_REQUESTS_ENABLED:'true',API_MAX_JOB_USD:'2',API_MAX_DAY_USD:'100',
+    PROCESSOR_MAX_MONTH_EUR:exhausted==='month'?'5':'100',PROCESSOR_MAX_TOTAL_EUR:exhausted==='total'?'5':'100'};
+  const {request}=await setup(t,config);
+  const q=await(await request('quote',input)).json();assert.equal(q.canStart,true);
+  const response=await request('start',{id:q.id,approved:true,approvedTotalEUR:q.totalEUR});
+  assert.equal(response.status,409);assert.match((await response.json()).error,/Monthly or total EUR reservation/);
 });

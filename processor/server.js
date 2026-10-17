@@ -1,6 +1,6 @@
 // Separate FFmpeg host, NOT a Cloudflare Worker. One process per durable data directory.
 import http from 'node:http';
-import { spendingPolicy, budgetAllows } from '../spending.js';
+import { spendingPolicy, budgetAllows, euroBudgetAllows, budgetMonth } from '../spending.js';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readdir, readFile, access, rm } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
@@ -49,6 +49,10 @@ export async function createProcessor(config, dependencies = {}) {
     if (!budgetAllows(policy(), result.apiUSD)) {
       result.canStart = false;
       result.blockedReasons = [...(result.blockedReasons || []), 'API spending is disabled or exceeds the configured per-job/day limit.'];
+    }
+    if (!euroBudgetAllows(config, result.totalEUR)) {
+      result.canStart = false;
+      result.blockedReasons = [...(result.blockedReasons || []), 'Processor EUR reservation limit is invalid or below this job estimate.'];
     }
     return result;
   };
@@ -154,6 +158,17 @@ export async function createProcessor(config, dependencies = {}) {
           .reduce((sum,j) => sum + (Number.isFinite(j.quote?.apiUSD) ? j.quote.apiUSD : Infinity), 0);
         if (!budgetAllows(policy(), job.quote.apiUSD, reserved))
           return send(res,{error:'Daily API reservation limit reached. No paid request was sent.'},409);
+        const month = budgetMonth(new Date().toISOString());
+        let monthlyEUR = 0, lifetimeEUR = 0;
+        for (const previous of jobs.values()) if (previous.approvedAt) {
+          const amount = previous.approvedTotalEUR;
+          const exposure = Number.isFinite(amount) && amount > 0 ? amount : Infinity;
+          lifetimeEUR += exposure;
+          const previousMonth = budgetMonth(previous.approvedAt);
+          if (previousMonth === month || previousMonth === null) monthlyEUR += exposure;
+        }
+        if (!euroBudgetAllows(config, job.quote.totalEUR, monthlyEUR, lifetimeEUR))
+          return send(res,{error:'Monthly or total EUR reservation limit reached. No paid request was sent.'},409);
         // Approval and its full reservation are saved together before any provider submission.
         job.status = 'running'; job.approvedAt = new Date().toISOString(); job.approvedTotalEUR=body.approvedTotalEUR;
         await save(job, join(root, job.id)); send(res, publicLongJob(job), 202);

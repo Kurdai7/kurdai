@@ -1,6 +1,7 @@
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
 import { audioPreview } from './dialogue.js';
 import { OMNI_MODEL, validateOmniInput, quoteOmni } from './omni-cost.js';
+import { reserveVideoCredits, settleVideoCredits, videoCreditPrice } from './video-credits.js';
 export const LONG_PRICES = Object.freeze({ reviewed: '2026-10-14', fxDate: '2026-10-14',
   usdPerEUR: 1.1195, wan480PerSecond: 0.015, wan720PerSecond: 0.036, firstImageUSD: 0.003 });
 export function longInput(body) {
@@ -96,6 +97,26 @@ export async function handleLong(request, env, user) {
       (request.method === 'GET' && ['/health', '/status', '/file', '/jobs'].includes(path)))) return json({ error: 'Unknown route.' }, 404);
     const upstream = new URL(`/v1${path}`, base);
     if (url.searchParams.has('id')) upstream.searchParams.set('id', url.searchParams.get('id'));
+    // Opt-in only: keep the existing owner-only gate and require an approved
+    // retail rate. Never infer a selling price from a client's request body.
+    const chargeCredits = env.VIDEO_PURCHASED_CREDITS_ENABLED === 'true';
+    const billingMode = env.STRIPE_MODE;
+    let startBody;
+    const processorHeaders = { Authorization: `Bearer ${serviceSecret}`, 'X-KurdAI-Owner': user.id,
+      'Content-Type': 'application/json' };
+    if (chargeCredits && path === '/start') {
+      startBody = await request.clone().json();
+      if (!/^[a-f0-9-]{36}$/.test(startBody.id || '')) return json({error:'Invalid video ID.'},400);
+      const checkUrl = new URL('/v1/status',base); checkUrl.searchParams.set('id',startBody.id);
+      const check = await fetch(checkUrl,{headers:processorHeaders,redirect:'manual',signal:AbortSignal.timeout(30000)});
+      if (!check.ok) { await check.body?.cancel(); return json({error:'Cannot confirm the video quote. No start request was sent.'},503); }
+      const job = await check.json();
+      if (job.id !== startBody.id) return json({error:'Processor video ID mismatch.'},502);
+      const credits = videoCreditPrice(env,job.quote);
+      if (startBody.approved !== true || startBody.approvedTotalEUR !== job.quote.totalEUR || startBody.approvedCredits !== credits)
+        return json({error:'Approve the current video cost and credit price first.'},409);
+      await reserveVideoCredits(env.DB,user.id,billingMode,job.id,credits,job.status==='quoted');
+    }
     // Bound each readiness probe below client connection timeouts; the UI retries
     // only this read. Synthetic media and downloads retain their longer windows.
     const response = await fetch(upstream, { method: request.method, redirect: 'manual', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 10000 : path === '/smoke' ? 90000 : 30000),
@@ -109,10 +130,27 @@ export async function handleLong(request, env, user) {
     }
     if (path === '/health' && [401,403].includes(response.status))
       return json({error: 'Render وەڵامی دا، بەڵام Secret ـی Cloudflare لەگەڵ Render یەکسان نییە.', code: 'PROCESSOR_AUTH_REJECTED'}, 503);
+    if (chargeCredits && ['/quote','/start','/status'].includes(path)) {
+      const data=await response.json();
+      if (path==='/quote' && response.ok) {
+        try { data.creditPrice=videoCreditPrice(env,data); data.creditMode=billingMode; }
+        catch { data.canStart=false; data.blockedReasons=[...(data.blockedReasons || []),'Video credit pricing is not ready.']; }
+      }
+      if (response.ok && ['/start','/status'].includes(path) && data.id) {
+        if (path==='/start' && data.id!==startBody.id) return json({error:'Processor video ID mismatch; reservation held for review.'},502);
+        if (path==='/status' && data.id!==url.searchParams.get('id')) return json({error:'Processor video ID mismatch.'},502);
+        await settleVideoCredits(env.DB,user.id,billingMode,data.id,data.status);
+      }
+      // Only explicit input/readiness rejections prove a start was not accepted.
+      if (path==='/start' && [400,401,403,404,409,422].includes(response.status))
+        await settleVideoCredits(env.DB,user.id,billingMode,startBody.id,'rejected');
+      return json(data,response.status);
+    }
     return new Response(response.body, { status: response.status, headers: { 'Cache-Control': 'private, no-store',
       'Content-Type': response.headers.get('content-type') || 'application/json',
       ...(path === '/file' ? { 'Content-Disposition': 'attachment; filename="KurdAI-video.mp4"' } : {}) } });
   } catch (error) {
+    if ([400,402,409,503].includes(error.status)) return json({error:error.message},error.status);
     if (['TimeoutError','AbortError'].includes(error.name) && request.method === 'GET' && new URL(request.url).pathname === '/api/long/capabilities')
       return json({error: 'Render did not answer this 10-second readiness probe. No video request was sent.', code: 'PROCESSOR_READINESS_TIMEOUT', diagnosticVersion: 4}, 503);
     if (['TimeoutError','AbortError','TypeError'].includes(error.name))

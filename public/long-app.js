@@ -47,6 +47,7 @@ $('longQuote').addEventListener('click', async () => {
       throw new Error('سێرڤەری Render هێشتا ماوەی هەڵبژێردراو پشتگیری ناکات؛ پێویستی بە Deploy ـی کۆدی نوێ هەیە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
     show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ٥ · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ لە دەرئەنجامی Omni دایە؛ کوالێتی زمان تاقی نەکراوەتەوە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
+    if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
     if(data.serviceCostBreakdown) {
       const b=data.serviceCostBreakdown;
       show(`${$('longCost').textContent}\n${b.mode==='image-to-video'?'بە وێنە':'بە دەق'} — دەرئەنجامی دیمەنی یەکەم: ${money(b.firstSegmentVideoEUR)}\nدەرئەنجامی بەردەوامکردن: ${money(b.continuationVideoEUR)}؛ لە کۆی دەرئەنجامەکەدا هەژمار کراوە.\nتۆکنی چوونەژوورەوە/مێژوو: دیاری نەکراوە · تێکستی دەرچوو: دیاری نەکراوە\nدەنگی ناوخۆی Omni: خەرجی جیاوازی نییە؛ کوالێتی سۆرانی/بادینی تاقی نەکراوەتەوە.`);
@@ -80,7 +81,8 @@ $('longStart').addEventListener('click', async () => {
   if (!window.confirm(`${quote.model}\nخەرجیی پێشبینیکراوی ${money(quote.totalEUR)} بۆ ${quote.outputSeconds} چرکە قبوڵ دەکەیت؟ پسوڵەی کۆتایی لەوانەیە جیاواز بێت. داواکارییەکان پارە خەرج دەکەن؛ یەکسانی ڕوخسار و دەنگ گەرەنتی نییە.`)) return;
   $('longStart').disabled = true;
   try {
-    const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR });
+    const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR,
+      ...(quote.creditPrice ? {approvedCredits:quote.creditPrice} : {}) });
     await refresh(job.id);
   } catch (e) { show(e.message); }
 });
