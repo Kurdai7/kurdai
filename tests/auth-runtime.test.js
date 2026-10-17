@@ -69,6 +69,12 @@ test('real Worker and D1 register, verify, login, logout and bound public reques
   assert.equal(emailFailure.status,503);
   assert.equal((await emailFailure.json()).code,'REGISTRATION_EMAIL_FAILED');
   assert.equal(await db.prepare('SELECT COUNT(*) AS n FROM users WHERE email=?').bind(failedEmail.email).first('n'),0);
+  mailStatus=200;
+  const simultaneous={...credentials,email:'parallel@example.test'};
+  const concurrent=await Promise.all([post('/api/register',simultaneous,'192.0.2.23'),post('/api/register',simultaneous,'192.0.2.23')]);
+  assert.deepEqual(concurrent.map(r=>r.status).sort(),[201,409]);
+  assert.equal(await db.prepare('SELECT COUNT(*) AS n FROM users WHERE email=?').bind(simultaneous.email).first('n'),1);
+  assert.equal(messages.length,3,'Concurrent signup must send exactly one verification email');
   await db.prepare('DROP TABLE verification_tokens').run();
   const brokenHealth=await health();
   assert.equal(brokenHealth.databaseReady,false);
@@ -77,5 +83,5 @@ test('real Worker and D1 register, verify, login, logout and bound public reques
   const databaseFailure=await post('/api/register',{...credentials,email:'db-failure@example.test'},'192.0.2.21');
   assert.equal(databaseFailure.status,503);
   assert.equal((await databaseFailure.json()).code,'REGISTRATION_DATABASE_FAILED');
-  assert.equal(messages.length,2,'Database failure must not send email');
+  assert.equal(messages.length,3,'Database failure must not send email');
 });
