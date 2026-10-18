@@ -73,9 +73,13 @@ function stripeClient(env) {
 }
 function checkoutOrigin(requestUrl,mode) {
   const origin=new URL(requestUrl).origin;
-  // Only this project's exact test origin may receive sandbox returns.
+  // Only explicitly reviewed project test origins may receive sandbox returns.
   // Never trust Origin/Host headers or a return URL supplied in the request body.
-  return mode==='test' && origin==='https://codex-stripe-checkout-kurdai.kurdai.workers.dev'
+  const testOrigins=new Set([
+    'https://codex-stripe-checkout-kurdai.kurdai.workers.dev',
+    'https://fix-settled-checkout-return-kurdai.kurdai.workers.dev'
+  ]);
+  return mode==='test' && testOrigins.has(origin)
     ? origin : 'https://kurdai.net';
 }
 function sessionMatches(s,order) {

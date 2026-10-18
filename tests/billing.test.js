@@ -94,14 +94,14 @@ test('Checkout binds one immutable order to a verified user and survives concurr
  const balance=await(await handleBilling(request('balance'),config,owner,{client})).json();assert.equal(balance.credits,0);
 });
 test('sandbox returns stay on the exact preview and reject caller-controlled destinations',async()=>{
- for(const origin of ['https://codex-stripe-checkout-kurdai.kurdai.workers.dev','https://kurdai.net','https://attacker.example']) {
+ for(const origin of ['https://codex-stripe-checkout-kurdai.kurdai.workers.dev','https://fix-settled-checkout-return-kurdai.kurdai.workers.dev','https://fix-settled-checkout-return-kurdai.kurdai.workers.dev.attacker.example','https://kurdai.net','https://attacker.example']) {
   const config=env(),client=mockClient();let captured;
   const create=client.checkout.sessions.create;
   client.checkout.sessions.create=async(params,options)=>{captured=params;return create(params,options);};
   const req=new Request(origin+'/api/billing/checkout',{method:'POST',headers:{'content-type':'application/json',Origin:'https://attacker.example'},body:JSON.stringify({requestId:crypto.randomUUID(),packId:'small',returnUrl:'https://attacker.example'})});
   const result=await handleBilling(req,config,owner,{client});
   assert.equal(result.status,201);
-  const expected=origin.includes('codex-stripe-checkout-kurdai.')?origin:'https://kurdai.net';
+  const expected=['https://codex-stripe-checkout-kurdai.kurdai.workers.dev','https://fix-settled-checkout-return-kurdai.kurdai.workers.dev'].includes(origin)?origin:'https://kurdai.net';
   assert.equal(new URL(captured.success_url).origin,expected);
   assert.equal(new URL(captured.cancel_url).origin,expected);
   assert.equal(config.DB.raw.prepare('SELECT COUNT(*) AS n FROM billing_ledger').get().n,0);
@@ -146,4 +146,16 @@ test('webhook handles race with session persistence without overwriting paid sta
  session.payment_status='paid';
  assert.equal((await handleBilling(await signedEvent(client,session),config,null,{client})).status,200);
  assert.equal(config.DB.raw.prepare('SELECT status FROM billing_orders').get().status,'paid');
+});
+
+test('webhook accepts verified settlement while checkout is disabled',async()=>{
+ const config=env(),client=mockClient();
+ const created=await handleBilling(request('checkout',{requestId:crypto.randomUUID(),packId:'small'}),config,owner,{client});
+ assert.equal(created.status,201);
+ const session=client.sessions.values().next().value;
+ config.STRIPE_CHECKOUT_ENABLED='false';
+ session.payment_status='paid';session.status='complete';
+ const delivered=await handleBilling(await signedEvent(client,session),config,null,{client});
+ assert.equal(delivered.status,200);
+ assert.equal(config.DB.raw.prepare('SELECT COALESCE(SUM(amount),0) AS credits FROM billing_ledger').get().credits,200);
 });
