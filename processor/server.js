@@ -14,6 +14,7 @@ import { advance, save, load, publicLongJob } from './engine.js';
 import { advanceOmni } from './omni-engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
 import { advanceSmoke, SMOKE_MODEL } from './smoke.js';
+import {archiveFinalVideo,restoreFinalVideo} from './r2-video-archive.js';
 import { putR2Object, getR2Object, deleteR2Object } from './r2-storage.js';
 
 // Fixed, non-secret configuration summary for operators. Never log env values.
@@ -176,7 +177,12 @@ export async function createProcessor(config, dependencies = {}) {
         if (!job || job.owner !== owner) return send(res, { error: 'Not found.' }, 404);
         if (url.pathname === '/v1/status') return send(res, publicLongJob(job));
         if (url.pathname === '/v1/file' && job.status === 'ready') {
-          const file = join(root, job.id, 'final.mp4'); await access(file);
+          const file = join(root, job.id, 'final.mp4');
+          if (config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && job.r2VideoArchived === true) {
+            try { await access(file); }
+            catch { await restoreFinalVideo(config,job.id,join(root,job.id)); }
+          }
+          await access(file);
           res.writeHead(200, { 'Content-Type': 'video/mp4', 'Cache-Control': 'private, no-store' });
           createReadStream(file).on('error', () => res.destroy()).pipe(res); return;
         }
@@ -357,6 +363,18 @@ export async function createProcessor(config, dependencies = {}) {
       }
       await advanceOmni(job,join(root,job.id),config,dependencies.omni || {});
     } else if (job) await advance(job, join(root, job.id), config, dependencies);
+    // Archive only completed media; never enable or submit paid provider work.
+    if (job?.status === 'ready' && config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && !job.r2VideoArchived) {
+      try {
+        await archiveFinalVideo(config,job.id,join(root,job.id,'final.mp4'));
+        job.r2VideoArchived = true;
+        await save(job,join(root,job.id));
+      } catch {
+        // Do not falsely report durable video storage or leak storage credentials.
+        job.r2VideoArchived = false;
+        await save(job,join(root,job.id));
+      }
+    }
   });
   return { server, tick,
     start() { timer = setInterval(() => tick().catch(() => {}), 15000); timer.unref(); },
