@@ -350,7 +350,8 @@ export async function createProcessor(config, dependencies = {}) {
   server.requestTimeout = 30000; server.headersTimeout = 15000;
   let timer, closed = false;
   const tick = () => serial(async () => {
-    const job = [...jobs.values()].find(j => j.status === 'running');
+    const job = [...jobs.values()].find(j => j.status === 'running') ||
+      (config.R2_VIDEO_ARCHIVE_ENABLED === 'true' ? [...jobs.values()].find(j => j.status === 'ready' && !j.r2VideoArchived && !j.r2ArchiveAttempted) : undefined);
     if (job?.input.model===SMOKE_MODEL) await advanceSmoke(job,join(root,job.id));
     else if (job && !job.inflight && !budgetAllows(policy(),job.quote.apiUSD)) {
       job.status='failed';job.error='API spending was disabled; no new provider request was sent.';
