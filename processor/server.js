@@ -364,14 +364,16 @@ export async function createProcessor(config, dependencies = {}) {
       await advanceOmni(job,join(root,job.id),config,dependencies.omni || {});
     } else if (job) await advance(job, join(root, job.id), config, dependencies);
     // Archive only completed media; never enable or submit paid provider work.
-    if (job?.status === 'ready' && config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && !job.r2VideoArchived) {
+    if (job?.status === 'ready' && config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && !job.r2VideoArchived && !job.r2ArchiveAttempted) {
       try {
         await archiveFinalVideo(config,job.id,join(root,job.id,'final.mp4'));
         job.r2VideoArchived = true;
+        job.r2ArchiveAttempted = true;
         await save(job,join(root,job.id));
       } catch {
         // Do not falsely report durable video storage or leak storage credentials.
         job.r2VideoArchived = false;
+        job.r2ArchiveAttempted = true;
         await save(job,join(root,job.id));
       }
     }
