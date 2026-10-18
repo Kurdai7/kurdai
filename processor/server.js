@@ -132,7 +132,7 @@ export async function createProcessor(config, dependencies = {}) {
     const prior=[...jobs.values()].find(j=>j.owner==='storage-self-test' && j.input.model===SMOKE_MODEL);
     if(prior?.status==='ready' && prior.r2VideoArchived) {
       const dir=join(root,prior.id);await rm(join(dir,'final.mp4'),{force:true});
-      await restoreFinalVideo(config,prior.id,dir);await verifySmoke(prior,true);
+      await restoreFinalVideo(config,prior.id,dir,prior.finalSHA256);await verifySmoke(prior,true);
     } else if(!prior) {
       const id=randomUUID(),job={id,owner:'storage-self-test',input:{model:SMOKE_MODEL,duration:70,aspectRatio:'16:9'},
         status:'running',completedSegments:0,reservedAPIUSD:0,
@@ -245,7 +245,7 @@ export async function createProcessor(config, dependencies = {}) {
           if (config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && job.r2VideoArchived === true) {
             try { await access(file); }
             catch {
-              try { await restoreFinalVideo(config,job.id,join(root,job.id)); }
+              try { await restoreFinalVideo(config,job.id,join(root,job.id),job.finalSHA256); }
               catch (error) {
                 // Concurrent restore can create the file first; never overwrite it.
                 if (error.code !== 'EEXIST') throw error;

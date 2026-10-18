@@ -78,4 +78,14 @@ test('real synthetic 70s MP4 and metadata survive an empty disk; paid jobs never
   assert.equal((await(await call('start',{id:interrupted,approved:true})).json()).status,'uncertain');
   await processor.tick();assert.equal(paidCalls,0);
   const repeated=await(await call('smoke',{aspectRatio:'16:9'})).json();assert.equal(repeated.id,created.id);
+  // A corrupt remote object must not become a downloadable cached file.
+  await rm(join(config.LONG_DATA_DIR,created.id,'final.mp4'));
+  const archive=storage.objects.get('jobs/'+created.id+'/final.mp4'),saved=archive.bytes;
+  archive.bytes=Buffer.from('corrupted archive');
+  assert.equal((await call('file?id='+created.id)).status,500);
+  await assert.rejects(readFile(join(config.LONG_DATA_DIR,created.id,'final.mp4')),{code:'ENOENT'});
+  archive.bytes=saved;
+  const recovered=await call('file?id='+created.id);assert.equal(recovered.status,200);
+  assert.equal(digest(Buffer.from(await recovered.arrayBuffer())),digest(originalFile));
+  assert.equal(paidCalls,0);
 });

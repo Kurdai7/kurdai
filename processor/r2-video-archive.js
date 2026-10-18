@@ -1,7 +1,7 @@
 // Optional private final-video archive. Never claim this makes job metadata durable.
 // Explicit calls only: no background uploads, no provider generation, no public URLs.
 import {readFile, writeFile, mkdir, link, unlink} from 'node:fs/promises';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import {join} from 'node:path';
 import {putR2Object,getR2Object} from './r2-storage.js';
 const jobId = id => {
@@ -16,9 +16,13 @@ export async function archiveFinalVideo(env,id,localPath) {
   await putR2Object(env,finalVideoKey(id),bytes);
   return {archived:true,bytes:bytes.length};
 }
-export async function restoreFinalVideo(env,id,directory) {
+export async function restoreFinalVideo(env,id,directory,expectedSHA256) {
+  if(expectedSHA256!==undefined && !/^[a-f0-9]{64}$/.test(expectedSHA256))
+    throw new Error('Invalid archived video checksum');
   const bytes=await getR2Object(env,finalVideoKey(id));
   if (!bytes.length || bytes.length > 100*1024*1024) throw new Error('Invalid archived video size');
+  if(expectedSHA256!==undefined && createHash('sha256').update(bytes).digest('hex')!==expectedSHA256)
+    throw new Error('Archived video checksum mismatch');
   await mkdir(directory,{recursive:true,mode:0o700});
   const path=join(directory,'final.mp4');
   const temporary=join(directory,'.restore-'+randomUUID());
