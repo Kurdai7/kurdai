@@ -11,7 +11,7 @@ async function call(path, body) {
   const data = await response.json(); if (!response.ok) throw Object.assign(new Error((data.error || 'داواکاری سەرکەوتوو نەبوو.') + (data.code ? ` [${data.code} · v${data.diagnosticVersion || 3}]` : '')), {code: data.code}); return data;
 }
 function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
-for (const id of ['prompt', 'aspectRatio', 'longModel', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
+for (const id of ['prompt', 'aspectRatio', 'longModel', 'longMode', 'longSource', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
 function modelChanged() {
   invalidate();const omni=$('longModel').value==='gemini-omni-1.1-flash';
   for(const option of $('longDuration').options) option.disabled=!omni && !['60','70'].includes(option.value);
@@ -19,13 +19,37 @@ function modelChanged() {
   if(omni) $('longResolution').value='720p';
   if(!omni && !['60','70'].includes($('longDuration').value)) $('longDuration').value='60';
   if(!omni) $('longLanguage').value='none';
+  $('longMode').options[1].disabled=!omni;
+  if(!omni) $('longMode').value='new';
+  $('longSourcePanel').hidden=$('longMode').value!=='extension';
 }
 $('longModel').addEventListener('change',modelChanged);modelChanged();
+let sources=[];
+function selectSource() {
+  invalidate();const source=sources.find(j=>j.id===$('longSource').value);
+  if(source) {
+    $('longLanguage').value=source.language;$('aspectRatio').value=source.aspectRatio;
+    $('longResolution').value=source.resolution;
+  }
+}
+async function loadSources() {
+  const session=token(),version=generation;
+  try {
+    const data=await call('jobs');if(session!==token() || version!==generation)return;
+    sources=(data.jobs || []).filter(j=>j.canExtend && j.model==='gemini-omni-1.1-flash');
+    $('longSource').replaceChildren(new Option('ڤیدیۆ هەڵبژێرە',''),...sources.map(j=>new Option(`${j.duration}s · ${j.language} · ${j.id.slice(0,8)}`,j.id)));
+    if(!sources.length)show('هێشتا ڤیدیۆیەکی تەواوکراوی Omni بۆ بەردەوامکردن نییە. هیچ AI بانگ نەکراوە.');
+  } catch(error){if(session===token() && version===generation)show(error.message);}
+}
+$('longMode').addEventListener('change',()=>{invalidate();modelChanged();if($('longMode').value==='extension')loadSources();});
+$('longSource').addEventListener('change',selectSource);
+$('longSourcesRefresh').addEventListener('click',()=>{invalidate();loadSources();});
 function reset() {
   generation++; clearTimeout(timer); invalidate();
   $('longVideo').pause(); $('longVideo').removeAttribute('src'); $('longVideo').load();
   if (output) URL.revokeObjectURL(output); output = null;
   $('longVideo').hidden = $('longDownload').hidden = true;
+  sources=[];$('longSource').replaceChildren(new Option('ڤیدیۆ هەڵبژێرە',''));
 }
 $('logoutBtn').addEventListener('click', reset);
 $('loginBtn').addEventListener('click', reset);
@@ -33,18 +57,23 @@ $('longQuote').addEventListener('click', async () => {
   invalidate(); const button = $('longQuote'); button.disabled = true;
   const session = token(); const version = generation;
   try {
+    if($('longMode').value==='extension' && !$('longSource').value)throw new Error('ڤیدیۆیەکی تەواوکراو بۆ بەردەوامکردن هەڵبژێرە.');
     const files=Array.from($('longReference').files),images=[];
     if(files.length>($('longModel').value==='gemini-omni-1.1-flash'?3:1)) throw new Error('Omni تا سێ وێنە، Wan تەنها یەک وێنە پەسەند دەکات.');
     for (const file of files) {
       if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 4 * 1024 * 1024) throw new Error('وێنەی PNG/JPEG بەکاربهێنە، تا 4 MiB.');
       images.push(await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }));
     }
-    const data = await call('quote', { model:$('longModel').value,prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
+    if(session!==token() || version!==generation)return;
+    const data = await call('quote', { model:$('longModel').value,mode:$('longMode').value,
+      ...($('longMode').value==='extension'?{sourceJobId:$('longSource').value}:{}),prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
       resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: $('longIdentity').value, image:images[0] || null,referenceImages:images.slice(1),
       language: $('longLanguage').value, dialogueText: $('longDialogue').value });
     if (session !== token() || version !== generation) return;
     if (data.outputSeconds !== Number($('longDuration').value) || data.model !== $('longModel').value)
       throw new Error('سێرڤەری Render هێشتا ماوەی هەڵبژێردراو پشتگیری ناکات؛ پێویستی بە Deploy ـی کۆدی نوێ هەیە. هیچ دروستکردنێک دەست پێ ناکات.');
+    if($('longMode').value==='extension' && (data.mode!=='extension' || data.sourceJobId!==$('longSource').value))
+      throw new Error('سێرڤەر بەردەوامکردنی ئەم ڤیدیۆیەی پشتڕاست نەکردەوە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
     show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ٥ · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ لە دەرئەنجامی Omni دایە؛ کوالێتی زمان تاقی نەکراوەتەوە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
     if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
@@ -57,7 +86,7 @@ $('longQuote').addEventListener('click', async () => {
       const a = data.audioQuote;
       show(`${$('longCost').textContent}\nدەنگ: هێشتا چالاک نییە؛ کۆی نرخ دیاری نەکراوە.\nهەڵسەنگاندنی بەشێکی API ـی دەنگ: $${a.estimateUSD.toFixed(6)}؛ ${a.language === 'sorani' ? 'تەنها دەرئەنجامی دەنگە؛ خەرجیی تێکستی چوونەژوورەوە زیاد دەبێت.' : 'تەنها بەهای پیتەکانە؛ بەشی بەشداری و مۆڵەت زیاد دەبێت.'}\nتا پشتڕاستکردنەوەی دەنگ و کۆی خەرجی، دروستکردنی بە دەنگ داخراوە.`);
     }
-  } catch (e) { show(e.message); } finally { button.disabled = false; }
+  } catch (e) { if(session===token() && version===generation)show(e.message); } finally { button.disabled = false; }
 });
 async function refresh(id) {
   clearTimeout(timer); const session = token(), version = generation;
@@ -66,6 +95,9 @@ async function refresh(id) {
     if (session !== token() || version !== generation) return;
     show(`${job.model==='synthetic-test-no-ai'?'تاقیکردنەوەی دەستکرد؛ AI و قسەکردنی کوردی نییە. خەرجی API: €0\n':''}${job.status} · ${job.completedSegments}/${job.totalSegments}\n${job.error || ''}\nخەرجیی API ـی تەرخانکراو (پسوڵە نییە): $${job.reservedAPIUSD.toFixed(3)}`);
     if (job.status === 'ready') {
+      // Never send a bearer session to a URL supplied by an upstream service.
+      const expected=`/api/long/file?id=${encodeURIComponent(id)}`;
+      if(job.id!==id || job.videoUrl!==expected)throw new Error('ناونیشانی داگرتنی ڤیدیۆ دروست نییە.');
       const response = await fetch(job.videoUrl, { headers: { Authorization: `Bearer ${session}` } });
       if (!response.ok) throw new Error('داگرتنی ڤیدیۆ سەرکەوتوو نەبوو.');
       const blob = await response.blob(); if (session !== token() || version !== generation) return;
@@ -74,17 +106,18 @@ async function refresh(id) {
       $('longDownload').download = `KurdAI-${job.duration}s.mp4`;
       $('longVideo').hidden = $('longDownload').hidden = false;
     } else if (job.status === 'running') timer = setTimeout(() => refresh(id), 15000);
-  } catch (e) { show(e.message); }
+  } catch (e) { if(session===token() && version===generation)show(e.message); }
 }
 $('longStart').addEventListener('click', async () => {
   if (!quote?.canStart || $('longStart').disabled || !Number.isFinite(quote.totalEUR) || quote.totalEUR<=0) return;
   if (!window.confirm(`${quote.model}\nخەرجیی پێشبینیکراوی ${money(quote.totalEUR)} بۆ ${quote.outputSeconds} چرکە قبوڵ دەکەیت؟ پسوڵەی کۆتایی لەوانەیە جیاواز بێت. داواکارییەکان پارە خەرج دەکەن؛ یەکسانی ڕوخسار و دەنگ گەرەنتی نییە.`)) return;
   $('longStart').disabled = true;
+  const session=token(),version=generation;
   try {
     const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR,
       ...(quote.creditPrice ? {approvedCredits:quote.creditPrice} : {}) });
-    await refresh(job.id);
-  } catch (e) { show(e.message); }
+    if(session===token() && version===generation)await refresh(job.id);
+  } catch (e) { if(session===token() && version===generation)show(e.message); }
 });
 
 $('longSmoke').addEventListener('click',async()=>{
@@ -98,9 +131,11 @@ $('longSmoke').addEventListener('click',async()=>{
   finally {button.disabled=false;}
 });
 $('longRefresh').addEventListener('click', async () => {
+  const session=token(),version=generation;
   try { const { jobs } = await call('jobs'); const job = jobs.find(j => j.status !== 'quoted');
+    if(session!==token() || version!==generation)return;
     if (job) await refresh(job.id); else show('هێشتا دروستکردنی ڤیدیۆ دەستی پێ نەکردووە.');
-  } catch (e) { show(e.message); }
+  } catch (e) { if(session===token() && version===generation)show(e.message); }
 });
 
 $('longReadiness').addEventListener('click', async () => {

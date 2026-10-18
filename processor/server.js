@@ -379,6 +379,18 @@ export async function createProcessor(config, dependencies = {}) {
         if (url.pathname === '/v1/quote') {
           let input;
           try { input = longInput(body); } catch (error) { return send(res, {error: error.message, code: 'PROCESSOR_INVALID_INPUT'}, 400); }
+          let previousInteractionId;
+          if(input.mode==='extension') {
+            const source=jobs.get(input.sourceJobId);
+            if(!source || source.owner!==owner) return send(res,{error:'Extension source not found.'},404);
+            if(!publicLongJob(source).canExtend) return send(res,{error:'Choose a completed Omni video with saved continuation context.'},409);
+            if(input.language!==source.input.language || input.aspectRatio!==source.input.aspectRatio || input.resolution!==source.input.resolution)
+              return send(res,{error:'Keep the source video dialect, aspect ratio and resolution for extension.'},409);
+            // Resolve provider context only from the owner's durable record.
+            // Caller-supplied interaction IDs are never trusted or forwarded.
+            previousInteractionId=source.previousInteractionId;
+            input.identity=source.input.identity;
+          }
           const costQuote = quote(input);
           // Keep at most ten unstarted quotes, including uploaded reference images.
           const pending = [...jobs.values()].filter(j => j.owner === owner && j.status === 'quoted')
@@ -387,7 +399,8 @@ export async function createProcessor(config, dependencies = {}) {
             await rm(join(root, stale.id), {recursive:true,force:true}); jobs.delete(stale.id);
           }
           const id = randomUUID(), expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
-          const job = { id, owner, input, quote:costQuote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0 };
+          const job = { id, owner, input, quote:costQuote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0,
+            ...(previousInteractionId?{previousInteractionId}:{}) };
           await save(job, join(root, id)); jobs.set(id, job);
           return send(res, { ...costQuote, id, expiresAt });
         }
