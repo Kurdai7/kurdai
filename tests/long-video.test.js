@@ -8,6 +8,7 @@ import { execFile } from 'node:child_process';
 import { longInput, quoteLong, handleLong } from '../long-video.js';
 import { advance, load } from '../processor/engine.js';
 import { createProcessor } from '../processor/server.js';
+import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';
 import { normalize, prepareOpening, lastFrame, assemble, duration } from '../processor/media.js';
 import { submitWan, submitImage, imageResult, download } from '../processor/providers.js';
 const input = longInput({ prompt: 'A Kurdish animated character walks through the village.', identity: 'Red dress, black braid.', aspectRatio: '16:9', resolution: '480p' });
@@ -65,7 +66,8 @@ test('processor binds approval to owner, quote and total, is idempotent and reta
   const root = await temp(t);
   const config = { BILLABLE_REQUESTS_ENABLED:'true', API_MAX_JOB_USD:'100', API_MAX_DAY_USD:'1000', LONG_DATA_DIR: root, LONG_VIDEO_SERVICE_SECRET: 'x'.repeat(32), LONG_VIDEO_ENABLED: 'true',
     LONG_MEDIA_EUR: '0.01', LONG_FX_PERCENT: '0', LONG_VAT_PERCENT: '0', FAL_KEY: 'mock', DASHSCOPE_API_KEY: 'mock' };
-  const p = await createProcessor(config);
+  Object.assign(config,durableTestFlags);const jobStorage=memoryJobStorage();
+  const p = await createProcessor(config,{jobStorage});
   await new Promise(resolve => p.server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${p.server.address().port}`;
   const headers = { Authorization: `Bearer ${config.LONG_VIDEO_SERVICE_SECRET}`, 'X-KurdAI-Owner': 'owner', 'Content-Type': 'application/json' };
@@ -85,10 +87,10 @@ test('processor binds approval to owner, quote and total, is idempotent and reta
   assert.equal((await post('/v1/start', { ...approval, id: q2.id, approvedTotalEUR: q2.totalEUR })).status, 409);
   assert.equal((await load(join(root, q.id))).reservedAPIUSD, 0); // No tick, so absolutely no provider request.
   await new Promise(resolve => p.server.close(resolve)); await p.close();
-  const restarted = await createProcessor(config);
+  const restarted = await createProcessor(config,{jobStorage});
   await new Promise(resolve => restarted.server.listen(0, '127.0.0.1', resolve));
   const response = await fetch(`http://127.0.0.1:${restarted.server.address().port}/v1/status?id=${q.id}`, { headers });
-  assert.equal((await response.json()).status, 'running');
+  assert.equal((await response.json()).status, 'uncertain');
   await new Promise(resolve => restarted.server.close(resolve)); await restarted.close();
 });
 

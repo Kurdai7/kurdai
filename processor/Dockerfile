@@ -5,6 +5,9 @@ COPY spending.js ./spending.js
 COPY long-video.js ./long-video.js
 COPY omni-cost.js ./omni-cost.js
 COPY dialogue.js ./dialogue.js
+COPY ltx-evaluation.js ./ltx-evaluation.js
+COPY ltx-speech-adapter.js ./ltx-speech-adapter.js
+COPY ltx-provider.js ./ltx-provider.js
 COPY package.json ./package.json
 COPY processor ./processor
 ENV LONG_DATA_DIR=/data
