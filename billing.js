@@ -124,6 +124,8 @@ export async function handleBilling(request,env,user,dependencies={}) {
     if(!webhook && !user)return json({error:'Please log in.'},401);
     if(!webhook && !allowed)return json({error:'Billing is unavailable for this account.'},403);
     if(!config.configured)return json({error:'Stripe is not configured. No payment was created.'},503);
+    // Keep webhook processing available for previously-created sessions even if
+    // checkout has since been disabled. Billing tables are created on demand.
     // Process already-created payments even when creation has been disabled.
     const client=dependencies.client || stripeClient(env);
     if(webhook) {
