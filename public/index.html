@@ -142,6 +142,13 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
       <div class="preview-footer"><span class="status"><span class="dot"></span><span id="previewStatus">ڤیدیۆی AI هێشتا پشتڕاست نەکراوەتەوە</span></span><span id="previewDuration">٨ چرکە</span></div>
     </div>
   </section>
+  <section id="billingPanel" class="panel account-panel" aria-labelledby="billingTitle" hidden>
+    <h2 id="billingTitle">کرییدیتی کڕدراو</h2>
+    <p id="billingBalance" class="sub"></p>
+    <div id="billingPacks" class="account-actions"></div>
+    <p id="billingMessage" role="status" aria-live="polite"></p>
+    <button id="billingRefresh" type="button" class="chip">پشکنینی دۆخی پارەدان</button>
+  </section>
   <section id="longPanel" class="panel account-panel" aria-labelledby="longTitle" hidden>
     <h2 id="longTitle">Omni 1.1 Flash — بە یەک پرۆمپت</h2>
     <p class="sub">پرۆمپتی سەرەوە بەکاردێت. Omni دیمەنەکان بە ناسنامەی ڤیدیۆی پێشوو بەردەوام دەکات و دەبنە یەک MP4 بە دەنگەوە. کوالێتی شێوەزار و جێگیری ڕوخسار و دەنگ هێشتا بە API تاقی نەکراونەتەوە.</p>
@@ -171,5 +178,6 @@ main{max-width:1120px;margin:auto;padding:34px 20px 60px}.hero{text-align:center
 <footer>KurdAI © 2026 · وەشانی سەرەتایی بۆ تاقیکردنەوە</footer>
 <script type="module" src="/app.js"></script>
 <script type="module" src="/long-app.js"></script>
+<script type="module" src="/billing-app.js"></script>
 </body>
 </html>
