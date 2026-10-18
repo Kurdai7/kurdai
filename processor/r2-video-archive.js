@@ -4,7 +4,7 @@ import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {putR2Object,getR2Object} from './r2-storage.js';
 const jobId = id => {
-  if (typeof id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9-]{27,28}$/.test(id))
+  if (typeof id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(id))
     throw new Error('Invalid job ID');
   return id;
 };
