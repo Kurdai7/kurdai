@@ -53,6 +53,27 @@ test('capabilities identify missing bindings without exposing secret values',asy
  assert.deepEqual(billingConfiguration({...config,STRIPE_WEBHOOK_SECRET:secret,STRIPE_RESTRICTED_KEY:'rk_live_wrongMode'}).missingConfiguration,['STRIPE_RESTRICTED_KEY']);
  assert.deepEqual(billingConfiguration(env()).missingConfiguration,[]);
 });
+test('key diagnostics distinguish absent, masked and mismatched keys without returning credentials',async()=>{
+ const config=env();
+ const cases=[
+  [undefined,'missing'],['','empty'],[{},'invalid_type'],
+  ['rk_test_hidden...tail','incomplete_or_masked'],['rk_test_hidden…tail','incomplete_or_masked'],
+  ['sk_test_syntheticOnly','standard_secret_key'],['pk_test_syntheticOnly','publishable_key'],
+  ['rk_test_synthetic Only','internal_whitespace'],['"rk_test_syntheticOnly"','invalid_format'],
+  ['RK_test_syntheticOnly','invalid_format'],['rk_live_syntheticOnly','mode_mismatch'],
+  [' \nrk_test_syntheticOnly\n ','format_valid']
+ ];
+ for(const [key,status] of cases) {
+  const data=await(await handleBilling(request('capabilities'),{...config,STRIPE_RESTRICTED_KEY:key},null)).json();
+  assert.equal(data.diagnosticVersion,2);assert.equal(data.restrictedKeyStatus,status);
+  assert.equal(data.configured,status==='format_valid');assert.equal(data.enabled,false);
+  const encoded=JSON.stringify(data);
+  assert.ok(!encoded.includes('syntheticOnly'));assert.ok(!encoded.includes(secret));
+  assert.ok(!encoded.includes('hidden'));assert.ok(!encoded.includes('rk_test_'));
+ }
+ const live=billingConfiguration({...config,STRIPE_MODE:'live',STRIPE_RESTRICTED_KEY:' \nrk_live_syntheticOnly\n '});
+ assert.equal(live.configured,true);assert.equal(live.enabled,false);
+});
 test('unsigned public webhooks cannot trigger database work or provider calls',async()=>{
  const config=env(),client=mockClient();let databaseCalls=0;
  config.DB={prepare(){databaseCalls++;throw Error('Unsigned webhook reached database');},batch(){databaseCalls++;throw Error('Unsigned webhook reached database');}};
