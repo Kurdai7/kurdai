@@ -51,3 +51,21 @@ test('video balance changes re-read server credits without creating checkout',as
  credits=200;w.document.dispatchEvent(new w.Event('kurdai-balance-change'));await wait();
  assert.match($('billingBalance').textContent,/200/);assert.equal(posts,0);
 });
+test('settled returns refresh credits and stop shadowing the next order',async t=>{
+ const first='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',second='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+ const {w,$,start}=setup(t,`https://kurdai.net/?checkout=returned&order=${first}&lang=en`);
+ let credits=0,posts=0;const orders=[];
+ w.fetch=async(path,opts)=>{
+  if(opts.method==='POST')posts++;
+  if(path.endsWith('/capabilities'))return response(cap);
+  if(path.endsWith('/balance'))return response({credits});
+  const id=new URL(path,w.location.href).searchParams.get('id');orders.push(id);credits=200;
+  return response({id,status:'paid'});
+ };
+ start();await wait();
+ assert.match($('billingBalance').textContent,/200/);
+ assert.equal(w.location.search,'?lang=en');
+ w.sessionStorage.setItem('kurdai_billing_order',JSON.stringify({accountId:'owner',mode:'live',orderId:second}));
+ $('billingRefresh').click();await wait();
+ assert.deepEqual(orders,[first,second]);assert.equal(w.sessionStorage.getItem('kurdai_billing_order'),null);assert.equal(posts,0);
+});
