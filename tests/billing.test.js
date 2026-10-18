@@ -147,3 +147,15 @@ test('webhook handles race with session persistence without overwriting paid sta
  assert.equal((await handleBilling(await signedEvent(client,session),config,null,{client})).status,200);
  assert.equal(config.DB.raw.prepare('SELECT status FROM billing_orders').get().status,'paid');
 });
+
+test('webhook accepts verified settlement while checkout is disabled',async()=>{
+ const config=env(),client=mockClient();
+ const created=await handleBilling(request('checkout',{requestId:crypto.randomUUID(),packId:'small'}),config,owner,{client});
+ assert.equal(created.status,201);
+ const session=client.sessions.values().next().value;
+ config.STRIPE_CHECKOUT_ENABLED='false';
+ session.payment_status='paid';session.status='complete';
+ const delivered=await handleBilling(await signedEvent(client,session),config,null,{client});
+ assert.equal(delivered.status,200);
+ assert.equal(config.DB.raw.prepare('SELECT COALESCE(SUM(amount),0) AS credits FROM billing_ledger').get().credits,200);
+});
