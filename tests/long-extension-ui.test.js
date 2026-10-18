@@ -54,3 +54,15 @@ test('a start response arriving after logout cannot poll or display another sess
   assert.ok(finish);$('logoutBtn').click();w.localStorage.setItem('kurdai_session_token','different-owner');finish();await wait();
   assert.equal(calls.some(p=>p.includes('/status')),false);assert.equal($('longVideo').hidden,true);
 });
+test('a lost start response refreshes the reserved balance without retrying generation',async t=>{
+ let starts=0,notifications=0;
+ const {w,$}=setup(t,async(path)=>{
+  if(path.endsWith('/start')){starts++;throw new TypeError('Synthetic lost response');}
+  return {ok:true,json:async()=>({id:sourceId,model:'gemini-omni-1.1-flash',outputSeconds:60,segments:12,
+   apiUSD:1,totalEUR:1,canStart:true,nativeAudio:true})};
+ });
+ w.confirm=()=>true;w.document.addEventListener('kurdai-balance-change',()=>notifications++);
+ $('longQuote').click();await wait();$('longStart').click();await wait();
+ assert.equal(starts,1);assert.equal(notifications,1);assert.equal($('longStart').disabled,true);
+ assert.equal($('longVideo').hidden,true);
+});

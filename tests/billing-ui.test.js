@@ -40,3 +40,14 @@ test('a delayed billing response cannot expose a previous account after logout',
  w.localStorage.removeItem('kurdai_session_token');w.document.dispatchEvent(new w.Event('kurdai-account-change'));
  resolve(response(cap));await wait();assert.equal($('billingPanel').hidden,true);assert.equal($('billingPacks').children.length,0);
 });
+test('video balance changes re-read server credits without creating checkout',async t=>{
+ const {w,$,start}=setup(t);let credits=200,posts=0,reads=0;
+ w.fetch=async(path,opts)=>{if(opts.method==='POST')posts++;
+  if(path.endsWith('/balance'))reads++;
+  return response(path.endsWith('/capabilities')?cap:{credits});};
+ start();await wait();assert.match($('billingBalance').textContent,/200/);
+ credits=106;w.document.dispatchEvent(new w.Event('kurdai-balance-change'));await wait();
+ assert.match($('billingBalance').textContent,/106/);assert.equal(reads,2);assert.equal(posts,0);
+ credits=200;w.document.dispatchEvent(new w.Event('kurdai-balance-change'));await wait();
+ assert.match($('billingBalance').textContent,/200/);assert.equal(posts,0);
+});

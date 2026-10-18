@@ -93,6 +93,7 @@ async function refresh(id) {
   try {
     const job = await call(`status?id=${encodeURIComponent(id)}`);
     if (session !== token() || version !== generation) return;
+    if(['ready','failed'].includes(job.status))document.dispatchEvent(new Event('kurdai-balance-change'));
     show(`${job.model==='synthetic-test-no-ai'?'تاقیکردنەوەی دەستکرد؛ AI و قسەکردنی کوردی نییە. خەرجی API: €0\n':''}${job.status} · ${job.completedSegments}/${job.totalSegments}\n${job.error || ''}\nخەرجیی API ـی تەرخانکراو (پسوڵە نییە): $${job.reservedAPIUSD.toFixed(3)}`);
     if (job.status === 'ready') {
       // Never send a bearer session to a URL supplied by an upstream service.
@@ -116,8 +117,14 @@ $('longStart').addEventListener('click', async () => {
   try {
     const job = await call('start', { id: quote.id, approved: true, approvedTotalEUR: quote.totalEUR,
       ...(quote.creditPrice ? {approvedCredits:quote.creditPrice} : {}) });
-    if(session===token() && version===generation)await refresh(job.id);
-  } catch (e) { if(session===token() && version===generation)show(e.message); }
+    if(session===token() && version===generation) {
+      document.dispatchEvent(new Event('kurdai-balance-change'));
+      await refresh(job.id);
+    }
+  } catch (e) { if(session===token() && version===generation) {
+    // A lost response can still leave a valid reservation. Re-read, never retry.
+    document.dispatchEvent(new Event('kurdai-balance-change'));show(e.message);
+  } }
 });
 
 $('longSmoke').addEventListener('click',async()=>{
