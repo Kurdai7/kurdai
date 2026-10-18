@@ -6,7 +6,7 @@
  let epoch=0,context=null,busy=false;
  const pendingKey='kurdai_billing_order';
  const returned=new URL(location.href).searchParams.get('order');
- const returnedOrder=/^[a-f0-9-]{36}$/.test(returned || '')?returned:null;
+ let returnedOrder=/^[a-f0-9-]{36}$/.test(returned || '')?returned:null;
  function pending(){try{return JSON.parse(sessionStorage.getItem(pendingKey));}catch{return null;}}
  function active(c){return c && c.epoch===epoch && token()===c.token;}
  async function api(path,c,options={}) {
@@ -42,10 +42,19 @@
    const own=saved?.accountId===c.accountId && saved?.mode===c.mode;
    if(returnedOrder || (own && saved.orderId)) {
     const order=await api('order?id='+encodeURIComponent(returnedOrder || saved.orderId),c);if(!active(c))return;
+    if(order.status==='paid') {
+     const settled=await api('balance',c);if(!active(c))return;
+     c.credits=settled.credits;render(c);
+    }
     $('billingMessage').textContent=order.status==='paid'?ku('پارەدان پشتڕاست کرایەوە.','Payment verified.'):
       order.status==='expired'?ku('کاتی پارەدانەکە بەسەرچووە.','Checkout expired.'):
       ku('پارەدان هێشتا پشتڕاست نەکراوەتەوە؛ دواتر دۆخەکە بپشکنە.','Payment is not verified yet; check its status again later.');
     if(own && saved.orderId===order.id && ['paid','expired'].includes(order.status))sessionStorage.removeItem(pendingKey);
+    if(order.id===returnedOrder && ['paid','expired'].includes(order.status)) {
+     returnedOrder=null;
+     const clean=new URL(location.href);clean.searchParams.delete('order');clean.searchParams.delete('checkout');
+     history.replaceState(history.state,'',clean.href);
+    }
    }
   }catch{if(active(c) && !panel.hidden)$('billingMessage').textContent=ku('پشکنین سەرکەوتوو نەبوو؛ پێش پارەدانێکی تر دۆخی پێشوو بپشکنە.','Status check failed; check the existing order before another payment.');}
  }
