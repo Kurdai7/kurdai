@@ -14,6 +14,7 @@ import { advance, save, load, publicLongJob } from './engine.js';
 import { advanceOmni } from './omni-engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
 import { advanceSmoke, SMOKE_MODEL } from './smoke.js';
+import {archiveFinalVideo,restoreFinalVideo} from './r2-video-archive.js';
 import { putR2Object, getR2Object, deleteR2Object } from './r2-storage.js';
 
 // Fixed, non-secret configuration summary for operators. Never log env values.
@@ -176,7 +177,18 @@ export async function createProcessor(config, dependencies = {}) {
         if (!job || job.owner !== owner) return send(res, { error: 'Not found.' }, 404);
         if (url.pathname === '/v1/status') return send(res, publicLongJob(job));
         if (url.pathname === '/v1/file' && job.status === 'ready') {
-          const file = join(root, job.id, 'final.mp4'); await access(file);
+          const file = join(root, job.id, 'final.mp4');
+          if (config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && job.r2VideoArchived === true) {
+            try { await access(file); }
+            catch {
+              try { await restoreFinalVideo(config,job.id,join(root,job.id)); }
+              catch (error) {
+                // Concurrent restore can create the file first; never overwrite it.
+                if (error.code !== 'EEXIST') throw error;
+              }
+            }
+          }
+          await access(file);
           res.writeHead(200, { 'Content-Type': 'video/mp4', 'Cache-Control': 'private, no-store' });
           createReadStream(file).on('error', () => res.destroy()).pipe(res); return;
         }
@@ -344,7 +356,8 @@ export async function createProcessor(config, dependencies = {}) {
   server.requestTimeout = 30000; server.headersTimeout = 15000;
   let timer, closed = false;
   const tick = () => serial(async () => {
-    const job = [...jobs.values()].find(j => j.status === 'running');
+    const job = [...jobs.values()].find(j => j.status === 'running') ||
+      (config.R2_VIDEO_ARCHIVE_ENABLED === 'true' ? [...jobs.values()].find(j => j.status === 'ready' && !j.r2VideoArchived && !j.r2ArchiveAttempted) : undefined);
     if (job?.input.model===SMOKE_MODEL) await advanceSmoke(job,join(root,job.id));
     else if (job && !job.inflight && !budgetAllows(policy(),job.quote.apiUSD)) {
       job.status='failed';job.error='API spending was disabled; no new provider request was sent.';
@@ -357,6 +370,20 @@ export async function createProcessor(config, dependencies = {}) {
       }
       await advanceOmni(job,join(root,job.id),config,dependencies.omni || {});
     } else if (job) await advance(job, join(root, job.id), config, dependencies);
+    // Archive only completed media; never enable or submit paid provider work.
+    if (job?.status === 'ready' && config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && !job.r2VideoArchived && !job.r2ArchiveAttempted) {
+      try {
+        await archiveFinalVideo(config,job.id,join(root,job.id,'final.mp4'));
+        job.r2VideoArchived = true;
+        job.r2ArchiveAttempted = true;
+        await save(job,join(root,job.id));
+      } catch {
+        // Do not falsely report durable video storage or leak storage credentials.
+        job.r2VideoArchived = false;
+        job.r2ArchiveAttempted = true;
+        await save(job,join(root,job.id));
+      }
+    }
   });
   return { server, tick,
     start() { timer = setInterval(() => tick().catch(() => {}), 15000); timer.unref(); },
