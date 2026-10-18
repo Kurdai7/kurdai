@@ -180,7 +180,13 @@ export async function createProcessor(config, dependencies = {}) {
           const file = join(root, job.id, 'final.mp4');
           if (config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && job.r2VideoArchived === true) {
             try { await access(file); }
-            catch { await restoreFinalVideo(config,job.id,join(root,job.id)); }
+            catch {
+              try { await restoreFinalVideo(config,job.id,join(root,job.id)); }
+              catch (error) {
+                // Concurrent restore can create the file first; never overwrite it.
+                if (error.code !== 'EEXIST') throw error;
+              }
+            }
           }
           await access(file);
           res.writeHead(200, { 'Content-Type': 'video/mp4', 'Cache-Control': 'private, no-store' });
