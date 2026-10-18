@@ -76,3 +76,23 @@ test('Omni UI handles unknown token costs, binds model and offers 5–70s withou
   $('longModel').value=model;$('longModel').dispatchEvent(new w.Event('change'));
   assert.equal($('longDuration').value,'60');assert.equal($('longLanguage').value,'none');dom.window.close();
 });
+
+test('pending native models preserve dialects, enforce actual resolutions and cannot request generation',async()=>{
+ const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
+ w.fetch=async(...args)=>{requests.push(args);throw new Error('Unexpected network request');};
+ w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
+ $('longLanguage').value='sorani';
+ for(const [model,resolution] of [['seedance-2.0-mini','720p'],['heygen-video-1','768p']]) {
+  $('longModel').value=model;$('longModel').dispatchEvent(new w.Event('change'));
+  assert.equal($('longLanguage').value,'sorani');assert.equal($('longResolution').value,resolution);
+  for(const value of ['460p','520p']) assert.equal([...$('longResolution').options].find(o=>o.value===value).disabled,true);
+  assert.ok(Number($('longDuration').value)<=15);
+  $('longQuote').click();await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/پەیوەست نەکراوە/);
+ }
+ assert.equal(requests.length,0);
+ $('longModel').value='wan2.2-i2v-flash';$('longModel').dispatchEvent(new w.Event('change'));
+ assert.equal($('longResolution').value,'720p');assert.equal($('longDuration').value,'60');
+ dom.window.close();
+});
