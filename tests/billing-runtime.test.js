@@ -11,10 +11,11 @@ test('actual Worker SDK signs and verifies an isolated test Checkout workflow ag
  const secret='whsec_syntheticOnlySecret',token='test-only-owner-session';
  const mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:bundle.outputFiles[0].text,
   compatibilityDate:'2026-09-25',d1Databases:['DB'],bindings:{VIDEO_TEST_EMAIL:'owner@example.test',
-   STRIPE_MODE:'test',STRIPE_RESTRICTED_KEY:'rk_test_syntheticOnly',STRIPE_WEBHOOK_SECRET:secret,STRIPE_CHECKOUT_ENABLED:'true',
+   STRIPE_MODE:'test',STRIPE_RESTRICTED_KEY:' \nrk_test_syntheticOnly\n ',STRIPE_WEBHOOK_SECRET:secret,STRIPE_CHECKOUT_ENABLED:'true',
    STRIPE_CREDIT_PACKS:JSON.stringify([{id:'testpack',priceId:'price_synthetic',amountCents:200,credits:200}])},
   outboundService:async request=>{
    const url=new URL(request.url);assert.equal(url.hostname,'api.stripe.com');
+   assert.equal(request.headers.get('authorization'),'Bearer rk_test_syntheticOnly');
    if(request.method==='POST') {
     providerCreates++;assert.equal(url.pathname,'/v1/checkout/sessions');
     assert.ok(request.headers.get('idempotency-key'));

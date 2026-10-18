@@ -17,6 +17,22 @@ export const BILLING_SCHEMA = [
 ];
 const json = (data,status=200) => Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
 const fail = (message,status=400) => {throw Object.assign(new Error(message),{status});};
+// Copy/paste can add edge whitespace. Never change key casing or internal bytes.
+const restrictedKey = env => typeof env.STRIPE_RESTRICTED_KEY==='string' ? env.STRIPE_RESTRICTED_KEY.trim() : '';
+function restrictedKeyStatus(env,mode) {
+  const raw=env.STRIPE_RESTRICTED_KEY,key=restrictedKey(env);
+  if(raw===undefined || raw===null)return 'missing';
+  if(typeof raw!=='string')return 'invalid_type';
+  if(!key)return 'empty';
+  if(key.includes('...') || key.includes('…'))return 'incomplete_or_masked';
+  if(/^sk_/.test(key))return 'standard_secret_key';
+  if(/^pk_/.test(key))return 'publishable_key';
+  if(/\s/.test(key))return 'internal_whitespace';
+  const match=/^rk_(test|live)_[A-Za-z0-9]+$/.exec(key);
+  if(!match)return 'invalid_format';
+  if(!['test','live'].includes(mode))return 'mode_not_configured';
+  return match[1]===mode?'format_valid':'mode_mismatch';
+}
 export function billingConfiguration(env) {
   const mode=env.STRIPE_MODE;
   let packs=[];
@@ -31,14 +47,14 @@ export function billingConfiguration(env) {
       ids.add(p.id);packs.push({id:p.id,priceId:p.priceId,amountCents:p.amountCents,credits:p.credits});
     }
   } catch {packs=[];}
-  const keyValid=['test','live'].includes(mode) && new RegExp(`^rk_${mode}_[A-Za-z0-9]+$`).test(env.STRIPE_RESTRICTED_KEY || '');
+  const keyStatus=restrictedKeyStatus(env,mode),keyValid=keyStatus==='format_valid';
   const missingConfiguration=[];
   if(!env.DB)missingConfiguration.push('DB');
   if(!['test','live'].includes(mode))missingConfiguration.push('STRIPE_MODE');
   if(!keyValid)missingConfiguration.push('STRIPE_RESTRICTED_KEY');
   if(!/^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || ''))missingConfiguration.push('STRIPE_WEBHOOK_SECRET');
   const liveApproved=mode==='test' || (env.STRIPE_LIVE_APPROVED==='true' && env.PUBLIC_RELEASE_VERIFIED==='true' && env.STRIPE_CATALOG_APPROVED==='true');
-  return {mode:['test','live'].includes(mode)?mode:null,packs,missingConfiguration,
+  return {mode:['test','live'].includes(mode)?mode:null,packs,missingConfiguration,keyStatus,
     configured:!!env.DB && keyValid && /^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || ''),
     enabled:env.STRIPE_CHECKOUT_ENABLED==='true' && keyValid && liveApproved && packs.length>0 && !!env.DB && /^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || '')};
 }
@@ -52,7 +68,7 @@ async function bodyText(request,limit) {
   return new TextDecoder('utf-8',{fatal:true}).decode(all);
 }
 function stripeClient(env) {
-  return new Stripe(env.STRIPE_RESTRICTED_KEY,{httpClient:Stripe.createFetchHttpClient(),maxNetworkRetries:0,timeout:20000});
+  return new Stripe(restrictedKey(env),{httpClient:Stripe.createFetchHttpClient(),maxNetworkRetries:0,timeout:20000});
 }
 function checkoutOrigin(requestUrl,mode) {
   const origin=new URL(requestUrl).origin;
@@ -99,7 +115,7 @@ export async function handleBilling(request,env,user,dependencies={}) {
   try {
     const allowed=!!user?.verified && (config.mode==='live' || (!!env.VIDEO_TEST_EMAIL && user.email.trim().toLowerCase()===env.VIDEO_TEST_EMAIL.trim().toLowerCase()));
     if(url.pathname==='/api/billing/capabilities' && request.method==='GET')
-      return json({mode:config.mode,configured:config.configured,missingConfiguration:config.missingConfiguration,enabled:config.enabled && allowed,
+      return json({diagnosticVersion:2,mode:config.mode,configured:config.configured,missingConfiguration:config.missingConfiguration,restrictedKeyStatus:config.keyStatus,enabled:config.enabled && allowed,
         accountId:allowed?user.id:null,
         publicPaymentsEnabled:config.enabled && config.mode==='live',
         packs:config.enabled && allowed?config.packs.map(({priceId,...p})=>p):[],currency:'eur'});
