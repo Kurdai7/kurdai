@@ -6,6 +6,7 @@ import {join} from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {createProcessor} from '../processor/server.js';
+import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';
 import {handleLong,longInput,quoteLong} from '../long-video.js';
 import {duration} from '../processor/media.js';
 import {OMNI_MODEL} from '../omni-cost.js';
@@ -40,7 +41,8 @@ for(const seconds of [5,60,70]) test(`Omni signed-in Worker HTTP, approval and v
     GEMINI_API_KEY:'dummy-not-a-real-key',OMNI_GENERATION_ENABLED:'true',OMNI_BILLING_VERIFIED:'true',LONG_DURABLE_STORAGE:'true',
     OMNI_INPUT_TOKENS_PER_SEGMENT:'10000',OMNI_TEXT_TOKENS_PER_SEGMENT:'1000',LONG_MEDIA_EUR:'0.01',LONG_FX_PERCENT:'0',LONG_VAT_PERCENT:'0'};
   let submissions=0;
-  const processor=await createProcessor(config,{omni:{client:{
+  Object.assign(config,durableTestFlags);
+  const processor=await createProcessor(config,{jobStorage:memoryJobStorage(),omni:{client:{
     async submit(input,previous) {
       assert.equal(previous,submissions?`v1_${submissions}`:undefined);
       assert.equal(input.dialogueText,submissions?'':body.dialogueText);

@@ -1,9 +1,16 @@
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import * as providers from './providers.js';
 import * as media from './media.js';
 import { segmentPrompt } from '../long-video.js';
+const remoteSaves=new Map();
+export function registerRemoteSave(root,callback) {
+  const key=resolve(root);if(remoteSaves.has(key))throw new Error('Persistence already registered');
+  remoteSaves.set(key,callback);return ()=>remoteSaves.delete(key);
+}
 export async function save(job, directory) {
+  // Durable acknowledgement must precede local save and any billable POST.
+  await remoteSaves.get(resolve(dirname(directory)))?.(job);
   await mkdir(directory, { recursive: true });
   const temporary = join(directory, 'job.json.tmp');
   await writeFile(temporary, JSON.stringify(job), { mode: 0o600 });

@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spendingPolicy, budgetAllows } from '../spending.js';
 import { createProcessor } from '../processor/server.js';
+import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';
 import { save } from '../processor/engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';
 
@@ -25,7 +26,8 @@ const configFor=root=>({LONG_DATA_DIR:root,LONG_VIDEO_SERVICE_SECRET:'test-only-
   GEMINI_API_KEY:'dummy',OMNI_GENERATION_ENABLED:'true',OMNI_BILLING_VERIFIED:'true',LONG_DURABLE_STORAGE:'true',
   OMNI_INPUT_TOKENS_PER_SEGMENT:'10000',OMNI_TEXT_TOKENS_PER_SEGMENT:'1000',LONG_MEDIA_EUR:'0.01',LONG_FX_PERCENT:'0',LONG_VAT_PERCENT:'0'});
 async function setup(t,config) {
-  const processor=await createProcessor(config,{omni:{client:{submit(){throw Error('Paid call forbidden');}}}});
+  Object.assign(config,durableTestFlags);
+  const processor=await createProcessor(config,{jobStorage:memoryJobStorage(),omni:{client:{submit(){throw Error('Paid call forbidden');}}}});
   await new Promise(r=>processor.server.listen(0,'127.0.0.1',r));
   t.after(async()=>{await new Promise(r=>processor.server.close(r));await processor.close();await rm(config.LONG_DATA_DIR,{recursive:true,force:true});});
   const origin=`http://127.0.0.1:${processor.server.address().port}`;

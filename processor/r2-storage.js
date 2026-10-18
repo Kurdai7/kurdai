@@ -15,7 +15,7 @@ function configOf(env) {
   return {endpoint,bucket,access:required(env.R2_ACCESS_KEY_ID,'R2_ACCESS_KEY_ID'),
     secret:required(env.R2_SECRET_ACCESS_KEY,'R2_SECRET_ACCESS_KEY')};
 }
-function requestParts(env,method,key,body) {
+function requestParts(env,method,key,body,conditions={}) {
   const cfg=configOf(env);
   if (!/^[a-zA-Z0-9][a-zA-Z0-9/_.-]{0,199}$/.test(key) || key.includes('..') || key.includes('//') || key.endsWith('/'))
     throw new Error('Invalid object key');
@@ -26,7 +26,9 @@ function requestParts(env,method,key,body) {
   const short=date.slice(0,8), scope=short+'/auto/s3/aws4_request';
   const payload=body || Buffer.alloc(0), digest=sha(payload);
   const headers={'host':url.host,'x-amz-content-sha256':digest,'x-amz-date':date};
-  const signed='host;x-amz-content-sha256;x-amz-date';
+  if(conditions.ifMatch) headers['if-match']=conditions.ifMatch;
+  if(conditions.ifNoneMatch) headers['if-none-match']=conditions.ifNoneMatch;
+  const signed=Object.keys(headers).sort().join(';');
   const canonical=[method,path,'',...Object.keys(headers).sort().map(k=>k+':'+headers[k]),'',signed,digest].join('\n');
   const stringToSign=['AWS4-HMAC-SHA256',date,scope,sha(canonical)].join('\n');
   const keyBytes=hmac(hmac(hmac(hmac('AWS4'+cfg.secret,short),'auto'),'s3'),'aws4_request');
@@ -34,21 +36,32 @@ function requestParts(env,method,key,body) {
   return {url,headers:{...headers,authorization:'AWS4-HMAC-SHA256 Credential='+cfg.access+'/'+scope+
     ', SignedHeaders='+signed+', Signature='+signature},payload};
 }
-export async function putR2Object(env,key,bytes) {
+export async function putR2Object(env,key,bytes,conditions={}) {
   const body=Buffer.from(bytes);
-  const req=requestParts(env,'PUT',key,body);
+  const req=requestParts(env,'PUT',key,body,conditions);
   const response=await fetch(req.url,{method:'PUT',headers:req.headers,body,redirect:'error',
     signal:AbortSignal.timeout(60000)});
   await response.body?.cancel();
-  if(!response.ok) throw new Error('R2 upload failed (HTTP '+response.status+')');
+  if(!response.ok) throw Object.assign(new Error('R2 upload failed (HTTP '+response.status+')'),{status:response.status});
+  return response.headers?.get('etag') || null;
 }
-export async function getR2Object(env,key) {
+export async function readR2Object(env,key,maxBytes=100*1024*1024) {
   const req=requestParts(env,'GET',key);
   const response=await fetch(req.url,{method:'GET',headers:req.headers,redirect:'error',
     signal:AbortSignal.timeout(60000)});
-  if(!response.ok) {await response.body?.cancel();throw new Error('R2 download failed (HTTP '+response.status+')');}
-  return Buffer.from(await response.arrayBuffer());
+  if(!response.ok) {await response.body?.cancel();throw Object.assign(new Error('R2 download failed (HTTP '+response.status+')'),{status:response.status});}
+  if(Number(response.headers?.get('content-length'))>maxBytes){await response.body?.cancel();throw new Error('R2 object exceeds size limit');}
+  let bytes;
+  if(response.body?.getReader) {
+    const reader=response.body.getReader(),chunks=[];let size=0;
+    for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;
+      if(size>maxBytes){await reader.cancel();throw new Error('R2 object exceeds size limit');}chunks.push(Buffer.from(value));}
+    bytes=Buffer.concat(chunks);
+  } else bytes=Buffer.from(await response.arrayBuffer());
+  if(bytes.length>maxBytes)throw new Error('R2 object exceeds size limit');
+  return {bytes,etag:response.headers?.get('etag') || null};
 }
+export const getR2Object = async(env,key,maxBytes)=>(await readR2Object(env,key,maxBytes)).bytes;
 export async function checkR2Object(env,key) {
   const req=requestParts(env,'HEAD',key);
   const response=await fetch(req.url,{method:'HEAD',headers:req.headers,redirect:'error',
