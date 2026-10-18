@@ -70,6 +70,7 @@
   finally{if(active(c)){busy=false;buttons();}}
  }
  document.addEventListener('kurdai-account-change',refresh);
+ document.addEventListener('kurdai-balance-change',refresh);
  window.addEventListener('storage',event=>{if(event.key==='kurdai_session_token')refresh();});
  $('billingRefresh').addEventListener('click',()=>{if(!busy)refresh();});
  $('languageToggle').addEventListener('click',()=>{if(context && active(context))render(context);});
