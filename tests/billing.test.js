@@ -59,13 +59,14 @@ test('key diagnostics distinguish absent, masked and mismatched keys without ret
   [undefined,'missing'],['','empty'],[{},'invalid_type'],
   ['rk_test_hidden...tail','incomplete_or_masked'],['rk_test_hidden…tail','incomplete_or_masked'],
   ['sk_test_syntheticOnly','standard_secret_key'],['pk_test_syntheticOnly','publishable_key'],
-  ['rk_test_synthetic Only','internal_whitespace'],['"rk_test_syntheticOnly"','invalid_format'],
+  ['rk_test_synthetic Only','format_valid'],['"rk_test_syntheticOnly"','invalid_format'],
   ['RK_test_syntheticOnly','invalid_format'],['rk_live_syntheticOnly','mode_mismatch'],
-  [' \nrk_test_syntheticOnly\n ','format_valid']
+  [' \nrk_test_syntheticOnly\n ','format_valid'],['rk_test_syn\nthetic\tOnly','format_valid'],
+  ['rk_test_syn\u00a0theticOnly','format_valid']
  ];
  for(const [key,status] of cases) {
   const data=await(await handleBilling(request('capabilities'),{...config,STRIPE_RESTRICTED_KEY:key},null)).json();
-  assert.equal(data.diagnosticVersion,2);assert.equal(data.restrictedKeyStatus,status);
+  assert.equal(data.diagnosticVersion,3);assert.equal(data.restrictedKeyStatus,status);
   assert.equal(data.configured,status==='format_valid');assert.equal(data.enabled,false);
   const encoded=JSON.stringify(data);
   assert.ok(!encoded.includes('syntheticOnly'));assert.ok(!encoded.includes(secret));

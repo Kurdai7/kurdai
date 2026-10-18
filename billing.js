@@ -17,8 +17,9 @@ export const BILLING_SCHEMA = [
 ];
 const json = (data,status=200) => Response.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
 const fail = (message,status=400) => {throw Object.assign(new Error(message),{status});};
-// Copy/paste can add edge whitespace. Never change key casing or internal bytes.
-const restrictedKey = env => typeof env.STRIPE_RESTRICTED_KEY==='string' ? env.STRIPE_RESTRICTED_KEY.trim() : '';
+// Stripe tokens contain no whitespace. Rejoin wrapped clipboard text without
+// changing case, punctuation or token characters. Never return the token.
+const restrictedKey = env => typeof env.STRIPE_RESTRICTED_KEY==='string' ? env.STRIPE_RESTRICTED_KEY.replace(/\s/g,'') : '';
 function restrictedKeyStatus(env,mode) {
   const raw=env.STRIPE_RESTRICTED_KEY,key=restrictedKey(env);
   if(raw===undefined || raw===null)return 'missing';
@@ -115,7 +116,7 @@ export async function handleBilling(request,env,user,dependencies={}) {
   try {
     const allowed=!!user?.verified && (config.mode==='live' || (!!env.VIDEO_TEST_EMAIL && user.email.trim().toLowerCase()===env.VIDEO_TEST_EMAIL.trim().toLowerCase()));
     if(url.pathname==='/api/billing/capabilities' && request.method==='GET')
-      return json({diagnosticVersion:2,mode:config.mode,configured:config.configured,missingConfiguration:config.missingConfiguration,restrictedKeyStatus:config.keyStatus,enabled:config.enabled && allowed,
+      return json({diagnosticVersion:3,mode:config.mode,configured:config.configured,missingConfiguration:config.missingConfiguration,restrictedKeyStatus:config.keyStatus,enabled:config.enabled && allowed,
         accountId:allowed?user.id:null,
         publicPaymentsEnabled:config.enabled && config.mode==='live',
         packs:config.enabled && allowed?config.packs.map(({priceId,...p})=>p):[],currency:'eur'});
