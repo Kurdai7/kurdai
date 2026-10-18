@@ -19,6 +19,34 @@ function updateDialogueSupport() {
       `${language === 'badini' ? 'Badini' : 'Sorani'} is requested separately. Actual speech and dialect accuracy are unverified. Native audio is included in Veo pricing; separate TTS is disabled.`);
 }
 $('language').addEventListener('change', updateDialogueSupport);
+$('recommendSorani').addEventListener('click', () => {
+  if (busy) return;
+  if ($('longPanel').hidden) {
+    $('dialectRecommendation').textContent=ku('بۆ Omni پێویستە ئەکاونتەکەت دەستگەیشتنی دروستکردنی ڤیدیۆی هەبێت. هیچ داواکارییەک نەنێردراوە.', 'Omni requires an account with video generation access. No request was sent.');
+    return;
+  }
+  if ($('longMode').value==='extension') {
+    $('dialectRecommendation').textContent=ku('لە Extension زمان و مۆدێلی ڤیدیۆی پێشوو دەپارێزرێن؛ بۆ سۆرانی ڤیدیۆی نوێ هەڵبژێرە.', 'Extension preserves the source dialect and model. Choose New Video for a new Sorani video.');
+    return;
+  }
+  $('longModel').value='gemini-omni-1.1-flash';
+  $('longModel').dispatchEvent(new Event('change'));
+  $('longLanguage').value='sorani';$('longLanguage').dispatchEvent(new Event('input'));
+  $('dialectRecommendation').textContent=ku('Omni بۆ سۆرانی هەڵبژێردرا. هیچ داواکارییەکی دروستکردن نەنێردراوە.', 'Omni selected for Sorani. No generation request was sent.');
+  $('longModel').focus();
+});
+$('recommendBadini').addEventListener('click', () => {
+  if (busy) return;
+  if ($('videoMode').value==='extend' || $('referenceImages').files.length) {
+    $('dialectRecommendation').textContent=ku('Veo Lite پشتگیری Reference Images یان Extension ناکات. وێنەکانت پارێزراون؛ ڤیدیۆی نوێ یان وێنەی سەرەتا هەڵبژێرە.', 'Veo Lite does not support reference images or extension. Your files are preserved; choose a new video or a first-frame image.');
+    return;
+  }
+  $('model').value='veo-3.1-lite-generate-preview';$('language').value='badini';
+  $('model').dispatchEvent(new Event('change'));$('language').dispatchEvent(new Event('input'));
+  $('dialectRecommendation').textContent=ku('Veo 3.1 Lite بۆ بادینی هەڵبژێردرا. پشتگیری API هێشتا تاقی نەکراوەتەوە؛ هیچ داواکارییەک نەنێردراوە.', 'Veo 3.1 Lite selected for Badini. API speech remains unverified; no request was sent.');
+  $('model').focus();
+});
+
 const errors = new Map([
   ['Too many attempts. Try again later.', 'هەوڵدانەوەکان زۆرن؛ دوای ١٥ خولەک دووبارە هەوڵ بدەرەوە.'],
   ['Email or password is incorrect.', 'ئیمەیڵ یان وشەی نهێنی هەڵەیە.'],

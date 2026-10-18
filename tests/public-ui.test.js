@@ -25,3 +25,22 @@ test('signed-in public accounts cannot expose owner generation and retain format
   assert.deepEqual(Array.from($('language').options,o=>o.value),['sorani','badini','none']);
   dom.window.close();
 });
+
+test('dialect recommendations choose existing routes without spending, exposing panels or changing extension inputs',async()=>{
+ const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id),calls=[];
+ w.fetch=async(path,options)=>{calls.push({path,options});return {ok:true,json:async()=>({})};};
+ w.HTMLMediaElement.prototype.pause=w.HTMLMediaElement.prototype.load=()=>{};
+ w.eval(readFileSync(new URL('../public/app.js',import.meta.url),'utf8'));
+ w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
+ await new Promise(resolve=>setTimeout(resolve,10));
+ $('recommendSorani').click();assert.equal($('longPanel').hidden,true);
+ $('recommendBadini').click();assert.equal($('model').value,'veo-3.1-lite-generate-preview');assert.equal($('language').value,'badini');
+ $('videoMode').value='extend';$('model').value='veo-3.1-fast-generate-preview';$('recommendBadini').click();
+ assert.equal($('videoMode').value,'extend');assert.equal($('model').value,'veo-3.1-fast-generate-preview');
+ $('longPanel').hidden=false;$('longMode').value='extension';$('longLanguage').value='badini';$('recommendSorani').click();assert.equal($('longLanguage').value,'badini');
+ $('longMode').value='new';$('longModel').value='heygen-video-1';$('longStart').disabled=false;$('recommendSorani').click();
+ assert.equal($('longModel').value,'gemini-omni-1.1-flash');assert.equal($('longLanguage').value,'sorani');assert.equal($('longStart').disabled,true);
+ assert.equal(calls.filter(c=>c.options?.method==='POST').length,0);
+ dom.window.close();
+});
