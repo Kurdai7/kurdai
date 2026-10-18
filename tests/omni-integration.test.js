@@ -23,6 +23,13 @@ test('Omni quotes distinguish output cost from unknown context and never borrow 
   assert.ok(Math.abs(long.firstSegmentVideoEUR+long.continuationVideoEUR-7.0952/1.1195)<1e-9);
   assert.equal(input.dialogueSegments[0],body.dialogueText);
   for(const language of ['sorani','badini']) assert.equal(longInput({...body,language}).language,language);
+  for(const duration of Array.from({length:14},(_,i)=>(i+1)*5))
+    for(const language of ['sorani','badini'])for(const aspectRatio of ['16:9','9:16']) {
+      const input=longInput({...body,duration,language,aspectRatio});
+      assert.equal(input.dialogueSegments.length,duration/5);
+      assert.equal(quoteLong(input).canStart,false);
+    }
+  for(const sourceJobId of ['', '../other','v1_provider_id'])assert.throws(()=>longInput({...body,mode:'extension',sourceJobId}));
   for(const duration of [0,6,71,'5'])assert.throws(()=>longInput({...body,duration}));
   assert.throws(()=>longInput({...body,resolution:'480p'}));
   assert.throws(()=>longInput({...body,referenceImages:['https://private.test/image']}));
@@ -33,20 +40,22 @@ test('Omni quotes distinguish output cost from unknown context and never borrow 
   }
 });
 
-for(const seconds of [5,60,70]) test(`Omni signed-in Worker HTTP, approval and voiced ${seconds}s MP4 work with synthetic generation only`,async t=>{
+for(const [seconds,language] of [[5,'sorani'],[10,'badini'],[60,'sorani'],[70,'sorani']]) test(`Omni signed-in Worker HTTP, approval and voiced ${seconds}s ${language} MP4 work with synthetic generation only`,async t=>{
   const root=await mkdtemp(join(tmpdir(),'kurdai-omni-http-')),run=promisify(execFile),source=join(root,'source.mp4');
   await run('ffmpeg',['-loglevel','error','-y','-f','lavfi','-i','color=c=blue:s=160x90:r=30','-f','lavfi','-i','sine=frequency=440:sample_rate=48000','-t','5','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac',source]);
   const bytes=await readFile(source);
   const config={BILLABLE_REQUESTS_ENABLED:'true',API_MAX_JOB_USD:'100',API_MAX_DAY_USD:'1000',LONG_DATA_DIR:join(root,'jobs'),LONG_VIDEO_SERVICE_SECRET:'synthetic-only-secret-'.repeat(3),
     GEMINI_API_KEY:'dummy-not-a-real-key',OMNI_GENERATION_ENABLED:'true',OMNI_BILLING_VERIFIED:'true',LONG_DURABLE_STORAGE:'true',
     OMNI_INPUT_TOKENS_PER_SEGMENT:'10000',OMNI_TEXT_TOKENS_PER_SEGMENT:'1000',LONG_MEDIA_EUR:'0.01',LONG_FX_PERCENT:'0',LONG_VAT_PERCENT:'0'};
-  let submissions=0;
+  const dialogueText=language==='badini'?'سلاڤ، بخێر هاتن.':body.dialogueText;
+  let submissions=0,nextDialogue=dialogueText;
   Object.assign(config,durableTestFlags);
-  const processor=await createProcessor(config,{jobStorage:memoryJobStorage(),omni:{client:{
+  const jobStorage=memoryJobStorage();
+  const processor=await createProcessor(config,{jobStorage,omni:{client:{
     async submit(input,previous) {
       assert.equal(previous,submissions?`v1_${submissions}`:undefined);
-      assert.equal(input.dialogueText,submissions?'':body.dialogueText);
-      assert.equal(input.language,'sorani');submissions++;return{id:`v1_${submissions}`,status:'completed'};
+      assert.equal(input.dialogueText,nextDialogue);nextDialogue='';
+      assert.equal(input.language,language);submissions++;return{id:`v1_${submissions}`,status:'completed'};
     },async poll(id){return{id,status:'completed'};},async media(){return bytes;}
   }}});
   await new Promise(resolve=>processor.server.listen(0,'127.0.0.1',resolve));
@@ -60,7 +69,7 @@ for(const seconds of [5,60,70]) test(`Omni signed-in Worker HTTP, approval and v
   const env={VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:config.LONG_VIDEO_SERVICE_SECRET};
   const request=(path,data)=>handleLong(new Request('https://kurdai.net/api/long/'+path,data?{method:'POST',body:JSON.stringify(data)}:{}),env,owner);
   const health=await(await request('capabilities')).json();assert.equal(health.models[OMNI_MODEL].canStart,true);assert.equal(health.paidProviderProbe,false);assert.equal(submissions,0);
-  const quote=await(await request('quote',{...body,duration:seconds,aspectRatio:seconds===70?'9:16':'16:9'})).json();
+  const quote=await(await request('quote',{...body,language,dialogueText,duration:seconds,aspectRatio:seconds===70?'9:16':'16:9'})).json();
   assert.equal(quote.model,OMNI_MODEL);assert.equal(quote.canStart,true);assert.equal(quote.outputSeconds,seconds);assert.equal(submissions,0);
   assert.equal((await request('start',{id:quote.id,approved:true,approvedTotalEUR:0})).status,400);
   assert.equal(submissions,0);
@@ -74,4 +83,28 @@ for(const seconds of [5,60,70]) test(`Omni signed-in Worker HTTP, approval and v
   const {stdout}=await run('ffprobe',['-v','error','-select_streams','a:0','-show_entries','stream=codec_name','-of','csv=p=0',target]);assert.match(stdout,/aac/);
   await request('start',approval);assert.equal(submissions,seconds/5);
   const other=await handleLong(new Request('https://kurdai.net/api/long/file?id='+quote.id),env,{...owner,id:'other',email:'other@example.test'});assert.equal(other.status,403);
+  if(seconds===5) {
+    assert.equal(job.canExtend,true);
+    assert.equal(JSON.stringify(job).includes('v1_1'),false);
+    const extension={...body,mode:'extension',sourceJobId:job.id,dialogueText:'بەردەوام دەبین.',previousInteractionId:'untrusted_context'};
+    assert.equal((await request('quote',{...extension,sourceJobId:'00000000-0000-0000-0000-000000000000'})).status,404);
+    assert.equal((await request('quote',{...extension,language:'badini'})).status,409);
+    assert.equal((await request('quote',{...extension,aspectRatio:'9:16'})).status,409);
+    const denied=await realFetch(origin+'/v1/quote',{method:'POST',headers:{authorization:'Bearer '+config.LONG_VIDEO_SERVICE_SECRET,'x-kurdai-owner':'another'},body:JSON.stringify(extension)});
+    assert.equal(denied.status,404);assert.equal(submissions,1);
+    const continued=await(await request('quote',extension)).json();
+    assert.equal(continued.canStart,true);assert.equal(submissions,1);
+    const ledger=JSON.parse((await jobStorage.read({},'processor/job-state-v1.json')).bytes);
+    const saved=ledger.jobs.find(j=>j.id===continued.id);
+    assert.equal(saved.input.sourceJobId,job.id);assert.equal(saved.previousInteractionId,'v1_1');
+    assert.equal(saved.input.identity,body.identity);
+    nextDialogue=extension.dialogueText;
+    const approved={id:continued.id,approved:true,approvedTotalEUR:continued.totalEUR};
+    assert.equal((await request('start',approved)).status,202);
+    for(let i=0;i<3;i++)await processor.tick();
+    const result=await(await request('status?id='+continued.id)).json();
+    assert.equal(result.status,'ready');assert.equal(result.sourceJobId,job.id);assert.equal(submissions,2);
+    await request('start',approved);assert.equal(submissions,2);
+    assert.equal((await request('file?id='+result.id)).status,200);
+  }
 });

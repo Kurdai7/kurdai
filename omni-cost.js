@@ -8,6 +8,10 @@ const number = value => ['string','number'].includes(typeof value) && String(val
   Number.isFinite(Number(value)) && Number(value)>=0 ? Number(value) : null;
 
 export function validateOmniInput(body) {
+  const mode=body.mode || 'new';
+  if(!['new','extension'].includes(mode)) throw new Error('جۆری دروستکردنی ڤیدیۆ دروست نییە.');
+  if(mode==='extension' && !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(body.sourceJobId || ''))
+    throw new Error('ڤیدیۆیەکی تەواوکراوی خۆت بۆ بەردەوامکردن هەڵبژێرە.');
   const prompt=String(body.prompt || '').trim(), identity=String(body.identity || '').trim();
   if (!prompt || prompt.length>10000) throw new Error('پرۆمپتێک لە ١ تا ١٠٠٠٠ پیت بنووسە.');
   if (identity.length>2000) throw new Error('ناسنامەی کارەکتەر زیاتر لە ٢٠٠٠ پیتە.');
@@ -39,7 +43,7 @@ export function validateOmniInput(body) {
   if(lines.some(line=>line.length>140)) throw new Error('هەر هێڵی دیالۆگ کورت بکەوە، تا ١٤٠ پیت بۆ دیمەنێک.');
   const dialogueSegments=Array(count).fill('');
   lines.forEach((line,i)=>{dialogueSegments[i]=line;});
-  return {model:OMNI_MODEL,prompt,identity,duration,aspectRatio:body.aspectRatio,resolution:'720p',language,dialogueText,
+  return {model:OMNI_MODEL,mode,...(mode==='extension'?{sourceJobId:body.sourceJobId}:{}),prompt,identity,duration,aspectRatio:body.aspectRatio,resolution:'720p',language,dialogueText,
     dialogueSegments,image:images[0] || null,referenceImages:images.slice(1)};
 }
 
@@ -65,7 +69,8 @@ export function quoteOmni(input,costs={}) {
   if(costs.omniBillingVerified!==true) blockers.push('ژمێریاری تۆکن و دەرئەنجامی بەردەوامکردنی Omni پێویستی بە پشتڕاستکردنەوە هەیە.');
   if(costs.omniEnabled!==true) blockers.push('دروستکردنی Omni لە سێرڤەر هێشتا داخراوە.');
   if(new Date().toISOString().slice(0,10)>OMNI_PRICES.expires) blockers.push('نرخەکان پێویستیان بە نوێکردنەوە هەیە.');
-  return {...OMNI_PRICES,model:OMNI_MODEL,outputSeconds:input.duration,segments:count,segmentSeconds:5,
+  return {...OMNI_PRICES,model:OMNI_MODEL,mode:input.mode || 'new',
+    ...(input.mode==='extension'?{sourceJobId:input.sourceJobId}:{}),outputSeconds:input.duration,segments:count,segmentSeconds:5,
     apiMinimumUSD:Number(minimum.toFixed(6)),apiMinimumEUR:minimum/OMNI_PRICES.usdPerEUR,
     serviceCostBreakdown:{currency:'EUR',outputOnly:true,
       firstSegmentVideoEUR:5*perSecond/OMNI_PRICES.usdPerEUR,

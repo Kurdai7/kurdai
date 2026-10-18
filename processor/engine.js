@@ -27,6 +27,10 @@ export function publicLongJob(job) {
     totalSegments: (job.input.duration ?? 70) / 5, duration: job.status === 'ready' ? (job.input.duration ?? 70) : null, quote: job.quote,
     error: job.error || null, approvedAt: job.approvedAt || null,
     reservedAPIUSD: job.reservedAPIUSD || 0,
+    canExtend:job.status==='ready' && job.input.model==='gemini-omni-1.1-flash' &&
+      typeof job.previousInteractionId==='string' && /^[A-Za-z0-9_-]{1,300}$/.test(job.previousInteractionId),
+    language:job.input.language || 'none',aspectRatio:job.input.aspectRatio,resolution:job.input.resolution,
+    ...(job.input.sourceJobId?{sourceJobId:job.input.sourceJobId}:{}),
     ...(job.input.model ? {providerUsage:job.providerUsage || {},invoiceReconciled:false} : {}),
     // Reserved is a conservative list-price exposure, not proof of provider billing.
     costStatus: job.input.model==='synthetic-test-no-ai' ? 'Synthetic media test; no provider calls or AI generation.' : 'List-price exposure only; reconcile the actual invoice.',

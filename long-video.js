@@ -6,6 +6,7 @@ export const LONG_PRICES = Object.freeze({ reviewed: '2026-10-14', fxDate: '2026
   usdPerEUR: 1.1195, wan480PerSecond: 0.015, wan720PerSecond: 0.036, firstImageUSD: 0.003 });
 export function longInput(body) {
   if (body?.model === OMNI_MODEL) return validateOmniInput(body);
+  if(body?.mode && body.mode!=='new') throw new Error('Video Extension requires Omni.');
   if (body?.model && body.model !== 'wan2.2-i2v-flash') throw new Error('Unknown video model.');
   const prompt = String(body.prompt || '').trim();
   if (!prompt || prompt.length > 650) throw new Error('Use a prompt of 1–650 characters for the economy model.');
