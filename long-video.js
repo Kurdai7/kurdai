@@ -1,3 +1,4 @@
+import {NATIVE_CANDIDATE_MODELS,validateNativeCandidate,quoteNativeCandidate} from './native-candidate-cost.js';
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
 import { audioPreview } from './dialogue.js';
 import { OMNI_MODEL, validateOmniInput, quoteOmni } from './omni-cost.js';
@@ -5,6 +6,7 @@ import { reserveVideoCredits, settleVideoCredits, videoCreditPrice } from './vid
 export const LONG_PRICES = Object.freeze({ reviewed: '2026-10-14', fxDate: '2026-10-14',
   usdPerEUR: 1.1195, wan480PerSecond: 0.015, wan720PerSecond: 0.036, firstImageUSD: 0.003 });
 export function longInput(body) {
+  if(NATIVE_CANDIDATE_MODELS.includes(body?.model)) return validateNativeCandidate(body);
   if (body?.model === OMNI_MODEL) return validateOmniInput(body);
   if(body?.mode && body.mode!=='new') throw new Error('Video Extension requires Omni.');
   if (body?.model && body.model !== 'wan2.2-i2v-flash') throw new Error('Unknown video model.');
@@ -36,6 +38,7 @@ export function longInput(body) {
   return input;
 }
 export function quoteLong(input, costs = {}) {
+  if(NATIVE_CANDIDATE_MODELS.includes(input?.model)) return quoteNativeCandidate(input);
   if (input.model === OMNI_MODEL) return quoteOmni(input,costs);
   const seconds = input.duration ?? 70;
   if (![60, 70].includes(seconds)) throw new Error('Choose 60 or 70 seconds.');

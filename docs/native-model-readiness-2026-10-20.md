@@ -36,3 +36,7 @@ Owner decision: offer Omni 1.1 Flash, PixVerse and Kling, one output with native
 - https://docs.platform.pixverse.ai/pixverse-api-pricing-2394995m0
 - https://ai.google.dev/gemini-api/docs/pricing
 - https://fal.ai/learn/tools/how-to-use-gemini-omni-flash-1-1
+
+## Follow-up: blocked quote integration
+
+`longInput` now validates the two candidate models and `quoteLong` returns non-payable, route-specific reference pricing. Both final EUR and actionable API totals remain null; canStart is always false regardless of legacy flags. PixVerse direct reference pricing is explicitly distinguished from the fal adapter price. Unsupported long duration, extension, references and mixed dialects are rejected. Docker includes the shared module. The public UI continues to block these routes until full integration and review. No paid job-engine activation is added.

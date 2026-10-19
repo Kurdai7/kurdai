@@ -6,7 +6,7 @@ RUN npm ci --omit=dev --ignore-scripts
 COPY spending.js ./spending.js
 COPY billing.js video-credits.js auth-guard.js ./
 COPY long-video.js ./long-video.js
-COPY omni-cost.js ./omni-cost.js
+COPY omni-cost.js native-candidate-cost.js ./
 COPY dialogue.js ./dialogue.js
 COPY ltx-evaluation.js ./ltx-evaluation.js
 COPY ltx-speech-adapter.js ./ltx-speech-adapter.js
