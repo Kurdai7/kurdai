@@ -61,7 +61,7 @@ $('longQuote').addEventListener('click', async () => {
   invalidate(); const button = $('longQuote'); button.disabled = true;
   const session = token(); const version = generation;
   try {
-    if(['seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes($('longModel').value)) throw new Error('ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ نرخ و پشتگیری دیالێکت پێویستیان بە پشتڕاستکردنەوە هەیە.');
+    if(['seedance-2.0-mini','heygen-video-1'].includes($('longModel').value)) throw new Error('ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ نرخ و پشتگیری دیالێکت پێویستیان بە پشتڕاستکردنەوە هەیە.');
     if($('longMode').value==='extension' && !$('longSource').value)throw new Error('ڤیدیۆیەکی تەواوکراو بۆ بەردەوامکردن هەڵبژێرە.');
     const files=Array.from($('longReference').files),images=[];
     if(files.length>($('longModel').value==='gemini-omni-1.1-flash'?3:1)) throw new Error('Omni تا سێ وێنە، Wan تەنها یەک وێنە پەسەند دەکات.');
@@ -80,7 +80,7 @@ $('longQuote').addEventListener('click', async () => {
     if($('longMode').value==='extension' && (data.mode!=='extension' || data.sourceJobId!==$('longSource').value))
       throw new Error('سێرڤەر بەردەوامکردنی ئەم ڤیدیۆیەی پشتڕاست نەکردەوە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
-    show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ٥ · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ لە دەرئەنجامی Omni دایە؛ کوالێتی زمان تاقی نەکراوەتەوە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
+    show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ${data.segmentSeconds || 5} · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ و ڤیدیۆ پێکەوەن؛ پشکنینی کوالێتی API هێشتا تەواو نییە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
     if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
     if(data.serviceCostBreakdown) {
       const b=data.serviceCostBreakdown;

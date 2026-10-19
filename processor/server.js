@@ -1,3 +1,5 @@
+import {advanceNative} from './native-engine.js';
+import {NATIVE_CANDIDATE_MODELS} from '../native-candidate-cost.js';
 // Separate FFmpeg host, NOT a Cloudflare Worker. One process per durable data directory.
 import http from 'node:http';
 import { spendingPolicy, budgetAllows, euroBudgetAllows, budgetMonth } from '../spending.js';
@@ -478,6 +480,8 @@ export async function createProcessor(config, dependencies = {}) {
         await save(job,join(root,job.id));return;
       }
       await advanceOmni(job,join(root,job.id),config,dependencies.omni || {});
+    } else if (job && NATIVE_CANDIDATE_MODELS.includes(job.input.model)) {
+      await advanceNative(job,join(root,job.id),config,dependencies.native || {});
     } else if (job) await advance(job, join(root, job.id), config, dependencies);
     // Archive only completed media; never enable or submit paid provider work.
     if (job?.status === 'ready' && config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && !job.r2VideoArchived && !job.r2ArchiveAttempted) {

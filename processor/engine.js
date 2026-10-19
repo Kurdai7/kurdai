@@ -24,7 +24,7 @@ const dataImage = async path => {
 };
 export function publicLongJob(job) {
   return { id: job.id, model:job.input.model || 'wan2.2-i2v-flash',status: job.status, completedSegments: job.completedSegments || 0,
-    totalSegments: (job.input.duration ?? 70) / 5, duration: job.status === 'ready' ? (job.input.duration ?? 70) : null, quote: job.quote,
+    totalSegments: ['pixverse-v6','kling-3.0-standard'].includes(job.input.model)?1:(job.input.duration ?? 70) / 5, duration: job.status === 'ready' ? (job.input.duration ?? 70) : null, quote: job.quote,
     error: job.error || null, approvedAt: job.approvedAt || null,
     reservedAPIUSD: job.reservedAPIUSD || 0,
     canExtend:job.status==='ready' && job.input.model==='gemini-omni-1.1-flash' &&
