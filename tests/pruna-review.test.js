@@ -31,3 +31,20 @@ test('two native-audio tasks archive separately and restart never resubmits',asy
  assert.deepEqual(result.results.map(x=>x.dialect),['sorani','badini']);
  for(const value of objects.values())assert.ok(!value.toString().includes('PRUNA_API_KEY'));
 });
+
+test('verified legacy 401 recovery is exclusive, audited and never retries a new rejection',async()=>{
+ const key='evaluations/pruna-native-2026-10-19/sorani.json';
+ const objects=new Map([[key,Buffer.from(JSON.stringify({dialect:'sorani',status:'reserved',model:'p-video-2-pro',speechVerified:false}))]]);
+ let submissions=0;
+ const io={get:async(e,k)=>{if(!objects.has(k))throw {status:404};return objects.get(k);},
+ put:async(e,k,b,c)=>{if(c?.ifNoneMatch&&objects.has(k))throw {status:412};objects.set(k,b);},
+ fetch:async()=>{submissions++;return {ok:false,status:401};}};
+ await assert.rejects(runPrunaReview(env,io),/Prior submission uncertain/);
+ assert.equal(submissions,0);
+ const recovery={...env,PRUNA_RECONCILE_401:'cb9991d-20261019T165529Z'};
+ await assert.rejects(runPrunaReview(recovery,io),/HTTP 401/);
+ await assert.rejects(runPrunaReview(recovery,io),/Prior submission uncertain/);
+ assert.equal(submissions,1);
+ assert.equal(JSON.parse(objects.get(key)).status,'authentication_rejected');
+ assert.equal(JSON.parse(objects.get('evaluations/pruna-native-2026-10-19/sorani.401-recovery.json')).httpStatus,401);
+});

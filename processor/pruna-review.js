@@ -24,16 +24,29 @@ export async function runPrunaReview(env,io={put:putR2Object,get:getR2Object,fet
   let state;
   try {state=JSON.parse(await io.get(env,key,100000));}
   catch(error){if(error.status!==404)throw new Error('Cannot read evaluation reservation.');}
+  let reconciled401=false;
+  // Operator reconciliation is limited to the single legacy Sorani rejection
+  // verified in Render at 2026-10-19T16:55:29.827842766Z (commit cb9991d).
+  // Keep its original reservation as an audit record and claim recovery once.
+  if(state?.status==='reserved' && !state.id && dialect==='sorani' &&
+   env.PRUNA_RECONCILE_401==='cb9991d-20261019T165529Z'){
+   await io.put(env,reviewKey(dialect,'401-recovery.json'),
+    Buffer.from(JSON.stringify({prior:state,httpStatus:401,source:'render-20261019T165529Z'})),{ifNoneMatch:'*'});
+   state=null;reconciled401=true;
+  }
   if(!state){
    // R2 conditional writes prevent retries across restarts and overlapping deploys.
    state={dialect,status:'reserved',model:'p-video-2-pro',speechVerified:false};
-   await io.put(env,key,Buffer.from(JSON.stringify(state)),{ifNoneMatch:'*'});
+   await io.put(env,key,Buffer.from(JSON.stringify(state)),reconciled401?{}:{ifNoneMatch:'*'});
    let response;
    try {response=await io.fetch(candidate.pruna.endpoint,{method:'POST',redirect:'error',
-    signal:AbortSignal.timeout(60000),headers:{apikey:env.PRUNA_API_KEY,Model:'p-video-2-pro',
+    signal:AbortSignal.timeout(60000),headers:{apikey:env.PRUNA_API_KEY.trim(),Model:'p-video-2-pro',
      'Content-Type':'application/json'},body:JSON.stringify(candidate.pruna.body)});}
    catch {throw new Error('Uncertain Pruna submission; reserved permanently, no retry.');}
-   if(!response.ok)throw new Error(`Pruna submission HTTP ${response.status}; no retry.`);
+   if(!response.ok){
+    if(response.status===401)await io.put(env,key,Buffer.from(JSON.stringify({...state,status:'authentication_rejected',httpStatus:401})));
+    throw new Error(`Pruna submission HTTP ${response.status}; no retry.`);
+   }
    const data=await response.json();
    if(typeof data.id!=='string'||!/^[A-Za-z0-9_-]{1,200}$/.test(data.id))throw new Error('Uncertain task ID; no retry.');
    state={...state,id:data.id,status:'submitted'};
@@ -44,7 +57,7 @@ export async function runPrunaReview(env,io={put:putR2Object,get:getR2Object,fet
   let completed;
   for(let attempt=0;attempt<180;attempt++){
    const response=await io.fetch(`https://api.pruna.ai/v1/predictions/status/${state.id}`,{
-    headers:{apikey:env.PRUNA_API_KEY},redirect:'error',signal:AbortSignal.timeout(30000)});
+    headers:{apikey:env.PRUNA_API_KEY.trim()},redirect:'error',signal:AbortSignal.timeout(30000)});
    if(!response.ok)throw new Error(`Pruna status HTTP ${response.status}; no new generation.`);
    const data=await response.json();
    if(data.status==='failed'||data.status==='canceled'||data.status==='cancelled')throw new Error('Pruna task failed; no retry.');
