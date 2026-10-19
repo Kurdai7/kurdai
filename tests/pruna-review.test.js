@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {reviewEnabled,runPrunaReview} from '../processor/pruna-review.js';
+import {reviewEnabled,runPrunaReview,probePrunaAuthentication} from '../processor/pruna-review.js';
 const env={PRUNA_FREE_EVALUATION:'2026-10-19-two-dialects',PRUNA_FREE_CREDIT_VERIFIED:'true',
  PRUNA_AUTO_TOPUP_DISABLED:'true',PRUNA_API_KEY:'fake',PRUNA_REVIEW_TOKEN:'x'.repeat(32)};
 test('review is private, explicit and expires after approval date',()=>{
@@ -47,4 +47,15 @@ test('verified legacy 401 recovery is exclusive, audited and never retries a new
  assert.equal(submissions,1);
  assert.equal(JSON.parse(objects.get(key)).status,'authentication_rejected');
  assert.equal(JSON.parse(objects.get('evaluations/pruna-native-2026-10-19/sorani.401-recovery.json')).httpStatus,401);
+});
+
+test('authentication diagnosis only performs a bounded GET and never leaks key',async()=>{
+ const result=await probePrunaAuthentication({...env,PRUNA_API_KEY:'  secret-value  '},async(url,request)=>{
+  assert.equal(request.method,'GET');assert.equal(request.headers.apikey,'secret-value');
+  assert.equal(request.redirect,'error');assert.ok(!request.body);
+  assert.ok(url.endsWith('/status/kurdai-auth-probe-does-not-exist'));
+  return {status:401};
+ });
+ assert.equal(result.authenticationRejected,true);assert.equal(result.edgeWhitespace,true);
+ assert.equal(result.generationSubmitted,false);assert.ok(!JSON.stringify(result).includes('secret-value'));
 });

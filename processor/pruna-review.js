@@ -72,7 +72,7 @@ export async function runPrunaReview(env,io={put:putR2Object,get:getR2Object,fet
   if(url.protocol!=='https:'||url.username||url.password||
    !(url.hostname==='api.pruna.ai'||url.hostname.endsWith('.pruna.ai')))
    throw new Error('Output host needs operator verification; no credentials sent.');
-  const media=await io.fetch(url.href,{redirect:'error',signal:AbortSignal.timeout(60000)});
+  const media=await io.fetch(url.href,{headers:url.hostname==='api.pruna.ai'?{apikey:env.PRUNA_API_KEY.trim()}:{},redirect:'error',signal:AbortSignal.timeout(60000)});
   if(!media.ok)throw new Error('Output download failed; task retained.');
   if(Number(media.headers.get('content-length'))>50*1024*1024)throw new Error('Output exceeds review size limit.');
   const chunks=[];let total=0;
@@ -96,4 +96,19 @@ async function inspectVideo(bytes){
    throw new Error('Output did not satisfy audio, resolution or duration review.');
   return {width:video.width,height:video.height,duration,audioPresent:true};
  }finally{await rm(directory,{recursive:true,force:true});}
+}
+
+// Read-only diagnostic: a missing prediction lookup cannot create media or incur generation cost.
+export async function probePrunaAuthentication(env,transport=fetch){
+ const raw=env.PRUNA_API_KEY||'';const key=raw.trim();
+ const diagnostic={keyConfigured:!!key,edgeWhitespace:raw!==key,
+  embeddedWhitespace:/\s/.test(key),wrappedInQuotes:/^[\"']|[\"']$/.test(key),
+  generationSubmitted:false};
+ if(!key)return {...diagnostic,error:'missing_key'};
+ try{
+  const response=await transport('https://api.pruna.ai/v1/predictions/status/kurdai-auth-probe-does-not-exist',
+   {method:'GET',headers:{apikey:key},redirect:'error',signal:AbortSignal.timeout(12000)});
+  await response.body?.cancel();
+  return {...diagnostic,httpStatus:response.status,authenticationRejected:response.status===401};
+ }catch{return {...diagnostic,error:'lookup_failed'};}
 }

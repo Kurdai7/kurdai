@@ -171,9 +171,13 @@ export async function createProcessor(config, dependencies = {}) {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
       const publicPath = new URL(req.url || '/', 'http://processor').pathname.replace(/\/+$/, '') || '/';
-      if(req.method==='GET' && /^\/pruna-review\/(sorani|badini)(\.mp4)?$/.test(publicPath)) {
+      if(req.method==='GET' && /^\/pruna-review\/(auth|sorani|badini)(\.mp4)?$/.test(publicPath)) {
         if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))
           return send(res,{error:'Unauthorized.'},401);
+        if(publicPath==='/pruna-review/auth'){
+          const {probePrunaAuthentication}=await import('./pruna-review.js');
+          return send(res,await probePrunaAuthentication(config));
+        }
         const [,dialect,video]=publicPath.match(/^\/pruna-review\/(sorani|badini)(\.mp4)?$/);
         const {reviewKey}=await import('./pruna-review.js');
         try {
