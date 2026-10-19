@@ -14,8 +14,8 @@ function invalidate() { generation++; quote = null; $('longStart').disabled = tr
 for (const id of ['prompt', 'aspectRatio', 'longModel', 'longMode', 'longSource', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
 function modelChanged() {
   invalidate();const selected=$('longModel').value;const omni=selected==='gemini-omni-1.1-flash';
-  const pending=['seedance-2.0-mini','heygen-video-1'].includes(selected);
-  $('longModelNotice').textContent=pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
+  const pending=['seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes(selected);
+  $('longModelNotice').textContent=['pixverse-v6','kling-3.0-standard'].includes(selected)?'سۆرانی لەلایەن خاوەنی KurdAI تاقی کراوەتەوە؛ پەیوەندی API هێشتا ئامادە نییە. بادینی پێویستی بە تاقیکردنەوە هەیە.':pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
   for(const option of $('longDuration').options) option.disabled=pending ? Number(option.value)>15 : (!omni && !['60','70'].includes(option.value));
   for(const option of $('longResolution').options) option.disabled=!(['720p',...(selected==='wan2.2-i2v-flash'?['480p']:[]),...(selected==='heygen-video-1'?['768p']:[])].includes(option.value)) || (selected==='heygen-video-1' && option.value==='720p');
   if(omni || pending) $('longResolution').value=selected==='heygen-video-1'?'768p':'720p';
@@ -61,7 +61,7 @@ $('longQuote').addEventListener('click', async () => {
   invalidate(); const button = $('longQuote'); button.disabled = true;
   const session = token(); const version = generation;
   try {
-    if(['seedance-2.0-mini','heygen-video-1'].includes($('longModel').value)) throw new Error('ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ نرخ و پشتگیری دیالێکت پێویستیان بە پشتڕاستکردنەوە هەیە.');
+    if(['seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes($('longModel').value)) throw new Error('ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ نرخ و پشتگیری دیالێکت پێویستیان بە پشتڕاستکردنەوە هەیە.');
     if($('longMode').value==='extension' && !$('longSource').value)throw new Error('ڤیدیۆیەکی تەواوکراو بۆ بەردەوامکردن هەڵبژێرە.');
     const files=Array.from($('longReference').files),images=[];
     if(files.length>($('longModel').value==='gemini-omni-1.1-flash'?3:1)) throw new Error('Omni تا سێ وێنە، Wan تەنها یەک وێنە پەسەند دەکات.');

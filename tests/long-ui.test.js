@@ -83,7 +83,7 @@ test('pending native models preserve dialects, enforce actual resolutions and ca
  w.fetch=async(...args)=>{requests.push(args);throw new Error('Unexpected network request');};
  w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
  $('longLanguage').value='sorani';
- for(const [model,resolution] of [['seedance-2.0-mini','720p'],['heygen-video-1','768p']]) {
+ for(const [model,resolution] of [['seedance-2.0-mini','720p'],['heygen-video-1','768p'],['pixverse-v6','720p'],['kling-3.0-standard','720p']]) {
   $('longModel').value=model;$('longModel').dispatchEvent(new w.Event('change'));
   assert.equal($('longLanguage').value,'sorani');assert.equal($('longResolution').value,resolution);
   for(const value of ['460p','520p']) assert.equal([...$('longResolution').options].find(o=>o.value===value).disabled,true);
