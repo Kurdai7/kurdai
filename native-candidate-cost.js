@@ -14,17 +14,16 @@ export function validateNativeCandidate(body) {
  return {model:body.model,mode:'new',prompt,dialogueText,identity,language:body.language,duration:body.duration,resolution:'720p',aspectRatio:body.aspectRatio};
 }
 export function quoteNativeCandidate(input) {
- // Direct PixVerse is only a reference price: the prepared adapter uses fal.
- // Never price one provider using another provider's cheaper rate.
+ // Published fal route rates; these are not final account invoices or EUR quotes.
  const kling=input.model==='kling-3.0-standard';
  return {model:input.model,outputSeconds:input.duration,segments:1,segmentSeconds:input.duration,
   reviewed:'2026-10-20',nativeAudio:true,audio:true,
   audioQuote:{native:true,language:input.language},
   apiUSD:null,apiEUR:null,totalEUR:null,mediaEUR:null,fxEUR:null,vatEUR:null,retailMarkupEUR:0,
-  providerReference:{provider:kling?'fal':'PixVerse direct',resolution:'720p',audio:true,
-   outputUSD:input.duration*(kling?0.126:12/225),invoiceVerified:false,appliesToPreparedAdapter:kling},
+  providerReference:{provider:'fal',resolution:'720p',audio:true,
+   outputUSD:Number((input.duration*(kling?0.126:0.06)).toFixed(6)),invoiceVerified:false,appliesToPreparedAdapter:true},
   canStart:false,blockedReasons:[
-   'پەیوەندی مۆدێلەکە بە سیستەمی کار و کرێدیت هێشتا تەواو نییە؛ هیچ پارەیەک وەرناگیرێت.',
+   'چالاککردنی API و تاقیکردنەوەی ڤیدیۆی ڕاستەقینە هێشتا ماون؛ هیچ پارەیەک وەرناگیرێت.',
    'نرخی کۆتایی، باج و خەرجییە زیادەکان پشتڕاست نەکراونەتەوە.',
    ...(kling?['ڕێگای Kling لە fal بۆ پاراستنی دیالۆگی کوردی هێشتا پەسەند نەکراوە.']:[]),
    ...(input.language==='badini'?['کوالێتی بادینی پێویستی بە گوێگرتن لە تاقیکردنەوەی جیاواز هەیە.']:[])

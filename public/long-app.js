@@ -81,6 +81,7 @@ $('longQuote').addEventListener('click', async () => {
       throw new Error('سێرڤەر بەردەوامکردنی ئەم ڤیدیۆیەی پشتڕاست نەکردەوە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
     show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ${data.segmentSeconds || 5} · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ و ڤیدیۆ پێکەوەن؛ پشکنینی کوالێتی API هێشتا تەواو نییە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
+    if(data.providerReference) show(`${$('longCost').textContent}\nنرخی بڵاوکراوەی ${data.providerReference.provider}: $${data.providerReference.outputUSD.toFixed(3)} بۆ دەرئەنجامی ڤیدیۆ بە دەنگ؛ باج و خەرجییەکانی تر لەخۆ ناگرێت. ئەمە نرخی کۆتایی فرۆشتن نییە.`);
     if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
     if(data.serviceCostBreakdown) {
       const b=data.serviceCostBreakdown;

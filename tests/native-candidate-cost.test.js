@@ -8,7 +8,8 @@ test('candidate quotes never become payable even with all legacy spending flags 
   const i=longInput({...base,model,language});const q=quoteLong(i,{enabled:true,omniEnabled:true,omniConfigured:true,mediaEUR:0,fxPercent:0,vatPercent:0});
   assert.equal(q.canStart,false);assert.equal(q.totalEUR,null);assert.equal(q.apiUSD,null);
   assert.equal(q.audioQuote.language,language);assert.ok(nativeCandidateRequest(i).body.prompt.includes(base.dialogueText));
-  assert.equal(q.providerReference.appliesToPreparedAdapter,model==='kling-3.0-standard');
+  assert.equal(q.providerReference.appliesToPreparedAdapter,true);assert.equal(q.providerReference.provider,'fal');
+  assert.equal(q.providerReference.outputUSD,model==='kling-3.0-standard'?0.63:0.3);
  }
  assert.throws(()=>longInput({...base,model:'pixverse-v6',duration:70}),/3–15/);
  assert.throws(()=>longInput({...base,model:'pixverse-v6',image:'https://example.com/image'}),/references/);

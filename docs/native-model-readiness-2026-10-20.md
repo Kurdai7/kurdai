@@ -44,3 +44,7 @@ Owner decision: offer Omni 1.1 Flash, PixVerse and Kling, one output with native
 ## Single-request job engine preparation
 
 `processor/native-engine.js` is wired into processor dispatch and persists before its sole billable submission, polls the stored task, checks native dimensions/audio/duration, and saves one final MP4 through the existing archival path. It never invokes silent Wan or separate TTS. Unknown submissions are terminal uncertain. Public progress treats each candidate as one clip, including non-five-second durations. The UI now permits free blocked quotes for these two choices; totals remain null and start remains disabled. Candidate quote generation is intentionally still non-payable: real provider qualifications and final account pricing have not been supplied. No environment flag or credential was changed.
+
+## Exact prepared PixVerse route pricing reviewed
+
+The fal PixVerse V6 text-to-video page now explicitly publishes 720p audio-on at USD .060/second (5s USD .30), as distinct from the direct PixVerse USD .2666667/5s reference. Candidate providerReference now uses the actual prepared fal route and never substitutes direct pricing. These remain published output estimates, not account invoices or inclusive EUR customer prices. Source: https://fal.ai/models/fal-ai/pixverse/v6/text-to-video . Latest complete regression: 129 tests passed; final UI change additionally passed its focused tests. No real API generation, Stripe Live, merge or production deploy.
