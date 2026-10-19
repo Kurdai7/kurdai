@@ -1,0 +1,33 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {reviewEnabled,runPrunaReview} from '../processor/pruna-review.js';
+const env={PRUNA_FREE_EVALUATION:'2026-10-19-two-dialects',PRUNA_FREE_CREDIT_VERIFIED:'true',
+ PRUNA_AUTO_TOPUP_DISABLED:'true',PRUNA_API_KEY:'fake',PRUNA_REVIEW_TOKEN:'x'.repeat(32)};
+test('review is private, explicit and expires after approval date',()=>{
+ assert.equal(reviewEnabled(env,new Date('2026-10-19')),true);
+ assert.equal(reviewEnabled(env,new Date('2026-10-20')),false);
+ assert.equal(reviewEnabled({...env,PRUNA_FREE_CREDIT_VERIFIED:'false'},new Date('2026-10-19')),false);
+});
+test('durable reservation prevents duplicate submission after network uncertainty',async()=>{
+ const objects=new Map();let submissions=0;
+ const io={get:async(e,k)=>{if(!objects.has(k))throw {status:404};return objects.get(k);},
+ put:async(e,k,b,c)=>{if(c?.ifNoneMatch&&objects.has(k))throw {status:412};objects.set(k,b);},
+ fetch:async()=>{submissions++;throw new Error('network');}};
+ await assert.rejects(runPrunaReview(env,io),/Uncertain/);
+ await assert.rejects(runPrunaReview(env,io),/Prior submission uncertain/);
+ assert.equal(submissions,1);
+});
+test('two native-audio tasks archive separately and restart never resubmits',async()=>{
+ const objects=new Map();let submissions=0;
+ const io={get:async(e,k)=>{if(!objects.has(k))throw {status:404};return objects.get(k);},
+ put:async(e,k,b,c)=>{if(c?.ifNoneMatch&&objects.has(k))throw {status:412};objects.set(k,b);},
+ wait:async()=>{},inspect:async()=>({width:1344,height:768,duration:5,audioPresent:true}),
+ fetch:async(url,request={})=>{
+  if(request.method==='POST'){submissions++;const body=JSON.parse(request.body);assert.equal(body.input.mode,'cost');return {ok:true,json:async()=>({id:`id${submissions}`})};}
+  if(String(url).includes('/status/'))return {ok:true,json:async()=>({status:'succeeded',generation_url:'https://api.pruna.ai/v1/predictions/delivery/test.mp4'})};
+  return {ok:true,headers:new Headers(),body:(async function*(){yield Buffer.from('test-video');})()};}};
+ const result=await runPrunaReview(env,io);assert.equal(result.results.length,2);
+ await runPrunaReview(env,io);assert.equal(submissions,2);
+ assert.deepEqual(result.results.map(x=>x.dialect),['sorani','badini']);
+ for(const value of objects.values())assert.ok(!value.toString().includes('PRUNA_API_KEY'));
+});

@@ -171,6 +171,17 @@ export async function createProcessor(config, dependencies = {}) {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
       const publicPath = new URL(req.url || '/', 'http://processor').pathname.replace(/\/+$/, '') || '/';
+      if(req.method==='GET' && /^\/pruna-review\/(sorani|badini)(\.mp4)?$/.test(publicPath)) {
+        if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))
+          return send(res,{error:'Unauthorized.'},401);
+        const [,dialect,video]=publicPath.match(/^\/pruna-review\/(sorani|badini)(\.mp4)?$/);
+        const {reviewKey}=await import('./pruna-review.js');
+        try {
+          const bytes=await getR2Object(config,reviewKey(dialect,video?'mp4':'json'),video?50*1024*1024:100000);
+          res.writeHead(200,{'Content-Type':video?'video/mp4':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+          return res.end(bytes);
+        }catch{return send(res,{error:'Evaluation output is not ready.'},404);}
+      }
       if (req.method === 'GET' && publicPath === '/readiness') {
         // Public diagnostic exposes no keys, billing details, owner IDs or file paths.
         const flags=configurationStatus(config);
@@ -522,6 +533,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     })();
   }
   processor.start();
+  if(process.env.PRUNA_FREE_EVALUATION==='2026-10-19-two-dialects') {
+    import('./pruna-review.js').then(({runPrunaReview})=>runPrunaReview(process.env))
+      .then(result=>console.info('pruna_review',JSON.stringify(result)))
+      .catch(error=>console.error('pruna_review_stopped',error.message.replace(/[^a-zA-Z0-9 .;:_-]/g,'').slice(0,180)));
+  }
   const shutdown = () => processor.server.close(async () => { await processor.close(); process.exit(0); });
   process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 }
