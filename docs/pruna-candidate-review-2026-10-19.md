@@ -30,3 +30,6 @@ Runware's terms permit commercial outputs for Partner Models subject to model ru
 
 HeyGen also documents single-model native audio and a 768p promotion at USD0.015/s through October (USD0.075/5s). Kurdish remains unverified; the earlier web-app TTS response does not constitute a test of this separate native-video API. It is not activated or claimed as a Kurdish solution.
 - https://www.heygen.com/ai-video-api
+
+## Account verification later on 2026-10-19
+Authenticated Runware Playground displayed USD0.025/second for 768p Cost; account balance USD0.05, spend USD0, automatic top-up disabled. The published promotion was not shown in the account. The preflight now uses the regular USD0.125/5s estimate even on review day. Historical promotion rows above are retained for provenance, not current account quotes. Two samples would be USD0.25 before extras. Do not submit under the EUR0.20 total authorization without a verified inclusive bound. No generation submitted.

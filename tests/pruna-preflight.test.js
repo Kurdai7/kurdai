@@ -11,7 +11,8 @@ test('Pruna candidate preparation stays offline, preserves separate dialects and
   assert.equal(c.runware.width,1344);assert.equal(c.runware.height,768);
   assert.equal(c.pruna.body.input.duration,5);assert.equal(c.pruna.body.input.mode,'cost');
   assert.equal(c.pruna.body.input.prompt_upsampler,'off');assert.equal(c.runware.settings.promptUpsampling,'off');
-  assert.equal(c.estimatesUSD.directFiveSeconds,0.125);assert.equal(c.estimatesUSD.runwareFiveSeconds,0.0625);
+  assert.equal(c.estimatesUSD.directFiveSeconds,0.125);assert.equal(c.estimatesUSD.runwareFiveSeconds,0.125);
+  assert.equal(plan.runwarePromotionApplied,false);
   assert.ok(c.estimatesUSD.runwareFifteenSeconds>c.estimatesUSD.runwareFiveSeconds);
  }
  assert.notEqual(plan.cases[0].runware.taskUUID,plan.cases[1].runware.taskUUID);
