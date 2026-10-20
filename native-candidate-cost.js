@@ -49,6 +49,8 @@ function quotePruna(input,costs) {
   ownerReview:{soraniAccepted:true,apiVerified:true,apiTransportVerified:true,apiSpeechVerified:true,badiniVerified:false,observedMedia:{width:1280,height:704,duration:4.041667,audioPresent:true}},
   providerReference:{provider:'Pruna',resolution:'720p',outputUSD:Number((input.duration*.015).toFixed(6)),audio:true,draft:true,invoiceVerified:false,appliesToPreparedAdapter:true,billedBy:'returned whole seconds'},
   segmentDurations:Array.from({length:segments},(_,i)=>Math.min(20,input.duration-i*20)),nativeResolution:'704p',resolutionLabel:'1280×704 (native)',estimateSeconds,blockedReasons:[]};
+ // The published USD estimate is available even when EUR conversion and activation are missing.
+ result.apiUSD=Number((estimateSeconds*.015).toFixed(6));
  const missing=[];
  if(costs.prunaEnabled!==true||costs.prunaConfigured!==true)missing.push('پەیوەندی P-Video 2 بۆ داواکارییە گشتییەکان چالاک نەکراوە.');
  if(costs.durableStorage!==true)missing.push('پاشەکەوتکردنی پارێزراوی داواکاری و ڤیدیۆ هێشتا پشتڕاست نەکراوەتەوە.');
