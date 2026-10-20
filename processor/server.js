@@ -1,3 +1,5 @@
+import {advanceNative} from './native-engine.js';
+import {NATIVE_CANDIDATE_MODELS} from '../native-candidate-cost.js';
 // Separate FFmpeg host, NOT a Cloudflare Worker. One process per durable data directory.
 import http from 'node:http';
 import { spendingPolicy, budgetAllows, euroBudgetAllows, budgetMonth } from '../spending.js';
@@ -9,7 +11,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StringDecoder } from 'node:string_decoder';
 import { longInput, quoteLong } from '../long-video.js';
-import { verifyRuntime, duration } from './media.js';
+import { verifyRuntime, duration, lastFrame } from './media.js';
 import { advance, save, load, publicLongJob, registerRemoteSave } from './engine.js';
 import {openJobStore} from './r2-job-store.js';
 import { advanceOmni } from './omni-engine.js';
@@ -155,7 +157,7 @@ export async function createProcessor(config, dependencies = {}) {
   };
   // One bounded, global write counter also protects disk and FFmpeg from repeated requests.
   let writeWindow = 0, writes = 0;
-  const costs = input => ({ mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
+  const costs = input => ({ prunaEnabled:config.PRUNA_NATIVE_ENABLED==='true'&&config.NATIVE_GENERATION_ENABLED==='true',prunaConfigured:!!config.PRUNA_API_KEY,prunaBillingVerified:config.NATIVE_BILLING_VERIFIED==='true',usdPerEUR:config.LONG_USD_PER_EUR,mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
     vatPercent: config.LONG_VAT_PERCENT,
     omniInputTokensPerSegment: config.OMNI_INPUT_TOKENS_PER_SEGMENT,
     omniTextTokensPerSegment: config.OMNI_TEXT_TOKENS_PER_SEGMENT,
@@ -171,6 +173,33 @@ export async function createProcessor(config, dependencies = {}) {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
       const publicPath = new URL(req.url || '/', 'http://processor').pathname.replace(/\/+$/, '') || '/';
+      if((req.method==='GET'||req.method==='POST') && publicPath==='/pruna-manual-review') {
+        if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))return send(res,{error:'Unauthorized.'},401);
+        const {manualPrunaReview}=await import('./pruna-manual-review.js');
+        try{return send(res,await manualPrunaReview(config,req.method==='POST'?'submit':'status',req.headers['x-kurdai-review-approval']));}
+        catch{return send(res,{error:'Evaluation stopped. Inspect saved task; no automatic generation retry.'},409);}
+      }
+      if(req.method==='GET' && publicPath==='/pruna-manual-review.mp4') {
+        if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))return send(res,{error:'Unauthorized.'},401);
+        const {manualReviewKey}=await import('./pruna-manual-review.js');
+        try{const bytes=await getR2Object(config,manualReviewKey.replace('.json','.mp4'),64*1024*1024);res.writeHead(200,{'Content-Type':'video/mp4','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(bytes);}
+        catch{return send(res,{error:'Evaluation output is not ready.'},404);}
+      }
+      if(req.method==='GET' && /^\/pruna-review\/(auth|sorani|badini)(\.mp4)?$/.test(publicPath)) {
+        if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))
+          return send(res,{error:'Unauthorized.'},401);
+        if(publicPath==='/pruna-review/auth'){
+          const {probePrunaAuthentication}=await import('./pruna-review.js');
+          return send(res,await probePrunaAuthentication(config));
+        }
+        const [,dialect,video]=publicPath.match(/^\/pruna-review\/(sorani|badini)(\.mp4)?$/);
+        const {reviewKey}=await import('./pruna-review.js');
+        try {
+          const bytes=await getR2Object(config,reviewKey(dialect,video?'mp4':'json'),video?50*1024*1024:100000);
+          res.writeHead(200,{'Content-Type':video?'video/mp4':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+          return res.end(bytes);
+        }catch{return send(res,{error:'Evaluation output is not ready.'},404);}
+      }
       if (req.method === 'GET' && publicPath === '/readiness') {
         // Public diagnostic exposes no keys, billing details, owner IDs or file paths.
         const flags=configurationStatus(config);
@@ -383,13 +412,18 @@ export async function createProcessor(config, dependencies = {}) {
           if(input.mode==='extension') {
             const source=jobs.get(input.sourceJobId);
             if(!source || source.owner!==owner) return send(res,{error:'Extension source not found.'},404);
-            if(!publicLongJob(source).canExtend) return send(res,{error:'Choose a completed Omni video with saved continuation context.'},409);
+            if(source.input.model!==input.model || !publicLongJob(source).canExtend) return send(res,{error:'Choose a completed video from the same model.'},409);
             if(input.language!==source.input.language || input.aspectRatio!==source.input.aspectRatio || input.resolution!==source.input.resolution)
               return send(res,{error:'Keep the source video dialect, aspect ratio and resolution for extension.'},409);
             // Resolve provider context only from the owner's durable record.
             // Caller-supplied interaction IDs are never trusted or forwarded.
             previousInteractionId=source.previousInteractionId;
             input.identity=source.input.identity;
+            if(input.model==='p-video-2'){
+              const sourceDir=join(root,source.id),sourceFile=join(sourceDir,'final.mp4'),frame=join(sourceDir,'extension-frame.jpg');
+              try{await access(sourceFile);}catch{if(!source.r2VideoArchived||!source.finalSHA256)return send(res,{error:'Source video is not available.'},409);await restoreFinalVideo(config,source.id,sourceDir,source.finalSHA256);}
+              await lastFrame(sourceFile,frame);input.image='data:image/jpeg;base64,'+(await readFile(frame)).toString('base64');
+            }
           }
           const costQuote = quote(input);
           // Keep at most ten unstarted quotes, including uploaded reference images.
@@ -463,6 +497,8 @@ export async function createProcessor(config, dependencies = {}) {
         await save(job,join(root,job.id));return;
       }
       await advanceOmni(job,join(root,job.id),config,dependencies.omni || {});
+    } else if (job && NATIVE_CANDIDATE_MODELS.includes(job.input.model)) {
+      await advanceNative(job,join(root,job.id),config,dependencies.native || {});
     } else if (job) await advance(job, join(root, job.id), config, dependencies);
     // Archive only completed media; never enable or submit paid provider work.
     if (job?.status === 'ready' && config.R2_VIDEO_ARCHIVE_ENABLED === 'true' && !job.r2VideoArchived && !job.r2ArchiveAttempted) {
@@ -522,6 +558,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     })();
   }
   processor.start();
+  if(process.env.PRUNA_FREE_EVALUATION==='2026-10-19-two-dialects') {
+    import('./pruna-review.js').then(({runPrunaReview})=>runPrunaReview(process.env))
+      .then(result=>console.info('pruna_review',JSON.stringify(result)))
+      .catch(error=>console.error('pruna_review_stopped',error.message.replace(/[^a-zA-Z0-9 .;:_-]/g,'').slice(0,180)));
+  }
   const shutdown = () => processor.server.close(async () => { await processor.close(); process.exit(0); });
   process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 }

@@ -44,3 +44,21 @@ test('dialect recommendations choose existing routes without spending, exposing 
  assert.equal(calls.filter(c=>c.options?.method==='POST').length,0);
  dom.window.close();
 });
+
+test('public model selector exposes Pruna controls without enabling the legacy paid route or submitting',async()=>{
+ const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id),calls=[];
+ w.fetch=async(path,options)=>{calls.push({path,options});return {ok:true,json:async()=>({})};};
+ w.HTMLMediaElement.prototype.pause=w.HTMLMediaElement.prototype.load=()=>{};
+ w.eval(readFileSync(new URL('../public/app.js',import.meta.url),'utf8'));
+ w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
+ await new Promise(resolve=>setTimeout(resolve,10));
+ assert.equal($('longPanel').hidden,true);
+ $('model').value='p-video-2';$('model').dispatchEvent(new w.Event('change'));
+ assert.equal($('longPanel').hidden,false);assert.equal($('longModel').value,'p-video-2');assert.equal($('longResolution').value,'704p');
+ assert.equal($('generate').disabled,true);assert.equal($('nativeQuote').disabled,true);assert.equal($('longStart').disabled,true);
+ assert.match($('model').selectedOptions[0].textContent,/Pruna/);
+ $('generate').click();$('nativeQuote').click();
+ assert.equal(calls.filter(c=>c.options?.method==='POST').length,0);
+ dom.window.close();
+});

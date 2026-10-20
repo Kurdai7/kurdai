@@ -1,3 +1,5 @@
+import {canUseVideoWorkflow} from './video-access.js';
+import {NATIVE_CANDIDATE_MODELS,validateNativeCandidate,quoteNativeCandidate} from './native-candidate-cost.js';
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
 import { audioPreview } from './dialogue.js';
 import { OMNI_MODEL, validateOmniInput, quoteOmni } from './omni-cost.js';
@@ -5,6 +7,7 @@ import { reserveVideoCredits, settleVideoCredits, videoCreditPrice } from './vid
 export const LONG_PRICES = Object.freeze({ reviewed: '2026-10-14', fxDate: '2026-10-14',
   usdPerEUR: 1.1195, wan480PerSecond: 0.015, wan720PerSecond: 0.036, firstImageUSD: 0.003 });
 export function longInput(body) {
+  if(NATIVE_CANDIDATE_MODELS.includes(body?.model)) return validateNativeCandidate(body);
   if (body?.model === OMNI_MODEL) return validateOmniInput(body);
   if(body?.mode && body.mode!=='new') throw new Error('Video Extension requires Omni.');
   if (body?.model && body.model !== 'wan2.2-i2v-flash') throw new Error('Unknown video model.');
@@ -36,6 +39,7 @@ export function longInput(body) {
   return input;
 }
 export function quoteLong(input, costs = {}) {
+  if(NATIVE_CANDIDATE_MODELS.includes(input?.model)) return quoteNativeCandidate(input,costs);
   if (input.model === OMNI_MODEL) return quoteOmni(input,costs);
   const seconds = input.duration ?? 70;
   if (![60, 70].includes(seconds)) throw new Error('Choose 60 or 70 seconds.');
@@ -69,8 +73,8 @@ export async function handleLong(request, env, user) {
   const json = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'private, no-store' } });
   try {
     if (!user) return json({ error: 'Please log in.' }, 401);
-    if (!user.verified || !env.VIDEO_TEST_EMAIL || user.email.trim().toLowerCase() !== env.VIDEO_TEST_EMAIL.trim().toLowerCase())
-      return json({ error: 'Only the verified owner can use the 70-second workflow.' }, 403);
+    if (!canUseVideoWorkflow(env,user))
+      return json({ error: 'Video generation is not available for this account.' }, 403);
     const url = new URL(request.url);
     const missingConfiguration = ['LONG_VIDEO_SERVICE_URL','LONG_VIDEO_SERVICE_SECRET'].filter(k => !env[k]);
     const configured = !missingConfiguration.length;

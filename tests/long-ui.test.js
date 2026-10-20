@@ -96,3 +96,30 @@ test('pending native models preserve dialects, enforce actual resolutions and ca
  assert.equal($('longResolution').value,'720p');assert.equal($('longDuration').value,'60');
  dom.window.close();
 });
+
+
+test('new native choices can request only a free blocked quote without enabling start',async()=>{
+ const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
+ w.localStorage.setItem('kurdai_session_token','owner');
+ w.fetch=async(path,options)=>{requests.push(path);const input=JSON.parse(options.body);return {ok:true,json:async()=>({model:input.model,outputSeconds:input.duration,segments:1,segmentSeconds:input.duration,nativeAudio:true,apiUSD:null,totalEUR:null,canStart:false,blockedReasons:['API integration pending']})};};
+ w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
+ for(const model of ['pixverse-v6','kling-3.0-standard']){
+  $('longModel').value=model;$('longModel').dispatchEvent(new w.Event('change'));$('longDuration').value='10';$('longQuote').click();
+  await new Promise(resolve=>setTimeout(resolve,10));
+  assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/API integration pending/);assert.match($('longCost').textContent,/1 × 10/);
+ }
+ assert.equal(requests.length,2);assert.ok(requests.every(p=>p.endsWith('/quote')));dom.window.close();
+});
+test('P-Video 2 allows 20 seconds, preserves Badini, and exposes a blocked free quote',async()=>{
+ const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
+ w.HTMLMediaElement.prototype.pause=w.HTMLMediaElement.prototype.load=()=>{};
+ w.fetch=async(path,options)=>{requests.push(path);const i=JSON.parse(options.body);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,segmentSeconds:i.duration,nativeAudio:true,canStart:false,totalEUR:null,apiUSD:null,blockedReasons:['Pruna authentication HTTP 401']})};};
+ w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
+ $('longLanguage').value='badini';$('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
+ assert.equal($('longLanguage').value,'badini');assert.equal($('longDuration').querySelector('[value="20"]').disabled,false);
+ assert.equal($('longDuration').querySelector('[value="25"]').disabled,false);assert.equal($('longDuration').querySelector('[value="70"]').disabled,false);
+ $('longDuration').value='20';$('longQuote').click();await new Promise(r=>setTimeout(r,20));
+ assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/401/);assert.deepEqual(requests,['/api/long/quote']);dom.window.close();
+});

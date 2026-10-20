@@ -65,3 +65,16 @@ test('proxy: server quote controls debit; lost response holds funds; status reco
   state='failed';const status=()=>handleLong(new Request('https://kurdai.net/api/long/status?id='+id),env,user);
   assert.equal((await status()).status,200);await status();assert.equal(await balance(db),100);
 });
+test('verified public workflow uses live purchased credits and cannot bypass cost approval',async t=>{
+ const db=await setup(t),id=crypto.randomUUID(),quote={canStart:true,totalEUR:.1,apiUSD:.09};
+ await db.prepare("INSERT INTO billing_ledger VALUES ('live-purchase','other','live',100,'stripe_purchase',1)").run();
+ const env={DB:db,PUBLIC_VIDEO_ENABLED:'true',PUBLIC_RELEASE_VERIFIED:'true',VIDEO_PURCHASED_CREDITS_ENABLED:'true',STRIPE_MODE:'live',VIDEO_CREDITS_PER_EUR:'100',LONG_VIDEO_SERVICE_URL:'https://processor.example',LONG_VIDEO_SERVICE_SECRET:'x'.repeat(32)};
+ const original=globalThis.fetch;t.after(()=>{globalThis.fetch=original;});let starts=0;
+ globalThis.fetch=async(u,o)=>{assert.equal(o.headers['X-KurdAI-Owner'],'other');if(new URL(u).pathname==='/v1/start')starts++;return Response.json({id,status:'quoted',quote});};
+ const request=approvedCredits=>new Request('https://kurdai.net/api/long/start',{method:'POST',body:JSON.stringify({id,approved:true,approvedTotalEUR:.1,approvedCredits})});
+ const user={id:'other',verified:true,email:'customer@example.com'};
+ assert.equal((await handleLong(request(1),env,user)).status,409);assert.equal(starts,0);
+ assert.equal((await handleLong(request(10),env,user)).status,200);assert.equal(starts,1);
+ const row=await db.prepare("SELECT SUM(amount) AS n FROM billing_ledger WHERE user_id='other' AND mode='live'").first();assert.equal(row.n,90);
+ assert.equal((await handleLong(request(10),env,{...user,verified:false})).status,403);assert.equal(starts,1);
+});

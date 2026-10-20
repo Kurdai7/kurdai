@@ -1,3 +1,4 @@
+import {KURDISH_WARDROBE} from './kurdish-wardrobe.js';
 // Gemini Omni transport. Not enabled by the website until its separate quote/
 // approval integration is complete. Never reuse the silent Wan price for this model.
 export const OMNI_MODEL = 'gemini-omni-1.1-flash';
@@ -32,6 +33,7 @@ export function omniRequest(input, previousInteractionId) {
   const text = [previousInteractionId
     ? 'Extend the previously generated video from its exact final frame. Output only the new continuation. Preserve the same camera motion, setting, faces, clothes, proportions and character voices. No cut, reset, black frame or recap.'
     : 'Create a stylized animated video. Preserve the supplied character identities and reference designs. No live-action people.',
+    KURDISH_WARDROBE,
     `Generate ${input.segmentSeconds} seconds.`,
     `Character identities: ${String(input.identity || '').slice(0,2000)}`,
     `Story action: ${input.prompt.trim()}`, language,
