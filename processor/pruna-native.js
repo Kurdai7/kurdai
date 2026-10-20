@@ -1,3 +1,4 @@
+import {KURDISH_WARDROBE} from './kurdish-wardrobe.js';
 // Native P-Video 2 transport. The caller reserves durably before the sole POST.
 import {writeFile} from 'node:fs/promises';
 import {validateNativeCandidate} from '../native-candidate-cost.js';
@@ -6,7 +7,7 @@ export function prunaNativeRequest(raw) {
  const i=validateNativeCandidate(raw);
  if(i.model!=='p-video-2')throw new Error('Unknown Pruna native model.');
  const dialect=i.language==='sorani'?'Sorani Kurdish (Central Kurdish)':'Badini Kurdish (Behdini, Duhok dialect)';
- return {input:{prompt:`Stylized 3D cartoon animation, one continuous shot, no live action. ${i.prompt}\nCharacter identities: ${i.identity}\nSpeak only ${dialect}. Say exactly, without translation: ${i.dialogueText}\nAccurate lip sync. No other dialogue, subtitles or background music.`,duration:i.duration,resolution:'720p',aspect_ratio:i.aspectRatio,fps:24,draft:true,save_audio:true,prompt_upsampling:false,disable_safety_filter:false}};
+ return {input:{prompt:`Stylized 3D cartoon animation, one continuous shot, no live action. ${i.prompt}\n${KURDISH_WARDROBE}\nCharacter identities: ${i.identity}\nSpeak only ${dialect}. Say exactly, without translation: ${i.dialogueText}\nAccurate lip sync. No other dialogue, subtitles or background music.`,duration:i.duration,resolution:'720p',aspect_ratio:i.aspectRatio,fps:24,draft:true,save_audio:true,prompt_upsampling:false,disable_safety_filter:false}};
 }
 function id(value) {
  if(typeof value!=='string'||!/^[A-Za-z0-9_-]{1,200}$/.test(value))throw new Error('Invalid saved Pruna task; do not resubmit.');

@@ -1,3 +1,4 @@
+import {KURDISH_WARDROBE} from './kurdish-wardrobe.js';
 // Private preparation only. Not registered as a public generation provider.
 // The job engine must persist a submission reservation before using this transport.
 const routes = Object.freeze({
@@ -14,7 +15,7 @@ export function nativeCandidateRequest(input) {
  if(!['sorani','badini'].includes(input.language)) throw new Error('Choose one Kurdish dialect.');
  if(typeof input.prompt!=='string' || !input.prompt.trim() || typeof input.dialogueText!=='string' || !input.dialogueText.trim()) throw new Error('A scene and exact spoken dialogue are required.');
  const dialect=input.language==='sorani'?'Sorani Kurdish (Central Kurdish)':'Badini Kurdish (Behdini, Duhok dialect)';
- const prompt=`Stylized cartoon animation, one continuous shot, no live action. ${input.prompt.trim()}\nCharacter identities: ${String(input.identity || '').trim()}\nSpeak only ${dialect}. Say exactly, without translation: ${input.dialogueText.trim()}\nAccurate lip sync. No other dialogue, no subtitles, no background music.`;
+ const prompt=`Stylized cartoon animation, one continuous shot, no live action. ${input.prompt.trim()}\n${KURDISH_WARDROBE}\nCharacter identities: ${String(input.identity || '').trim()}\nSpeak only ${dialect}. Say exactly, without translation: ${input.dialogueText.trim()}\nAccurate lip sync. No other dialogue, no subtitles, no background music.`;
  if(Buffer.byteLength(prompt,'utf8')>2048) throw new Error('Combined scene and dialogue exceed 2048 UTF-8 bytes.');
  const body={prompt,aspect_ratio:input.aspectRatio,enable_safety_checker:true};
  if(input.model==='pixverse-v6') Object.assign(body,{duration:input.duration,resolution:'720p',generate_audio_switch:true,generate_multi_clip_switch:false,thinking_type:'disabled'});
