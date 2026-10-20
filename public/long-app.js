@@ -87,7 +87,7 @@ $('longQuote').addEventListener('click', async () => {
     if($('longMode').value==='extension' && (data.mode!=='extension' || data.sourceJobId!==$('longSource').value))
       throw new Error('سێرڤەر بەردەوامکردنی ئەم ڤیدیۆیەی پشتڕاست نەکردەوە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
-    show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segmentDurations?data.segmentDurations.join(' + '):`${data.segments} × ${data.segmentSeconds || 5}`} · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ و ڤیدیۆ پێکەوەن؛ پشکنینی کوالێتی API هێشتا تەواو نییە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
+    show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segmentDurations?data.segmentDurations.join(' + '):`${data.segments} × ${data.segmentSeconds || 5}`} · ${$('longResolution').value} · ${data.nativeAudio?(data.ownerReview?.apiSpeechVerified && data.audioQuote?.language==='sorani'?'دەنگ و ڤیدیۆ پێکەوەن؛ دەنگی سۆرانی لە تاقیکردنەوەی API پەسەند کراوە':'دەنگ و ڤیدیۆ پێکەوەن؛ کوالێتی ئەم زمانە هێشتا پەسەند نەکراوە'):'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
     if(data.providerReference) show(`${$('longCost').textContent}\nنرخی بڵاوکراوەی ${data.providerReference.provider}: $${data.providerReference.outputUSD.toFixed(3)} بۆ دەرئەنجامی ڤیدیۆ بە دەنگ؛ باج و خەرجییەکانی تر لەخۆ ناگرێت. ئەمە نرخی کۆتایی فرۆشتن نییە.`);
     if(data.limitations?.length)show(`${$('longCost').textContent}\n${data.limitations.join('\n')}`);
     if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
@@ -177,6 +177,10 @@ $('longReadiness').addEventListener('click', async () => {
       }
     }
     if (session !== token() || version !== generation) return;
+    if(state.processorReachable && $('longModel').value==='p-video-2') {
+      show('سێرڤەر: بەردەستە.\\nPruna P-Video 2: پەیوەندی API و دەنگی سۆرانی پێشتر تاقی کراونەتەوە و پەسەند کراون. کوالێتی بادینی هێشتا پەسەند نەکراوە.\\nبۆ پشکنینی نرخی ئەم داواکارییە و ڕێکخستنە ماوەکان، «پیشاندانی خەرجی — بێ پارە» هەڵبژێرە. پەیوەستبوونی سێرڤەر بە تەنها واتای چالاکبوونی دروستکردن نییە.\\nهیچ داواکارییەکی ڤیدیۆ نەنێردراوە.');
+      return;
+    }
     if(state.processorReachable && $('longModel').value==='gemini-omni-1.1-flash') {
       const model=state.models?.['gemini-omni-1.1-flash'];
       show(`سێرڤەر: بەردەستە.\nOmni 1.1 Flash: ${model ? (model.canStart?'ڕێکخراوە؛ تاقیکردنەوەی AI هێشتا نەکراوە.':(model.blockedReasons || []).join('\n')):'سێرڤەر پێویستی بە Deploy ـی کۆدی نوێی Omni هەیە.'}\nسۆرانی و بادینی جیاوازن؛ کوالێتیی دەنگ و جێگیری کارەکتەر هێشتا بە API تاقی نەکراونەتەوە.\nهیچ داواکارییەکی ڤیدیۆ نەنێردراوە.`);
