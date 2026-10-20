@@ -11,7 +11,10 @@ async function call(path, body) {
   const data = await response.json(); if (!response.ok) throw Object.assign(new Error((data.error || 'داواکاری سەرکەوتوو نەبوو.') + (data.code ? ` [${data.code} · v${data.diagnosticVersion || 3}]` : '')), {code: data.code}); return data;
 }
 function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
-for (const id of ['prompt', 'aspectRatio', 'longModel', 'longMode', 'longSource', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
+for (const id of ['prompt', 'longPrompt', 'aspectRatio', 'longModel', 'longMode', 'longSource', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
+// Both editors represent the same scene; keep existing text across model changes.
+$('prompt').addEventListener('input',()=>{ $('longPrompt').value=$('prompt').value; });
+$('longPrompt').addEventListener('input',()=>{ $('prompt').value=$('longPrompt').value; });
 function modelChanged() {
   invalidate();const selected=$('longModel').value;const omni=selected==='gemini-omni-1.1-flash';
   const pruna=selected==='p-video-2';
@@ -64,6 +67,9 @@ $('longQuote').addEventListener('click', async () => {
   try {
     if(['seedance-2.0-mini','heygen-video-1'].includes($('longModel').value)) throw new Error('ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ نرخ و پشتگیری دیالێکت پێویستیان بە پشتڕاستکردنەوە هەیە.');
     if($('longMode').value==='extension' && !$('longSource').value)throw new Error('ڤیدیۆیەکی تەواوکراو بۆ بەردەوامکردن هەڵبژێرە.');
+    const scene=($('longPrompt').value || $('prompt').value).trim();
+    if($('longModel').value==='p-video-2' && !scene) { $('longPrompt').focus(); throw new Error('خانەی «وەسفی دیمەنی ڤیدیۆ» پڕ بکەرەوە؛ دیالۆگەکەت پارێزراوە.'); }
+    if($('longModel').value==='p-video-2' && !$('longDialogue').value.trim()) { $('longDialogue').focus(); throw new Error('خانەی «دیالۆگی ڕاستەقینە» پڕ بکەرەوە؛ وەسفی دیمەنەکەت پارێزراوە.'); }
     const files=Array.from($('longReference').files),images=[];
     if(files.length>($('longModel').value==='gemini-omni-1.1-flash'?3:1)) throw new Error('Omni تا سێ وێنە، Wan تەنها یەک وێنە پەسەند دەکات.');
     for (const file of files) {
@@ -72,7 +78,7 @@ $('longQuote').addEventListener('click', async () => {
     }
     if(session!==token() || version!==generation)return;
     const data = await call('quote', { model:$('longModel').value,mode:$('longMode').value,
-      ...($('longMode').value==='extension'?{sourceJobId:$('longSource').value}:{}),prompt: $('prompt').value, aspectRatio: $('aspectRatio').value,
+      ...($('longMode').value==='extension'?{sourceJobId:$('longSource').value}:{}),prompt: scene, aspectRatio: $('aspectRatio').value,
       resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: $('longIdentity').value, image:images[0] || null,referenceImages:images.slice(1),
       language: $('longLanguage').value, dialogueText: $('longDialogue').value });
     if (session !== token() || version !== generation) return;
