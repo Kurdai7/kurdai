@@ -173,6 +173,18 @@ export async function createProcessor(config, dependencies = {}) {
     try {
       // Loopback health check returns no owner data, job IDs, configuration or keys.
       const publicPath = new URL(req.url || '/', 'http://processor').pathname.replace(/\/+$/, '') || '/';
+      if((req.method==='GET'||req.method==='POST') && publicPath==='/pruna-manual-review') {
+        if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))return send(res,{error:'Unauthorized.'},401);
+        const {manualPrunaReview}=await import('./pruna-manual-review.js');
+        try{return send(res,await manualPrunaReview(config,req.method==='POST'?'submit':'status',req.headers['x-kurdai-review-approval']));}
+        catch{return send(res,{error:'Evaluation stopped. Inspect saved task; no automatic generation retry.'},409);}
+      }
+      if(req.method==='GET' && publicPath==='/pruna-manual-review.mp4') {
+        if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))return send(res,{error:'Unauthorized.'},401);
+        const {manualReviewKey}=await import('./pruna-manual-review.js');
+        try{const bytes=await getR2Object(config,manualReviewKey.replace('.json','.mp4'),64*1024*1024);res.writeHead(200,{'Content-Type':'video/mp4','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(bytes);}
+        catch{return send(res,{error:'Evaluation output is not ready.'},404);}
+      }
       if(req.method==='GET' && /^\/pruna-review\/(auth|sorani|badini)(\.mp4)?$/.test(publicPath)) {
         if(!config.PRUNA_REVIEW_TOKEN || !timingSafeEqual(hash(req.headers.authorization || ''),hash(`Bearer ${config.PRUNA_REVIEW_TOKEN}`)))
           return send(res,{error:'Unauthorized.'},401);
