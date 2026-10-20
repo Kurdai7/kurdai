@@ -23,7 +23,7 @@ test('P-Video 2 keeps both dialects and published Draft pricing without authoriz
  for(const language of ['sorani','badini']){
   const i=longInput({...base,model:'p-video-2',language,duration:20});
   const q=quoteLong(i,{enabled:true,omniEnabled:true,omniConfigured:true});
-  assert.equal(q.canStart,false);assert.equal(q.totalEUR,null);assert.equal(q.apiUSD,null);
+  assert.equal(q.canStart,false);assert.equal(q.totalEUR,null);assert.equal(q.apiUSD,.315);
   assert.equal(q.providerReference.outputUSD,.3);assert.equal(q.providerReference.draft,true);
   assert.equal(q.providerReference.provider,'Pruna');assert.equal(q.ownerReview.apiVerified,true);
   assert.equal(q.audioQuote.language,language);assert.equal(i.dialogueText,base.dialogueText);
@@ -45,4 +45,13 @@ test('Pruna retail quote requires reviewed flags, native resolution and explicit
 test('long Sorani dialogue cannot be squeezed into a short Pruna clip',()=>{
  assert.throws(()=>longInput({...base,model:'p-video-2',duration:4,dialogueText:'سڵاو هاوڕێیان چۆنن هیوادارم هەمووتان باش و تەندروست بن ئەمڕۆ ڕۆژێکی جوانە'}),/دیالۆگەکە/);
  assert.equal(longInput({...base,model:'p-video-2',duration:4,dialogueText:'سڵاو، بەخێربێن بۆ کورد ئەی.'}).duration,4);
+});
+
+test('Pruna USD estimates remain visible without inventing missing EUR costs or allowing generation',()=>{
+ for(const duration of [3,4,5,20,21,40,60,70]){
+  const input=longInput({...base,model:'p-video-2',resolution:'704p',duration});
+  const q=quoteLong(input,{});
+  assert.equal(q.apiUSD,Number(((duration+Math.ceil(duration/20))*.015).toFixed(6)));
+  assert.equal(q.apiEUR,null);assert.equal(q.totalEUR,null);assert.equal(q.canStart,false);
+ }
 });
