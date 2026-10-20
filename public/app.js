@@ -89,7 +89,7 @@ function clearOutput() {
   for (const id of ['resultVideo', 'downloadVideo', 'extendResult']) $(id).hidden = true;
   document.querySelector('.preview-screen').hidden = false;
 }
-function setBusy(value) { busy = value; $('generate').disabled = value || !generationAllowed; $('nativeQuote').disabled = value || !generationAllowed; }
+function setBusy(value) { busy = value; $('generate').disabled = value || !generationAllowed || $('model').value==='p-video-2'; $('nativeQuote').disabled = value || !generationAllowed || $('model').value==='p-video-2'; }
 function stateLabel(job) {
   return ({ ready: ku('ئامادەیە', 'Ready'), running: ku('دروست دەکرێت', 'Generating'),
     submitting: ku('دەنیردرێت', 'Submitting'), failed: ku('سەرکەوتوو نەبوو', 'Failed'),
@@ -114,12 +114,12 @@ async function refreshJobs() {
   const active = jobs.find(job => ['running', 'submitting', 'uncertain'].includes(job.status));
   $('resumeJob').hidden = !active;
   $('resumeJob').dataset.job = active?.id || '';
-  $('generate').disabled = busy || !!active || !generationAllowed;
+  $('generate').disabled = busy || !!active || !generationAllowed || $('model').value==='p-video-2';
   updateControls();
 }
 async function refreshAccount() {
   document.dispatchEvent(new Event('kurdai-account-change'));
-  generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
+  generationAllowed=false;setBusy(busy);$('longPanel').hidden=$('model').value!=='p-video-2';
   $('logoutBtn').hidden = !token();
   if (!token()) { $('creditStatus').textContent = ku('تکایە بچۆ ژوورەوە.', 'Please log in.'); return; }
   const expected = token();
@@ -130,14 +130,14 @@ async function refreshAccount() {
     const capability = await api('/api/video-capabilities');
     if (token() !== expected) return;
     generationAllowed=capability.configured===true && capability.accountAllowed===true && capability.accountVerified!==false;
-    $('longPanel').hidden=!((capability.longWorkflowAllowed===true || capability.accountAllowed===true) && capability.accountVerified!==false);
+    $('longPanel').hidden=$('model').value!=='p-video-2' && !((capability.longWorkflowAllowed===true || capability.accountAllowed===true) && capability.accountVerified!==false);
     setBusy(busy);
     if (!capability.configured && !capability.longWorkflowAllowed) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.') + (capability.missingConfiguration?.length ? ` (${capability.missingConfiguration.join(', ')})` : ''), true);
     else if (!capability.accountVerified && capability.accountVerified !== undefined) message('toast', 'Verify your email first.', true);
     else if (!capability.accountAllowed && !capability.longWorkflowAllowed) message('toast', 'Generation is currently available only to the configured test account.', true);
     await refreshJobs();
   } catch (error) {
-    generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
+    generationAllowed=false;setBusy(busy);$('longPanel').hidden=$('model').value!=='p-video-2';
     if(error.status===401){localStorage.removeItem(tokenKey);$('logoutBtn').hidden=true;}
     message('accountMessage', error.message, true);
   }
@@ -169,6 +169,14 @@ document.querySelectorAll('[data-style]').forEach(button => button.addEventListe
   selectedStyle = button.dataset.style;
 }));
 function updateControls() {
+  if ($('model').value==='p-video-2') {
+    $('longPanel').hidden=false;
+    if ($('longModel').value!=='p-video-2') { $('longModel').value='p-video-2'; $('longModel').dispatchEvent(new Event('change')); }
+    $('generate').disabled=true; $('nativeQuote').disabled=true;
+    $('dialogueSupport').textContent=ku('Pruna هەڵبژێردرا. ماوە، دیالۆگ و نرخ لە بەشی «دروستکردنی ڤیدیۆ بە دەنگ» لە خوارەوە ڕێکبخە. دروستکردن پێویستی بە چالاکبوونی ئەکاونت و ڕێکخستنی نرخ هەیە.', 'Pruna selected. Set duration, dialogue and quote in the native video section below. Generation requires account access and configured pricing.');
+    return;
+  }
+  setBusy(busy);
   const mode = $('videoMode').value;
   $('sourceFields').hidden = mode !== 'extend'; $('frameFields').hidden = mode !== 'frame'; $('referenceFields').hidden = mode !== 'new';
   const parent = jobs.find(job => job.id === $('sourceJob').value);
@@ -269,6 +277,7 @@ async function trackJob(jobId) {
   finally { if (epoch === expectedEpoch) { setBusy(false); await refreshJobs().catch(() => {}); } }
 }
 async function prepareNative(quoteOnly = false) {
+  if ($('model').value==='p-video-2') return;
   if (busy) return;
   if (!token()) return message('toast', 'Please log in.', true);
   const prompt = $('prompt').value.trim();
