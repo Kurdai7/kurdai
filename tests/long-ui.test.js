@@ -119,7 +119,7 @@ test('P-Video 2 allows 20 seconds, preserves Badini, and exposes a blocked free 
  w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
  $('longLanguage').value='badini';$('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
  assert.equal($('longLanguage').value,'badini');assert.equal($('longDuration').querySelector('[value="20"]').disabled,false);
- assert.equal($('longDuration').querySelector('[value="25"]').disabled,true);
+ assert.equal($('longDuration').querySelector('[value="25"]').disabled,false);assert.equal($('longDuration').querySelector('[value="70"]').disabled,false);
  $('longDuration').value='20';$('longQuote').click();await new Promise(r=>setTimeout(r,20));
  assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/401/);assert.deepEqual(requests,['/api/long/quote']);dom.window.close();
 });

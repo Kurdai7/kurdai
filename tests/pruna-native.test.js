@@ -11,7 +11,7 @@ test('Pruna requests native audio and preserves separate dialect dialogue withou
   assert.equal(b.save_audio,true);assert.equal(b.draft,true);assert.equal(b.disable_safety_filter,false);
   assert.equal(b.audio,undefined);assert.ok(b.prompt.includes(input.dialogueText));assert.match(b.prompt,language==='sorani'?/Sorani Kurdish/:/Badini Kurdish/);
  }
- assert.throws(()=>prunaNativeRequest({...input,mode:'extension'}),/extension/);
+ assert.throws(()=>prunaNativeRequest({...input,mode:'extension'}),/completed source/);assert.throws(()=>prunaNativeRequest({...input,duration:70}),/20 seconds/);
 });
 test('Pruna persists task identity, polls and downloads without sending keys to sibling output hosts',async t=>{
  const root=await mkdtemp(join(tmpdir(),'pruna-transport-'));t.after(()=>rm(root,{recursive:true,force:true}));
@@ -34,4 +34,11 @@ test('Pruna disabled requests, uncertain requests and rejected authentication ne
  await assert.rejects(client.submit(input),e=>/uncertain/.test(e.message)&&!e.message.includes('private'));assert.equal(calls,1);
  const rejected=createPrunaNativeClient({enabled:true,apiKey:'private'},async()=>{calls++;return new Response('private',{status:401});});
  await assert.rejects(rejected.submit(input),/HTTP 401/);assert.equal(calls,2);
+});
+
+test('Pruna initial frame upload precedes one paid generation and validates file destinations',async()=>{
+ const seen=[];const png='data:image/png;base64,iVBORw0KGgo=';
+ const client=createPrunaNativeClient({enabled:true,apiKey:'private'},async(url,options)=>{seen.push({url,options});if(url.endsWith('/files'))return Response.json({urls:{get:'https://api.pruna.ai/v1/files/frame1'}});return Response.json({id:'task-with-image'});});
+ await client.submit({...input,image:png});assert.equal(seen.length,2);assert.ok(seen[0].options.body instanceof FormData);const body=JSON.parse(seen[1].options.body);assert.equal(body.input.image,'https://api.pruna.ai/v1/files/frame1');assert.equal(body.input.save_audio,true);
+ const bad=createPrunaNativeClient({enabled:true,apiKey:'private'},async()=>Response.json({urls:{get:'https://attacker.example/file'}}));await assert.rejects(bad.submit({...input,image:png}),/Untrusted/);
 });

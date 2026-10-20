@@ -49,3 +49,10 @@ test('Pruna native route uses its own explicit gate and reserves exactly one nat
  const j=make();await advanceNative(j,join(root,'allowed'),{...config,PRUNA_NATIVE_ENABLED:'true'},deps);assert.equal(submissions,1);assert.equal(publicLongJob(j).totalSegments,1);
  await advanceNative(j,join(root,'allowed'),{...config,PRUNA_NATIVE_ENABLED:'true'},deps);assert.equal(submissions,1);
 });
+
+test('Pruna preserves native 704p pixels and audio without upscaling',async t=>{
+ const root=await directory(t),dir=join(root,'native704'),j=job();j.input.model='p-video-2';j.input.resolution='704p';
+ Object.assign(j.quote,{model:'p-video-2',provider:'pruna',draft:true});j.inflight={kind:'native',state:'polling',task:{id:'native-task',model:'p-video-2'}};
+ await advanceNative(j,dir,{...config,PRUNA_NATIVE_ENABLED:'true'},{client:{poll:async()=>({status:'completed',url:'https://api.pruna.ai/test'})},download:async(u,p)=>{const {mkdir}=await import('node:fs/promises');await mkdir(dir,{recursive:true});await writeFile(p,'original native audio and pixels');},inspect:async()=>({width:1280,height:704,duration:6.04,audioPresent:true}),normalize:async()=>{throw new Error('Do not upscale');}});
+ assert.equal(j.status,'ready');assert.equal(await readFile(join(dir,'final.mp4'),'utf8'),'original native audio and pixels');assert.equal(j.nativeMedia.height,704);
+});

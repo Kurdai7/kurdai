@@ -23,7 +23,7 @@ export async function normalize(source, target, aspectRatio, resolution) {
   if (Math.abs(await duration(target) - 5) > 0.04) throw new Error('Invalid normalized segment duration.');
 }
 export async function lastFrame(source, target) {
-  await run(['-protocol_whitelist', 'file,pipe', '-sseof', '-0.033334', '-i', source, '-frames:v', '1', target]);
+  await run(['-protocol_whitelist', 'file,pipe', '-sseof', '-1', '-i', source, '-vf', 'reverse', '-frames:v', '1', target]);
 }
 export async function assemble(directory, count = 14) {
   if (![12,14].includes(count)) throw new Error('Twelve or fourteen complete clips are required.');

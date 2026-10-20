@@ -1,3 +1,4 @@
+import {advancePrunaChain} from './pruna-chain.js';
 // Single native video/audio job; no TTS, image generator, or paid retry.
 import {copyFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -17,6 +18,7 @@ async function inspect(path) {
 }
 export async function advanceNative(job,directory,config,dependencies={}) {
  if(job.status!=='running')return;
+ if(job.input.model==='p-video-2'&&job.input.duration>20)return advancePrunaChain(job,directory,config,dependencies);
  const persist=()=>save(job,directory);
  try {
   const input=validateNativeCandidate(job.input);
@@ -40,9 +42,10 @@ export async function advanceNative(job,directory,config,dependencies={}) {
   const source=join(directory,'native-source.mp4'),clip=join(directory,'clip-0.mp4');
   await (dependencies.download||(pruna?client.download:download))(result.url,source);
   const info=await (dependencies.inspect||inspect)(source);
-  const dimensions=input.aspectRatio==='16:9'?[1280,720]:[720,1280];
+  const dimensions=input.aspectRatio==='16:9'?[1280,pruna?704:720]:[pruna?704:720,1280];
   if(info.width<dimensions[0]||info.height<dimensions[1]||!info.audioPresent||!Number.isFinite(info.duration)||Math.abs(info.duration-input.duration)>.15)throw new Error('Native output does not meet the approved duration, audio or resolution.');
-  await (dependencies.normalize||normalizeVoiced)(source,clip,input.aspectRatio,input.resolution,input.duration);
+  if(pruna)await (dependencies.copy||copyFile)(source,clip);
+  else await (dependencies.normalize||normalizeVoiced)(source,clip,input.aspectRatio,input.resolution,input.duration);
   await (dependencies.copy||copyFile)(clip,join(directory,'final.mp4'));
   job.providerTaskId=job.inflight.task.id;job.nativeMedia={...info,speechVerified:false};
   job.completedSegments=1;job.inflight=null;job.status='ready';await persist();

@@ -11,7 +11,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StringDecoder } from 'node:string_decoder';
 import { longInput, quoteLong } from '../long-video.js';
-import { verifyRuntime, duration } from './media.js';
+import { verifyRuntime, duration, lastFrame } from './media.js';
 import { advance, save, load, publicLongJob, registerRemoteSave } from './engine.js';
 import {openJobStore} from './r2-job-store.js';
 import { advanceOmni } from './omni-engine.js';
@@ -157,7 +157,7 @@ export async function createProcessor(config, dependencies = {}) {
   };
   // One bounded, global write counter also protects disk and FFmpeg from repeated requests.
   let writeWindow = 0, writes = 0;
-  const costs = input => ({ mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
+  const costs = input => ({ prunaEnabled:config.PRUNA_NATIVE_ENABLED==='true'&&config.NATIVE_GENERATION_ENABLED==='true',prunaConfigured:!!config.PRUNA_API_KEY,prunaBillingVerified:config.NATIVE_BILLING_VERIFIED==='true',usdPerEUR:config.LONG_USD_PER_EUR,mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
     vatPercent: config.LONG_VAT_PERCENT,
     omniInputTokensPerSegment: config.OMNI_INPUT_TOKENS_PER_SEGMENT,
     omniTextTokensPerSegment: config.OMNI_TEXT_TOKENS_PER_SEGMENT,
@@ -412,13 +412,18 @@ export async function createProcessor(config, dependencies = {}) {
           if(input.mode==='extension') {
             const source=jobs.get(input.sourceJobId);
             if(!source || source.owner!==owner) return send(res,{error:'Extension source not found.'},404);
-            if(!publicLongJob(source).canExtend) return send(res,{error:'Choose a completed Omni video with saved continuation context.'},409);
+            if(source.input.model!==input.model || !publicLongJob(source).canExtend) return send(res,{error:'Choose a completed video from the same model.'},409);
             if(input.language!==source.input.language || input.aspectRatio!==source.input.aspectRatio || input.resolution!==source.input.resolution)
               return send(res,{error:'Keep the source video dialect, aspect ratio and resolution for extension.'},409);
             // Resolve provider context only from the owner's durable record.
             // Caller-supplied interaction IDs are never trusted or forwarded.
             previousInteractionId=source.previousInteractionId;
             input.identity=source.input.identity;
+            if(input.model==='p-video-2'){
+              const sourceDir=join(root,source.id),sourceFile=join(sourceDir,'final.mp4'),frame=join(sourceDir,'extension-frame.jpg');
+              try{await access(sourceFile);}catch{if(!source.r2VideoArchived||!source.finalSHA256)return send(res,{error:'Source video is not available.'},409);await restoreFinalVideo(config,source.id,sourceDir,source.finalSHA256);}
+              await lastFrame(sourceFile,frame);input.image='data:image/jpeg;base64,'+(await readFile(frame)).toString('base64');
+            }
           }
           const costQuote = quote(input);
           // Keep at most ten unstarted quotes, including uploaded reference images.

@@ -24,11 +24,11 @@ const dataImage = async path => {
 };
 export function publicLongJob(job) {
   return { id: job.id, model:job.input.model || 'wan2.2-i2v-flash',status: job.status, completedSegments: job.completedSegments || 0,
-    totalSegments: ['pixverse-v6','kling-3.0-standard','p-video-2'].includes(job.input.model)?1:(job.input.duration ?? 70) / 5, duration: job.status === 'ready' ? (job.input.duration ?? 70) : null, quote: job.quote,
+    totalSegments: job.input.model==='p-video-2'?Math.ceil(job.input.duration/20):['pixverse-v6','kling-3.0-standard'].includes(job.input.model)?1:(job.input.duration ?? 70) / 5, duration: job.status === 'ready' ? (job.input.duration ?? 70) : null, quote: job.quote,
     error: job.error || null, approvedAt: job.approvedAt || null,
     reservedAPIUSD: job.reservedAPIUSD || 0,
-    canExtend:job.status==='ready' && job.input.model==='gemini-omni-1.1-flash' &&
-      typeof job.previousInteractionId==='string' && /^[A-Za-z0-9_-]{1,300}$/.test(job.previousInteractionId),
+    canExtend:job.status==='ready' && (job.input.model==='p-video-2' || (job.input.model==='gemini-omni-1.1-flash' &&
+      typeof job.previousInteractionId==='string' && /^[A-Za-z0-9_-]{1,300}$/.test(job.previousInteractionId))),
     language:job.input.language || 'none',aspectRatio:job.input.aspectRatio,resolution:job.input.resolution,
     ...(job.input.sourceJobId?{sourceJobId:job.input.sourceJobId}:{}),
     ...(job.input.model ? {providerUsage:job.providerUsage || {},invoiceReconciled:false} : {}),

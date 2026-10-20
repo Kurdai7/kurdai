@@ -130,11 +130,11 @@ async function refreshAccount() {
     const capability = await api('/api/video-capabilities');
     if (token() !== expected) return;
     generationAllowed=capability.configured===true && capability.accountAllowed===true && capability.accountVerified!==false;
-    $('longPanel').hidden=!(capability.accountAllowed===true && capability.accountVerified!==false);
+    $('longPanel').hidden=!((capability.longWorkflowAllowed===true || capability.accountAllowed===true) && capability.accountVerified!==false);
     setBusy(busy);
-    if (!capability.configured) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.') + (capability.missingConfiguration?.length ? ` (${capability.missingConfiguration.join(', ')})` : ''), true);
+    if (!capability.configured && !capability.longWorkflowAllowed) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.') + (capability.missingConfiguration?.length ? ` (${capability.missingConfiguration.join(', ')})` : ''), true);
     else if (!capability.accountVerified && capability.accountVerified !== undefined) message('toast', 'Verify your email first.', true);
-    else if (!capability.accountAllowed) message('toast', 'Generation is currently available only to the configured test account.', true);
+    else if (!capability.accountAllowed && !capability.longWorkflowAllowed) message('toast', 'Generation is currently available only to the configured test account.', true);
     await refreshJobs();
   } catch (error) {
     generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;

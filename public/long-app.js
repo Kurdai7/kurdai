@@ -16,16 +16,16 @@ function modelChanged() {
   invalidate();const selected=$('longModel').value;const omni=selected==='gemini-omni-1.1-flash';
   const pruna=selected==='p-video-2';
   const pending=['p-video-2','seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes(selected);
-  $('longModelNotice').textContent=pruna?'یەک ڤیدیۆی API بە دەنگ دروست کراوە؛ گوێگرتنی سۆرانی هێشتا ماوە. قەبارەی ڕاستەقینەی تاقیکردنەوە 1280×704 بوو؛ 720pی تەواو نییە. هەردوو زمان دەمێننەوە.':['pixverse-v6','kling-3.0-standard'].includes(selected)?'سۆرانی لەلایەن خاوەنی KurdAI تاقی کراوەتەوە؛ پەیوەندی API هێشتا ئامادە نییە. بادینی پێویستی بە تاقیکردنەوە هەیە.':pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
-  for(const option of $('longDuration').options) option.disabled=pending ? Number(option.value)>(pruna?20:15) : (!omni && !['60','70'].includes(option.value));
-  for(const option of $('longResolution').options) option.disabled=!(['720p',...(selected==='wan2.2-i2v-flash'?['480p']:[]),...(selected==='heygen-video-1'?['768p']:[])].includes(option.value)) || (selected==='heygen-video-1' && option.value==='720p');
-  if(omni || pending) $('longResolution').value=selected==='heygen-video-1'?'768p':'720p';
-  if(pending && Number($('longDuration').value)>(pruna?20:15)) $('longDuration').value='5';
+  $('longModelNotice').textContent=pruna?'سۆرانیی P-Video 2 لە ڤیدیۆی API پەسەند کراوە. قەبارەی ڕاستەقینەی تاقیکردنەوە 1280×704 بوو؛ 720pی تەواو نییە. هەردوو زمان دەمێننەوە.':['pixverse-v6','kling-3.0-standard'].includes(selected)?'سۆرانی لەلایەن خاوەنی KurdAI تاقی کراوەتەوە؛ پەیوەندی API هێشتا ئامادە نییە. بادینی پێویستی بە تاقیکردنەوە هەیە.':pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
+  for(const option of $('longDuration').options) option.disabled=pending ? Number(option.value)>(pruna?70:15) : (!omni && !['60','70'].includes(option.value));
+  for(const option of $('longResolution').options) option.disabled=!([...(pruna?['704p']:['720p']),...(selected==='wan2.2-i2v-flash'?['480p']:[]),...(selected==='heygen-video-1'?['768p']:[])].includes(option.value)) || (selected==='heygen-video-1' && option.value==='720p');
+  if(omni || pending) $('longResolution').value=selected==='heygen-video-1'?'768p':pruna?'704p':'720p';
+  if(pending && Number($('longDuration').value)>(pruna?70:15)) $('longDuration').value='5';
   if(selected==='wan2.2-i2v-flash' && !['720p','480p'].includes($('longResolution').value)) $('longResolution').value='720p';
   if(!omni && !pending && !['60','70'].includes($('longDuration').value)) $('longDuration').value='60';
   if(selected==='wan2.2-i2v-flash') $('longLanguage').value='none';
-  $('longMode').options[1].disabled=!omni;
-  if(!omni) $('longMode').value='new';
+  $('longMode').options[1].disabled=!(omni||pruna);
+  if(!omni&&!pruna) $('longMode').value='new';
   $('longSourcePanel').hidden=$('longMode').value!=='extension';
 }
 $('longModel').addEventListener('change',modelChanged);modelChanged();
@@ -41,9 +41,9 @@ async function loadSources() {
   const session=token(),version=generation;
   try {
     const data=await call('jobs');if(session!==token() || version!==generation)return;
-    sources=(data.jobs || []).filter(j=>j.canExtend && j.model==='gemini-omni-1.1-flash');
+    sources=(data.jobs || []).filter(j=>j.canExtend && j.model===$('longModel').value);
     $('longSource').replaceChildren(new Option('ڤیدیۆ هەڵبژێرە',''),...sources.map(j=>new Option(`${j.duration}s · ${j.language} · ${j.id.slice(0,8)}`,j.id)));
-    if(!sources.length)show('هێشتا ڤیدیۆیەکی تەواوکراوی Omni بۆ بەردەوامکردن نییە. هیچ AI بانگ نەکراوە.');
+    if(!sources.length)show('هێشتا ڤیدیۆیەکی تەواوکراوی ئەم مۆدێلە بۆ بەردەوامکردن نییە. هیچ AI بانگ نەکراوە.');
   } catch(error){if(session===token() && version===generation)show(error.message);}
 }
 $('longMode').addEventListener('change',()=>{invalidate();modelChanged();if($('longMode').value==='extension')loadSources();});
@@ -81,8 +81,9 @@ $('longQuote').addEventListener('click', async () => {
     if($('longMode').value==='extension' && (data.mode!=='extension' || data.sourceJobId!==$('longSource').value))
       throw new Error('سێرڤەر بەردەوامکردنی ئەم ڤیدیۆیەی پشتڕاست نەکردەوە. هیچ دروستکردنێک دەست پێ ناکات.');
     quote = data;
-    show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segments} × ${data.segmentSeconds || 5} · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ و ڤیدیۆ پێکەوەن؛ پشکنینی کوالێتی API هێشتا تەواو نییە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
+    show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segmentDurations?data.segmentDurations.join(' + '):`${data.segments} × ${data.segmentSeconds || 5}`} · ${$('longResolution').value} · ${data.nativeAudio?'دەنگ و ڤیدیۆ پێکەوەن؛ پشکنینی کوالێتی API هێشتا تەواو نییە':'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
     if(data.providerReference) show(`${$('longCost').textContent}\nنرخی بڵاوکراوەی ${data.providerReference.provider}: $${data.providerReference.outputUSD.toFixed(3)} بۆ دەرئەنجامی ڤیدیۆ بە دەنگ؛ باج و خەرجییەکانی تر لەخۆ ناگرێت. ئەمە نرخی کۆتایی فرۆشتن نییە.`);
+    if(data.limitations?.length)show(`${$('longCost').textContent}\n${data.limitations.join('\n')}`);
     if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
     if(data.serviceCostBreakdown) {
       const b=data.serviceCostBreakdown;
