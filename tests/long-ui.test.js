@@ -120,6 +120,25 @@ test('P-Video 2 allows 20 seconds, preserves Badini, and exposes a blocked free 
  $('longLanguage').value='badini';$('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
  assert.equal($('longLanguage').value,'badini');assert.equal($('longDuration').querySelector('[value="20"]').disabled,false);
  assert.equal($('longDuration').querySelector('[value="25"]').disabled,false);assert.equal($('longDuration').querySelector('[value="70"]').disabled,false);
+ $('prompt').value='A Kurdish family';$('longDialogue').value='سلاڤ';
  $('longDuration').value='20';$('longQuote').click();await new Promise(r=>setTimeout(r,20));
  assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/401/);assert.deepEqual(requests,['/api/long/quote']);dom.window.close();
+});
+
+test('Pruna missing scene and dialogue focus the correct local field, retain text, and never submit incomplete quotes',async()=>{
+ const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
+ w.fetch=async(path,options)=>{requests.push(JSON.parse(options.body));const i=requests.at(-1);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,nativeAudio:true,canStart:false})};};
+ w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
+ $('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
+ $('longPanel').hidden=false;
+ $('longDialogue').value='سڵاو، بەخێربێن';$('longQuote').click();await new Promise(r=>setTimeout(r,10));
+ assert.equal(requests.length,0);assert.equal(w.document.activeElement.id,'longPrompt');assert.equal($('longDialogue').value,'سڵاو، بەخێربێن');
+ $('longPrompt').value='A Kurdish cartoon village';$('longPrompt').dispatchEvent(new w.Event('input'));
+ assert.equal($('prompt').value,'A Kurdish cartoon village');
+ $('longDialogue').value='';$('longQuote').click();await new Promise(r=>setTimeout(r,10));
+ assert.equal(requests.length,0);assert.equal(w.document.activeElement.id,'longDialogue');
+ $('longDialogue').value='سڵاو';$('longQuote').click();await new Promise(r=>setTimeout(r,10));
+ assert.equal(requests.length,1);assert.equal(requests[0].prompt,'A Kurdish cartoon village');assert.equal(requests[0].dialogueText,'سڵاو');assert.equal($('longStart').disabled,true);
+ dom.window.close();
 });
