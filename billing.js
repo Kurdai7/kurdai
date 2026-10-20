@@ -1,3 +1,4 @@
+import {PREPARED_PACKS,TEST_CREDIT_PACKS,PACKS_VERSION,preparedLiveEconomics} from './billing-packs.js';
 import Stripe from 'stripe';
 import { authLimit } from './auth-guard.js';
 
@@ -38,7 +39,7 @@ export function billingConfiguration(env) {
   const mode=env.STRIPE_MODE;
   let packs=[];
   try {
-    const values=JSON.parse(env.STRIPE_CREDIT_PACKS || '[]');
+    const values=JSON.parse(env.STRIPE_CREDIT_PACKS || JSON.stringify(mode==='test'?TEST_CREDIT_PACKS:[]));
     if(!Array.isArray(values) || values.length>10) throw Error();
     const ids=new Set();
     for(const p of values) {
@@ -54,7 +55,7 @@ export function billingConfiguration(env) {
   if(!['test','live'].includes(mode))missingConfiguration.push('STRIPE_MODE');
   if(!keyValid)missingConfiguration.push('STRIPE_RESTRICTED_KEY');
   if(!/^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || ''))missingConfiguration.push('STRIPE_WEBHOOK_SECRET');
-  const liveApproved=mode==='test' || (env.STRIPE_LIVE_APPROVED==='true' && env.PUBLIC_RELEASE_VERIFIED==='true' && env.STRIPE_CATALOG_APPROVED==='true');
+  const liveApproved=mode==='test' || (env.STRIPE_LIVE_APPROVED==='true' && env.PUBLIC_RELEASE_VERIFIED==='true' && env.STRIPE_CATALOG_APPROVED==='true' && preparedLiveEconomics(env,packs));
   return {mode:['test','live'].includes(mode)?mode:null,packs,missingConfiguration,keyStatus,
     configured:!!env.DB && keyValid && /^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || ''),
     enabled:env.STRIPE_CHECKOUT_ENABLED==='true' && keyValid && liveApproved && packs.length>0 && !!env.DB && /^whsec_[A-Za-z0-9]+$/.test(env.STRIPE_WEBHOOK_SECRET || '')};
@@ -123,6 +124,7 @@ export async function handleBilling(request,env,user,dependencies={}) {
       return json({diagnosticVersion:3,mode:config.mode,configured:config.configured,missingConfiguration:config.missingConfiguration,restrictedKeyStatus:config.keyStatus,enabled:config.enabled && allowed,
         accountId:allowed?user.id:null,
         publicPaymentsEnabled:config.enabled && config.mode==='live',
+        preparedPacks:PREPARED_PACKS,preparedPacksVersion:PACKS_VERSION,
         packs:config.enabled && allowed?config.packs.map(({priceId,...p})=>p):[],currency:'eur'});
     const webhook=url.pathname==='/api/billing/webhook' && request.method==='POST';
     if(!webhook && !user)return json({error:'Please log in.'},401);

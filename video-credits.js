@@ -1,3 +1,4 @@
+import {VIDEO_COST_CREDITS_PER_EUR} from './billing-packs.js';
 import { BILLING_SCHEMA } from './billing.js';
 
 const reservationSchema = `CREATE TABLE IF NOT EXISTS video_credit_reservations (
@@ -54,7 +55,7 @@ export async function settleVideoCredits(db,userId,mode,jobId,outcome) {
   ]);
 }
 export function videoCreditPrice(env,quote) {
-  const rate=Number(env.VIDEO_CREDITS_PER_EUR);
+  const rate=Number(env.VIDEO_CREDITS_PER_EUR ?? (env.STRIPE_MODE==='test'?VIDEO_COST_CREDITS_PER_EUR:NaN));
   if (!Number.isSafeInteger(rate) || rate<1 || rate>1000000 ||
     !Number.isFinite(quote?.totalEUR) || quote.totalEUR<=0 || quote.canStart!==true)
     throw failure('Video credit price or processor readiness is not confirmed.',503);
