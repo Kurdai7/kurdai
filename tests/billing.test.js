@@ -1,3 +1,5 @@
+import {TEST_CREDIT_PACKS} from '../billing-packs.js';
+import {reserveVideoCredits,settleVideoCredits,videoCreditPrice} from '../video-credits.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
@@ -27,7 +29,7 @@ function mockClient() {
   submissions++;const id='cs_test_'+submissions;
   const price=params.line_items[0].price;
   const s={id,livemode:false,mode:'payment',metadata:params.metadata,client_reference_id:params.client_reference_id,
-   currency:'eur',amount_total:price==='price_testA'?200:500,payment_status:'unpaid',status:'open',url:'https://checkout.stripe.com/c/pay/'+id,
+   currency:'eur',amount_total:new Map([['price_testA',200],['price_testB',500],...TEST_CREDIT_PACKS.map(p=>[p.priceId,p.amountCents])]).get(price),payment_status:'unpaid',status:'open',url:'https://checkout.stripe.com/c/pay/'+id,
    line_items:{has_more:false,data:[{quantity:1,price:{id:price}}]}};
   sessions.set(id,s);idempotent.set(options.idempotencyKey,s);return s;
  },async retrieve(id){assert.ok(sessions.has(id));return sessions.get(id);}}}};
@@ -158,4 +160,43 @@ test('webhook accepts verified settlement while checkout is disabled',async()=>{
  const delivered=await handleBilling(await signedEvent(client,session),config,null,{client});
  assert.equal(delivered.status,200);
  assert.equal(config.DB.raw.prepare('SELECT COALESCE(SUM(amount),0) AS credits FROM billing_ledger').get().credits,200);
+});
+
+test('prepared EUR1/EUR5 packs: verified payment grants credits once and completed video captures once',async()=>{
+ for(const pack of TEST_CREDIT_PACKS) {
+  const config=env(),client=mockClient();config.STRIPE_CREDIT_PACKS=JSON.stringify(TEST_CREDIT_PACKS);
+  config.VIDEO_CREDITS_PER_EUR='100';
+  const created=await handleBilling(request('checkout',{requestId:crypto.randomUUID(),packId:pack.id,credits:99999,amountCents:1}),config,owner,{client});
+  assert.equal(created.status,201);
+  const session=client.sessions.values().next().value;
+  assert.equal(session.amount_total,pack.amountCents);
+  const creditBalance=()=>config.DB.raw.prepare("SELECT COALESCE(SUM(amount),0) AS n FROM billing_ledger WHERE user_id='owner' AND mode='test'").get().n;
+  assert.equal(creditBalance(),0);
+  session.payment_status='paid';session.status='complete';
+  for(const type of ['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.completed'])
+   assert.equal((await handleBilling(await signedEvent(client,session,type),config,null,{client})).status,200);
+  assert.equal(creditBalance(),pack.credits);
+  const jobId=crypto.randomUUID(),cost=videoCreditPrice(config,{canStart:true,totalEUR:.09});
+  assert.equal(cost,9);
+  await reserveVideoCredits(config.DB,owner.id,'test',jobId,cost);
+  await reserveVideoCredits(config.DB,owner.id,'test',jobId,cost);
+  assert.equal(creditBalance(),pack.credits-cost);
+  await settleVideoCredits(config.DB,owner.id,'test',jobId,'ready');
+  await settleVideoCredits(config.DB,owner.id,'test',jobId,'ready');
+  assert.equal(creditBalance(),pack.credits-cost);
+  assert.equal(config.DB.raw.prepare("SELECT status FROM video_credit_reservations WHERE job_id=?").get(jobId).status,'captured');
+  await assert.rejects(reserveVideoCredits(config.DB,owner.id,'test',crypto.randomUUID(),pack.credits),e=>e.status===402);
+ }
+});
+test('new test catalogue never enables live checkout without independent economics review',()=>{
+ const config=env();
+ const live={...config,STRIPE_MODE:'live',STRIPE_RESTRICTED_KEY:'rk_live_syntheticOnly',
+  STRIPE_LIVE_APPROVED:'true',STRIPE_CATALOG_APPROVED:'true',PUBLIC_RELEASE_VERIFIED:'true',
+  STRIPE_CREDIT_PACKS:JSON.stringify(TEST_CREDIT_PACKS),VIDEO_CREDITS_PER_EUR:'100'};
+ assert.equal(billingConfiguration(live).enabled,false);
+ assert.equal(billingConfiguration({...live,STRIPE_PACK_ECONOMICS_VERIFIED:'true'}).enabled,false);
+ const livePacks=TEST_CREDIT_PACKS.map((p,i)=>({...p,priceId:'price_livePrepared'+i}));
+ assert.equal(billingConfiguration({...live,STRIPE_CREDIT_PACKS:JSON.stringify(livePacks)}).enabled,false);
+ assert.equal(billingConfiguration({...live,STRIPE_CREDIT_PACKS:JSON.stringify(livePacks),STRIPE_PACK_ECONOMICS_VERIFIED:'true'}).enabled,true);
+ assert.equal(billingConfiguration({...live,STRIPE_CREDIT_PACKS:JSON.stringify(livePacks),STRIPE_PACK_ECONOMICS_VERIFIED:'true',STRIPE_LIVE_APPROVED:'false'}).enabled,false);
 });

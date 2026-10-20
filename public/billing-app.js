@@ -13,18 +13,20 @@
   const response=await fetch('/api/billing/'+path,{...options,headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.token},signal:AbortSignal.timeout(20000)});
   const data=await response.json();if(!response.ok)throw Error('Billing request failed');return data;
  }
- function buttons(){for(const b of $('billingPacks').querySelectorAll('button'))b.disabled=busy;}
+ function buttons(){for(const b of $('billingPacks').querySelectorAll('button'))b.disabled=busy || b.dataset.preview==='true';}
  function render(c) {
   $('billingTitle').textContent=ku('کرییدیتی کڕدراو','Purchased credits');
   $('billingRefresh').textContent=ku('پشکنینی دۆخی پارەدان','Check payment status');
   $('billingBalance').textContent=ku(`کرییدیتی کڕدراو: ${c.credits} — جیاوازە لە کرییدیتی ڕۆژانە.`,`Purchased credits: ${c.credits} — separate from daily credits.`);
   $('billingPacks').replaceChildren();
   if(c.mode==='test')$('billingBalance').textContent=ku('تاقیکردنەوە — پارەی ڕاستەقینە نییە. ','Test mode — no real money. ')+$('billingBalance').textContent;
-  if(c.enabled)for(const p of c.packs){
+  for(const p of (c.enabled?c.packs:(c.preparedPacks || []))){
    const button=document.createElement('button');button.type='button';button.className='chip';
    const price=new Intl.NumberFormat(document.documentElement.lang==='en'?'en-FI':'ckb',{style:'currency',currency:'EUR'}).format(p.amountCents/100);
    button.textContent=ku(`${p.credits} کرییدیت — ${price}`,`${p.credits} credits — ${price}`);
-   button.addEventListener('click',()=>checkout(c,p));$('billingPacks').append(button);
+   if(c.enabled)button.addEventListener('click',()=>checkout(c,p));
+   else {button.dataset.preview='true';button.disabled=true;button.title=ku('ئامادەکراوە؛ کڕین هێشتا چالاک نییە.','Prepared; purchases are not enabled yet.');}
+   $('billingPacks').append(button);
   }
   buttons();
  }
