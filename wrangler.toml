@@ -7,10 +7,8 @@ keep_vars = true
 # Public staging origin only; its shared credential belongs in Worker secrets.
 # Provider credentials are runtime secrets. Spending stays disabled.
 [vars]
-STRIPE_CHECKOUT_ENABLED = "false"
-BILLABLE_REQUESTS_ENABLED = "false"
-API_MAX_JOB_USD = "0"
-API_MAX_DAY_USD = "0"
+# Payment and API spending controls are managed in the production Dashboard.
+# Missing controls remain disabled by application defaults; keep_vars preserves existing values.
 LONG_VIDEO_SERVICE_URL = "https://kurdai-processor-staging.onrender.com"
 
 # Preview configuration is independent of production. Existing preview secrets
