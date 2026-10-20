@@ -59,7 +59,12 @@ export function videoCreditPrice(env,quote) {
   if (!Number.isSafeInteger(rate) || rate<1 || rate>1000000 ||
     !Number.isFinite(quote?.totalEUR) || quote.totalEUR<=0 || quote.canStart!==true)
     throw failure('Video credit price or processor readiness is not confirmed.',503);
-  const credits=Math.ceil(quote.totalEUR*rate);
+  // Decimal arithmetic avoids charging 8 credits for a EUR0.07 quote at rate 100.
+  const [mantissa,rawExponent='0']=String(quote.totalEUR).split('e');
+  const decimals=(mantissa.split('.')[1] || '').length,exponent=Number(rawExponent)-decimals;
+  let numerator=BigInt(mantissa.replace('.',''))*BigInt(rate),denominator=1n;
+  if(exponent>=0)numerator*=10n**BigInt(exponent);else denominator=10n**BigInt(-exponent);
+  const credits=Number((numerator+denominator-1n)/denominator);
   if (!Number.isSafeInteger(credits) || credits<1 || credits>1000000)
     throw failure('Video credit price is outside the supported limit.',503);
   return credits;
