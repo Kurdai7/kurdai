@@ -8,7 +8,8 @@ test('review is private, explicit and expires after approval date',()=>{
  assert.equal(reviewEnabled(env,new Date('2026-10-20')),false);
  assert.equal(reviewEnabled({...env,PRUNA_FREE_CREDIT_VERIFIED:'false'},new Date('2026-10-19')),false);
 });
-test('durable reservation prevents duplicate submission after network uncertainty',async()=>{
+test('durable reservation prevents duplicate submission after network uncertainty',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-19T12:00:00Z')});
  const objects=new Map();let submissions=0;
  const io={get:async(e,k)=>{if(!objects.has(k))throw {status:404};return objects.get(k);},
  put:async(e,k,b,c)=>{if(c?.ifNoneMatch&&objects.has(k))throw {status:412};objects.set(k,b);},
@@ -17,7 +18,8 @@ test('durable reservation prevents duplicate submission after network uncertaint
  await assert.rejects(runPrunaReview(env,io),/Prior submission uncertain/);
  assert.equal(submissions,1);
 });
-test('two native-audio tasks archive separately and restart never resubmits',async()=>{
+test('two native-audio tasks archive separately and restart never resubmits',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-19T12:00:00Z')});
  const objects=new Map();let submissions=0;
  const io={get:async(e,k)=>{if(!objects.has(k))throw {status:404};return objects.get(k);},
  put:async(e,k,b,c)=>{if(c?.ifNoneMatch&&objects.has(k))throw {status:412};objects.set(k,b);},
@@ -32,7 +34,8 @@ test('two native-audio tasks archive separately and restart never resubmits',asy
  for(const value of objects.values())assert.ok(!value.toString().includes('PRUNA_API_KEY'));
 });
 
-test('verified legacy 401 recovery is exclusive, audited and never retries a new rejection',async()=>{
+test('verified legacy 401 recovery is exclusive, audited and never retries a new rejection',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-19T12:00:00Z')});
  const key='evaluations/pruna-native-2026-10-19/sorani.json';
  const objects=new Map([[key,Buffer.from(JSON.stringify({dialect:'sorani',status:'reserved',model:'p-video-2-pro',speechVerified:false}))]]);
  let submissions=0;

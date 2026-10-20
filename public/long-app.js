@@ -14,12 +14,13 @@ function invalidate() { generation++; quote = null; $('longStart').disabled = tr
 for (const id of ['prompt', 'aspectRatio', 'longModel', 'longMode', 'longSource', 'longResolution', 'longDuration', 'longIdentity', 'longReference', 'longLanguage', 'longDialogue']) $(id).addEventListener('input', invalidate);
 function modelChanged() {
   invalidate();const selected=$('longModel').value;const omni=selected==='gemini-omni-1.1-flash';
-  const pending=['seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes(selected);
-  $('longModelNotice').textContent=['pixverse-v6','kling-3.0-standard'].includes(selected)?'سۆرانی لەلایەن خاوەنی KurdAI تاقی کراوەتەوە؛ پەیوەندی API هێشتا ئامادە نییە. بادینی پێویستی بە تاقیکردنەوە هەیە.':pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
-  for(const option of $('longDuration').options) option.disabled=pending ? Number(option.value)>15 : (!omni && !['60','70'].includes(option.value));
+  const pruna=selected==='p-video-2';
+  const pending=['p-video-2','seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes(selected);
+  $('longModelNotice').textContent=pruna?'سۆرانی لە تاقیکردنەوەی VdoBloom پەسەند کراوە. هەردوو زمان دەمێننەوە؛ پەیوەندی API هێشتا کار ناکات.':['pixverse-v6','kling-3.0-standard'].includes(selected)?'سۆرانی لەلایەن خاوەنی KurdAI تاقی کراوەتەوە؛ پەیوەندی API هێشتا ئامادە نییە. بادینی پێویستی بە تاقیکردنەوە هەیە.':pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
+  for(const option of $('longDuration').options) option.disabled=pending ? Number(option.value)>(pruna?20:15) : (!omni && !['60','70'].includes(option.value));
   for(const option of $('longResolution').options) option.disabled=!(['720p',...(selected==='wan2.2-i2v-flash'?['480p']:[]),...(selected==='heygen-video-1'?['768p']:[])].includes(option.value)) || (selected==='heygen-video-1' && option.value==='720p');
   if(omni || pending) $('longResolution').value=selected==='heygen-video-1'?'768p':'720p';
-  if(pending && Number($('longDuration').value)>15) $('longDuration').value='5';
+  if(pending && Number($('longDuration').value)>(pruna?20:15)) $('longDuration').value='5';
   if(selected==='wan2.2-i2v-flash' && !['720p','480p'].includes($('longResolution').value)) $('longResolution').value='720p';
   if(!omni && !pending && !['60','70'].includes($('longDuration').value)) $('longDuration').value='60';
   if(selected==='wan2.2-i2v-flash') $('longLanguage').value='none';

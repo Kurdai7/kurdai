@@ -19,3 +19,17 @@ test('owner Worker quote fallback exposes a blocked candidate without provider t
  const response=await handleLong(req,{VIDEO_TEST_EMAIL:'owner@example.com'},{id:'owner',email:'owner@example.com',verified:true});
  assert.equal(response.status,200);const q=await response.json();assert.equal(q.model,'pixverse-v6');assert.equal(q.canStart,false);assert.equal(q.totalEUR,null);
 });
+test('P-Video 2 keeps both dialects and published Draft pricing without authorizing billing',async()=>{
+ for(const language of ['sorani','badini']){
+  const i=longInput({...base,model:'p-video-2',language,duration:20});
+  const q=quoteLong(i,{enabled:true,omniEnabled:true,omniConfigured:true});
+  assert.equal(q.canStart,false);assert.equal(q.totalEUR,null);assert.equal(q.apiUSD,null);
+  assert.equal(q.providerReference.outputUSD,.3);assert.equal(q.providerReference.draft,true);
+  assert.equal(q.providerReference.provider,'Pruna');assert.equal(q.ownerReview.apiVerified,false);
+  assert.equal(q.audioQuote.language,language);assert.equal(i.dialogueText,base.dialogueText);
+ }
+ assert.throws(()=>longInput({...base,model:'p-video-2',duration:70}),/3–20/);
+ const req=new Request('https://kurdai.net/api/long/quote',{method:'POST',body:JSON.stringify({...base,model:'p-video-2'})});
+ const res=await handleLong(req,{VIDEO_TEST_EMAIL:'owner@example.com'},{id:'owner',email:'owner@example.com',verified:true});
+ assert.equal(res.status,200);const q=await res.json();assert.equal(q.canStart,false);assert.equal(q.providerReference.outputUSD,.075);
+});

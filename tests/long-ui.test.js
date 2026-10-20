@@ -111,3 +111,15 @@ test('new native choices can request only a free blocked quote without enabling 
  }
  assert.equal(requests.length,2);assert.ok(requests.every(p=>p.endsWith('/quote')));dom.window.close();
 });
+test('P-Video 2 allows 20 seconds, preserves Badini, and exposes a blocked free quote',async()=>{
+ const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
+ w.HTMLMediaElement.prototype.pause=w.HTMLMediaElement.prototype.load=()=>{};
+ w.fetch=async(path,options)=>{requests.push(path);const i=JSON.parse(options.body);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,segmentSeconds:i.duration,nativeAudio:true,canStart:false,totalEUR:null,apiUSD:null,blockedReasons:['Pruna authentication HTTP 401']})};};
+ w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
+ $('longLanguage').value='badini';$('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
+ assert.equal($('longLanguage').value,'badini');assert.equal($('longDuration').querySelector('[value="20"]').disabled,false);
+ assert.equal($('longDuration').querySelector('[value="25"]').disabled,true);
+ $('longDuration').value='20';$('longQuote').click();await new Promise(r=>setTimeout(r,20));
+ assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/401/);assert.deepEqual(requests,['/api/long/quote']);dom.window.close();
+});

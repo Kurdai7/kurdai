@@ -48,3 +48,16 @@ Owner decision: offer Omni 1.1 Flash, PixVerse and Kling, one output with native
 ## Exact prepared PixVerse route pricing reviewed
 
 The fal PixVerse V6 text-to-video page now explicitly publishes 720p audio-on at USD .060/second (5s USD .30), as distinct from the direct PixVerse USD .2666667/5s reference. Candidate providerReference now uses the actual prepared fal route and never substitutes direct pricing. These remain published output estimates, not account invoices or inclusive EUR customer prices. Source: https://fal.ai/models/fal-ai/pixverse/v6/text-to-video . Latest complete regression: 129 tests passed; final UI change additionally passed its focused tests. No real API generation, Stripe Live, merge or production deploy.
+
+
+## Owner P-Video 2 review and release status — 2026-10-20
+
+The owner generated a four-second P-Video 2 video in VdoBloom (9 of 10 free credits) and accepted its Sorani speech. This is a real owner listening review of that web application, not proof that KurdAI can call its API. Both Sorani and Badini must remain available; Badini is not independently qualified. No request to remove either language is current.
+
+Added a P-Video 2 selection and a non-payable Draft reference quote. Direct Pruna publishes USD .015/returned second for 720p Draft (5 seconds: .075), and .025/second standard. This is not the VdoBloom credit price or a final EUR customer price. The maximum native request is 20 seconds; 70-second chaining is not implemented for this route. No silent fallback or separate TTS is substituted.
+
+The newly deployed key was checked after deploying aaee9e0: configured, no surrounding/embedded whitespace or quotes, HTTP 401. No generation submitted. Cloudflare's managed original P-Video is a different model; its zero account balance and USD10 minimum credit top-up were observed on the owner's phone. Do not substitute it for P-Video 2 silently.
+
+Release remains blocked by a working qualified API connection and inclusive billing/credit settlement. Stripe Live remains disabled. Website listening success alone does not authorize changing those flags or presenting the site as fully ready.
+
+Source: https://docs.api.pruna.ai/guides/models/p-video-2
