@@ -66,3 +66,14 @@ Source: https://docs.api.pruna.ai/guides/models/p-video-2
 ## P-Video 2 native processor wiring
 
 `processor/pruna-native.js` now prepares direct 720p Draft requests with native audio, exact separate-dialect dialogue, safety enabled and no separate TTS. The shared native engine selects the Pruna credential and requires PRUNA_NATIVE_ENABLED as well as its existing generation/billing/durable storage gates and a matching complete Pruna Draft quote. It persists before POST, polls the stored task only, downloads bounded output over validated HTTPS hosts, sends the API key only to exact api.pruna.ai, validates media and archives a single MP4. Public quotes remain non-payable, so no public request can activate this prepared route. No flags were enabled and no provider request was sent. The owner web-app result is still not direct-API qualification.
+
+
+## Actual API result — 2026-10-20
+
+The owner rotated the active Pruna key, and the agent replaced the stale revoked key in Render. Deployment 00b0c14 became Live; the authenticated missing-task probe changed from HTTP 401 to HTTP 404. Account UI showed USD20 credits and auto-top-up disabled. No card top-up or paid subscription was performed.
+
+The owner explicitly approved one four-second Sorani P-Video 2 Draft test using free credits, estimated USD .06 with maximum published model exposure USD .30. The dated private endpoint in ce9bcb9 was deployed specifically to staging (dep-dbbmma1jfumc7387oh9g). It persisted the reservation and submitted exactly once. Pruna returned succeeded. No second generation POST was sent.
+
+Actual downloaded MP4: 1,930,754 bytes, H.264 1280x704, duration 4.041667 seconds, AAC audio at 48kHz. The strict literal-720p inspection correctly refused readiness. This model's 720p label therefore does not establish 1280x720 for this route. Do not upscale and claim native 720p. The original output was preserved and delivered to the owner for listening; speech quality and lip sync still require that review. Billing is not invoice-reconciled. The durable reservation/task remains retained; do not retry or delete it because the inspection refused the media.
+
+Next release blockers are actual Sorani listening review, an honest resolution choice, inclusive customer pricing/settlement and production activation. Badini remains available as a language choice but unverified. The earlier HTTP401 blocker is resolved. Six focused manual-review/transport tests passed before staging deployment; no claim of a new complete regression result is made here.
