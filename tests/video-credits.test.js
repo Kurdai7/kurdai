@@ -78,3 +78,13 @@ test('verified public workflow uses live purchased credits and cannot bypass cos
  const row=await db.prepare("SELECT SUM(amount) AS n FROM billing_ledger WHERE user_id='other' AND mode='live'").first();assert.equal(row.n,90);
  assert.equal((await handleLong(request(10),env,{...user,verified:false})).status,403);assert.equal(starts,1);
 });
+
+test('decimal video quotes charge exact whole credits without floating-point overbilling',()=>{
+ const env={VIDEO_CREDITS_PER_EUR:'100'};
+ assert.equal(videoCreditPrice(env,{totalEUR:.07,canStart:true}),7);
+ assert.equal(videoCreditPrice(env,{totalEUR:.14,canStart:true}),14);
+ assert.equal(videoCreditPrice(env,{totalEUR:.0701,canStart:true}),8);
+ assert.equal(videoCreditPrice(env,{totalEUR:1e-7,canStart:true}),1);
+ assert.equal(videoCreditPrice({STRIPE_MODE:'test'},{totalEUR:.07,canStart:true}),7);
+ assert.throws(()=>videoCreditPrice({STRIPE_MODE:'live'},{totalEUR:.07,canStart:true}));
+});
