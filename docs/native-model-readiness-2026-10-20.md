@@ -61,3 +61,8 @@ The newly deployed key was checked after deploying aaee9e0: configured, no surro
 Release remains blocked by a working qualified API connection and inclusive billing/credit settlement. Stripe Live remains disabled. Website listening success alone does not authorize changing those flags or presenting the site as fully ready.
 
 Source: https://docs.api.pruna.ai/guides/models/p-video-2
+
+
+## P-Video 2 native processor wiring
+
+`processor/pruna-native.js` now prepares direct 720p Draft requests with native audio, exact separate-dialect dialogue, safety enabled and no separate TTS. The shared native engine selects the Pruna credential and requires PRUNA_NATIVE_ENABLED as well as its existing generation/billing/durable storage gates and a matching complete Pruna Draft quote. It persists before POST, polls the stored task only, downloads bounded output over validated HTTPS hosts, sends the API key only to exact api.pruna.ai, validates media and archives a single MP4. Public quotes remain non-payable, so no public request can activate this prepared route. No flags were enabled and no provider request was sent. The owner web-app result is still not direct-API qualification.

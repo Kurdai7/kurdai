@@ -23,7 +23,7 @@ export function quoteNativeCandidate(input) {
   apiUSD:null,apiEUR:null,totalEUR:null,mediaEUR:null,fxEUR:null,vatEUR:null,retailMarkupEUR:0,
   ownerReview:pruna?{source:'VdoBloom web app',reviewed:'2026-10-20',soraniAccepted:true,apiVerified:false,badiniVerified:false}:null,
   providerReference:{provider:pruna?'Pruna':'fal',resolution:'720p',audio:true,
-   outputUSD:Number((input.duration*(pruna?0.015:kling?0.126:0.06)).toFixed(6)),invoiceVerified:false,appliesToPreparedAdapter:!pruna,...(pruna?{draft:true,billedBy:'returned whole seconds'}:{})},
+   outputUSD:Number((input.duration*(pruna?0.015:kling?0.126:0.06)).toFixed(6)),invoiceVerified:false,appliesToPreparedAdapter:true,...(pruna?{draft:true,billedBy:'returned whole seconds'}:{})},
   canStart:false,blockedReasons:[
    ...(pruna?['سۆرانی لە VdoBloom پەسەند کراوە؛ کلیلی API ـی Pruna هێشتا 401 دەدات. نرخی Draft تەنها هەڵسەنگاندنە.']:[]),
    'چالاککردنی API و تاقیکردنەوەی ڤیدیۆی ڕاستەقینە هێشتا ماون؛ هیچ پارەیەک وەرناگیرێت.',

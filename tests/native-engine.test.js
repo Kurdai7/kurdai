@@ -41,3 +41,11 @@ test('durable reservation failure sends no request',async t=>{
  const unregister=registerRemoteSave(root,async()=>{throw new Error('storage unavailable');});t.after(unregister);
  await assert.rejects(advanceNative(j,dir,config,{client:{submit:async()=>{submits++;}}}));assert.equal(submits,0);
 });
+test('Pruna native route uses its own explicit gate and reserves exactly one native task',async t=>{
+ const root=await directory(t);let submissions=0;
+ const make=()=>{const j=job();j.input.model='p-video-2';Object.assign(j.quote,{model:'p-video-2',provider:'pruna',draft:true});return j;};
+ const deps={client:{submit:async input=>{submissions++;return {id:'pruna-task',model:input.model};},poll:async()=>({status:'IN_PROGRESS'})}};
+ const blocked=make();await advanceNative(blocked,join(root,'blocked'),config,deps);assert.equal(submissions,0);assert.equal(blocked.status,'failed');
+ const j=make();await advanceNative(j,join(root,'allowed'),{...config,PRUNA_NATIVE_ENABLED:'true'},deps);assert.equal(submissions,1);assert.equal(publicLongJob(j).totalSegments,1);
+ await advanceNative(j,join(root,'allowed'),{...config,PRUNA_NATIVE_ENABLED:'true'},deps);assert.equal(submissions,1);
+});
