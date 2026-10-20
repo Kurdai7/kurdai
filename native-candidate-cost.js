@@ -21,12 +21,12 @@ export function quoteNativeCandidate(input) {
   reviewed:'2026-10-20',nativeAudio:true,audio:true,
   audioQuote:{native:true,language:input.language},
   apiUSD:null,apiEUR:null,totalEUR:null,mediaEUR:null,fxEUR:null,vatEUR:null,retailMarkupEUR:0,
-  ownerReview:pruna?{source:'VdoBloom web app',reviewed:'2026-10-20',soraniAccepted:true,apiVerified:false,badiniVerified:false}:null,
+  ownerReview:pruna?{source:'VdoBloom web app',reviewed:'2026-10-20',soraniAccepted:true,apiVerified:false,apiTransportVerified:true,apiSpeechVerified:false,badiniVerified:false,observedMedia:{width:1280,height:704,duration:4.041667,audioPresent:true}}:null,
   providerReference:{provider:pruna?'Pruna':'fal',resolution:'720p',audio:true,
    outputUSD:Number((input.duration*(pruna?0.015:kling?0.126:0.06)).toFixed(6)),invoiceVerified:false,appliesToPreparedAdapter:true,...(pruna?{draft:true,billedBy:'returned whole seconds'}:{})},
   canStart:false,blockedReasons:[
-   ...(pruna?['سۆرانی لە VdoBloom پەسەند کراوە؛ کلیلی API ـی Pruna هێشتا 401 دەدات. نرخی Draft تەنها هەڵسەنگاندنە.']:[]),
-   'چالاککردنی API و تاقیکردنەوەی ڤیدیۆی ڕاستەقینە هێشتا ماون؛ هیچ پارەیەک وەرناگیرێت.',
+   ...(pruna?['سۆرانی لە VdoBloom پەسەند کراوە؛ تاقیکردنەوەی API بە دەنگ سەرکەوتوو بوو؛ قەبارەی ڕاستەقینە 1280×704 بوو، نەک 1280×720. گوێگرتنی ئەنجامی API هێشتا ماوە.']:[]),
+   ...(pruna?[]:['چالاککردنی API و تاقیکردنەوەی ڤیدیۆی ڕاستەقینە هێشتا ماون؛ هیچ پارەیەک وەرناگیرێت.']),
    'نرخی کۆتایی، باج و خەرجییە زیادەکان پشتڕاست نەکراونەتەوە.',
    ...(kling?['ڕێگای Kling لە fal بۆ پاراستنی دیالۆگی کوردی هێشتا پەسەند نەکراوە.']:[]),
    ...(input.language==='badini'?['کوالێتی بادینی پێویستی بە گوێگرتن لە تاقیکردنەوەی جیاواز هەیە.']:[])
