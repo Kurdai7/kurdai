@@ -458,9 +458,39 @@ export default {
         }
 
         if (!user.verified) {
-          return json({
-            error: 'Verify your email before logging in.'
-          }, 403);
+          // Only a correct password can request another verification message.
+          // A shared account counter also bounds requests across different IPs.
+          const retry = await authLimit(request, env.DB, 'verification:' + user.id);
+          if (retry) return json({
+            error: 'Too many attempts. Try again later.'
+          }, 429);
+          const recent = await env.DB.prepare(
+            'SELECT created_at FROM verification_tokens WHERE user_id=? ORDER BY created_at DESC LIMIT 1'
+          ).bind(user.id).first();
+          if (recent && Date.parse(recent.created_at) > Date.now() - 60000) {
+            return json({code:'VERIFICATION_PENDING',
+              error:'نامەی پشتڕاستکردنەوە نێردراوە؛ ئیمەیڵەکەت بپشکنە، بەشی Spam ـیش ببینە.'},403);
+          }
+          if (!env.EMAIL_API_KEY || !env.EMAIL_FROM) return json({
+            code:'VERIFICATION_EMAIL_UNAVAILABLE',
+            error:'ناردنی نامەی پشتڕاستکردنەوە ئێستا بەردەست نییە.'
+          },503);
+          const verificationToken = id() + id().replaceAll('-', '');
+          const verificationHash = await sha256(verificationToken);
+          await env.DB.prepare(
+            'INSERT INTO verification_tokens (token_hash,user_id,expires_at,created_at) VALUES (?,?,?,?)'
+          ).bind(verificationHash,user.id,new Date(Date.now()+30*60000).toISOString(),nowIso()).run();
+          try {
+            await sendVerificationEmail(env,user.email,verificationToken,request.url);
+          } catch (e) {
+            await env.DB.prepare('DELETE FROM verification_tokens WHERE token_hash=?')
+              .bind(verificationHash).run();
+            console.error('Verification resend failed',{errorType:e.name});
+            return json({code:'VERIFICATION_EMAIL_FAILED',
+              error:'نامەکە نەنێردرا؛ تکایە دواتر هەوڵ بدەرەوە.'},503);
+          }
+          return json({code:'VERIFICATION_SENT',
+            error:'نامەی پشتڕاستکردنەوە نێردرا؛ ئیمەیڵەکەت بکەرەوە و کرتە لە لینکەکە بکە.'},403);
         }
 
         const session =
