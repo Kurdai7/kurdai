@@ -48,7 +48,8 @@ test('retail credit pricing requires explicit configuration and a startable serv
 });
 test('proxy: server quote controls debit; lost response holds funds; status reconciles failure',async t=>{
   const db=await setup(t),id=crypto.randomUUID(),quote={totalEUR:0.7,canStart:true};
-  const env={DB:db,VIDEO_ADMIN_EMAIL:'admin@example.test',VIDEO_TEST_EMAIL:'owner@example.test',LONG_VIDEO_SERVICE_URL:'https://processor.example.test',
+  const env={DB:db,VIDEO_TEST_EMAIL:'owner@example.test',LONG_VIDEO_SERVICE_URL:'https://processor.example.test',
+    VIDEO_ADMIN_EMAIL:'admin@example.test',
     LONG_VIDEO_SERVICE_SECRET:'s'.repeat(32),STRIPE_MODE:'test',VIDEO_PURCHASED_CREDITS_ENABLED:'true',VIDEO_CREDITS_PER_EUR:'100'};
   const user={id:'owner',email:env.VIDEO_TEST_EMAIL,verified:true};
   let starts=0,lost=true,state='quoted';
@@ -88,4 +89,3 @@ test('decimal video quotes charge exact whole credits without floating-point ove
  assert.equal(videoCreditPrice({STRIPE_MODE:'test'},{totalEUR:.07,canStart:true}),7);
  assert.throws(()=>videoCreditPrice({STRIPE_MODE:'live'},{totalEUR:.07,canStart:true}));
 });
-
