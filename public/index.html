@@ -1,6 +1,4 @@
-<!doctype html>
-<html lang="ckb" dir="rtl">
-<head>
+<!DOCTYPE html><html lang="ckb" dir="rtl"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#103b2d">
@@ -39,8 +37,8 @@ select{line-height:1.6;min-height:48px}
 <header>
   <div class="brand">
     <svg class="flag" viewBox="0 0 120 80" role="img" aria-label="ئاڵای کوردستان">
-      <rect width="120" height="26.67" fill="#e32636"/><rect y="26.67" width="120" height="26.66" fill="#fff"/><rect y="53.33" width="120" height="26.67" fill="#159447"/>
-      <polygon fill="#f9d616" points="60.000,21.000 61.789,28.134 65.600,21.844 65.207,29.188 70.703,24.301 68.162,31.203 74.855,28.154 70.392,34.000 77.687,33.059 71.699,37.330 78.947,38.580 71.966,40.897 78.524,44.228 71.170,44.384 76.454,49.500 69.382,47.482 72.923,53.928 66.760,49.915 68.244,57.118 63.537,51.467 62.832,58.788 60.000,52.000 57.168,58.788 56.463,51.467 51.756,57.118 53.240,49.915 47.077,53.928 50.618,47.482 43.546,49.500 48.830,44.384 41.476,44.228 48.034,40.897 41.053,38.580 48.301,37.330 42.313,33.059 49.608,34.000 45.145,28.154 51.838,31.203 49.297,24.301 54.793,29.188 54.400,21.844 58.211,28.134"/>
+      <rect width="120" height="26.67" fill="#e32636"></rect><rect y="26.67" width="120" height="26.66" fill="#fff"></rect><rect y="53.33" width="120" height="26.67" fill="#159447"></rect>
+      <polygon fill="#f9d616" points="60.000,21.000 61.789,28.134 65.600,21.844 65.207,29.188 70.703,24.301 68.162,31.203 74.855,28.154 70.392,34.000 77.687,33.059 71.699,37.330 78.947,38.580 71.966,40.897 78.524,44.228 71.170,44.384 76.454,49.500 69.382,47.482 72.923,53.928 66.760,49.915 68.244,57.118 63.537,51.467 62.832,58.788 60.000,52.000 57.168,58.788 56.463,51.467 51.756,57.118 53.240,49.915 47.077,53.928 50.618,47.482 43.546,49.500 48.830,44.384 41.476,44.228 48.034,40.897 41.053,38.580 48.301,37.330 42.313,33.059 49.608,34.000 45.145,28.154 51.838,31.203 49.297,24.301 54.793,29.188 54.400,21.844 58.211,28.134"></polygon>
     </svg>
     <div><div class="brand-name">Kurd<span>AI</span></div><div class="tagline">داهێنان بە زمانی کوردی</div></div>
   </div>
@@ -64,7 +62,7 @@ select{line-height:1.6;min-height:48px}
       <div><label class="field-label" for="accountEmail">ئیمەیڵ</label><input id="accountEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
       <div><label class="field-label" for="accountPassword">وشەی نهێنی</label><input id="accountPassword" type="password" autocomplete="current-password" minlength="12" placeholder="لانیکەم ١٢ پیت"></div>
     </div>
-    <div class="account-actions"><button type="button" class="chip" id="registerBtn">دروستکردنی ئەکاونت</button><button type="button" class="chip active" id="loginBtn">چوونەژوورەوە</button><button type="button" class="chip" id="logoutBtn" hidden>دەرچوون</button></div>
+    <div class="account-actions"><button type="button" class="chip" id="registerBtn">دروستکردنی ئەکاونت</button><button type="button" class="chip active" id="loginBtn">چوونەژوورەوە</button><button type="button" class="chip" id="logoutBtn" hidden="">دەرچوون</button></div>
     <div class="toast" id="accountMessage" role="status" aria-live="polite"></div>
     <p class="note" id="creditStatus">کرێدیت: پێویستە بچیتە ژوورەوە. پشتڕاستکردنەوەی ئیمەیڵ پێویستە.</p>
   </section>
@@ -81,12 +79,12 @@ select{line-height:1.6;min-height:48px}
           <select id="language"><option value="sorani">کوردی سۆرانی (Sorani Kurdish)</option><option value="badini">کوردی بادینی (Badini Kurdish)</option><option value="none">بەبێ دیالۆگ</option></select>
         </div>
         <div><label class="field-label" for="duration">ماوەی ڤیدیۆ</label>
-          <select id="duration"><option value="4">٤ چرکە</option><option value="6">٦ چرکە</option><option value="8" selected>٨ چرکە</option></select>
+          <select id="duration"><option value="4">٤ چرکە</option><option value="6">٦ چرکە</option><option value="8" selected="">٨ چرکە</option></select>
         </div>
       </div>
-      <p class="note" id="dialogueSupport" role="status" aria-live="polite">Veo: داواکردنی سۆرانی؛ کوالێتیی دەنگ و شێوەزار هێشتا تاقی نەکراوەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.</p>
-      <div class="actions"><button class="chip" type="button" id="recommendSorani">سۆرانی → Omni 1.1 Flash</button><button class="chip" type="button" id="recommendBadini">بادینی → Veo 3.1 Lite</button></div>
-      <p class="note" id="dialectRecommendation" role="status">پێشنیار بەپێی ئەزموونی خاوەن پڕۆژە؛ دەنگی هەردوو مۆدێل لە API ـی KurdAI هێشتا پشتڕاست نەکراوەتەوە. هەڵبژاردن هیچ ڤیدیۆیەک دروست ناکات.</p>
+      <details class="studio-details"><summary><span class="fold-ku">ڕێنمایی زمان و مۆدێل</span><span class="fold-en" lang="en">Language and model guidance</span></summary><p class="note" id="dialogueSupport" role="status" aria-live="polite">Veo: داواکردنی سۆرانی؛ کوالێتیی دەنگ و شێوەزار هێشتا تاقی نەکراوەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.</p><div class="actions"><button class="chip" type="button" id="recommendSorani">سۆرانی → Omni 1.1 Flash</button><button class="chip" type="button" id="recommendBadini">بادینی → Veo 3.1 Lite</button></div><p class="note" id="dialectRecommendation" role="status">پێشنیار بەپێی ئەزموونی خاوەن پڕۆژە؛ دەنگی هەردوو مۆدێل لە API ـی KurdAI هێشتا پشتڕاست نەکراوەتەوە. هەڵبژاردن هیچ ڤیدیۆیەک دروست ناکات.</p></details>
+      
+      
       </fieldset>
       <fieldset class="form-group"><legend>٢. ڕێکخستنی ڤیدیۆ</legend>
       <div class="two">
@@ -94,25 +92,25 @@ select{line-height:1.6;min-height:48px}
         <div><label class="field-label" for="resolution">کوالێتی</label><select id="resolution"><option value="720p">720p — گونجاو بۆ Extension</option><option value="1080p">1080p — ٨ چرکە</option></select></div>
       </div>
       <label class="field-label" for="model">مۆدێلی ڤیدیۆ</label>
-      <select id="model"><option value="p-video-2">Pruna P-Video 2 — دەنگ و ڤیدیۆی کوردی</option><option value="veo-3.1-fast-generate-preview" selected>Veo 3.1 Fast</option><option value="veo-3.1-generate-preview">Veo 3.1</option><option value="veo-3.1-lite-generate-preview">Veo 3.1 Lite — هەرزانتر، بێ Reference/Extension</option></select>
+      <select id="model"><option value="p-video-2">Pruna P-Video 2 — دەنگ و ڤیدیۆی کوردی</option><option value="veo-3.1-fast-generate-preview" selected="">Veo 3.1 Fast</option><option value="veo-3.1-generate-preview">Veo 3.1</option><option value="veo-3.1-lite-generate-preview">Veo 3.1 Lite — هەرزانتر، بێ Reference/Extension</option></select>
       <label class="field-label" for="videoMode">جۆری دروستکردن</label>
       <select id="videoMode"><option value="new">ڤیدیۆی نوێ / Reference Images</option><option value="extend">Video Extension — زیادکردنی ٧ چرکە</option><option value="frame">Image to Video / وێنە یان دوا فڕەیم</option></select>
-      <div id="sourceFields" hidden>
+      <details class="studio-details"><summary><span class="fold-ku">وێنە و ڤیدیۆی ڕەفەرەنس</span><span class="fold-en" lang="en">Reference images and video</span></summary><div id="sourceFields" hidden="">
         <label class="field-label" for="sourceJob">ڤیدیۆی پێشووی ئەم ئەکاونتە</label><select id="sourceJob"><option value="">ڤیدیۆیەکی ئامادە هەڵبژێرە</option></select>
         <p class="note">Extension تەنها بۆ ڤیدیۆی Veo بە 720p ـە کە لەم ئەکاونتە دروست کراوە و لە ٤٨ کاتژمێری ڕابردوودا هێشتا بەردەستە.</p>
-      </div>
-      <div id="frameFields" hidden>
+      </div><div id="frameFields" hidden="">
         <label class="field-label" for="previousFrame">وێنەی سەرەتا یان دوا فڕەیم (PNG / JPEG)</label><input id="previousFrame" type="file" accept="image/png,image/jpeg">
         <button type="button" class="chip" id="captureFrame">وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو</button>
         <p class="note">ئەمە کلیپێکی نوێ لەو وێنەیەوە دەست پێ دەکات؛ بە خۆکار لەگەڵ ڤیدیۆی پێشوو یەک ناخات.</p>
-      </div>
-      <div id="referenceFields">
-        <label class="field-label" for="referenceImages">وێنەکانی کارەکتەر و جل‌وبەرگ (تا ٣ وێنە)</label><input id="referenceImages" type="file" accept="image/png,image/jpeg" multiple>
+      </div><div id="referenceFields">
+        <label class="field-label" for="referenceImages">وێنەکانی کارەکتەر و جل‌وبەرگ (تا ٣ وێنە)</label><input id="referenceImages" type="file" accept="image/png,image/jpeg" multiple="">
         <p class="note">PNG یان JPEG، هەر وێنەیەک تا ٤ MiB. وێنەکان یارمەتی پاراستنی ناسنامە دەدەن؛ یەکسانیی تەواو مسۆگەر نییە.</p>
-      </div>
-      <div id="imagePreviews" class="image-previews"></div>
+      </div><div id="imagePreviews" class="image-previews"></div></details>
+      
+      
+      
       </fieldset>
-      <fieldset class="form-group"><legend>٣. شێوەی ڤیدیۆ</legend>
+      <details class="studio-details"><summary><span class="fold-ku">شێوەی ڤیدیۆ — 3D، سینەمایی، کارتۆن، ڕاستەقینە</span><span class="fold-en" lang="en">Video style — 3D, cinematic, cartoon, realistic</span></summary><fieldset class="form-group"><legend>٣. شێوەی ڤیدیۆ</legend>
       <label class="field-label">جۆری ڤیدیۆ</label>
       <div class="chips" id="styles">
         <button type="button" class="chip active" data-style="3D Animation">٣D ئەنیمەیشن</button>
@@ -120,13 +118,13 @@ select{line-height:1.6;min-height:48px}
         <button type="button" class="chip" data-style="Cartoon">کارتۆن</button>
         <button type="button" class="chip" data-style="Realistic">ڕاستەقینە</button>
       </div>
-      </fieldset>
+      </fieldset></details>
       <div class="generation-actions">
       <p class="note" id="billingNote">دروستکردنی ڤیدیۆ خەرجی Google API هەیە. کرێدیتی ڕۆژانەی پیشاندراو لێرە پارەی Google نادات. ئێستا دروستکردن بۆ ئەکاونتی تاقیکردنەوەی ڕێکخراوە.</p>
-      <button class="chip" id="nativeQuote" type="button" disabled>پیشاندانی خەرجی API — بێ پارە</button>
+      <button class="chip" id="nativeQuote" type="button" disabled="">پیشاندانی خەرجی API — بێ پارە</button>
       <div class="toast" id="nativeCost" role="status" aria-live="polite"></div>
-      <button class="generate" id="generate" type="button" disabled>🎬 دروستکردنی ڤیدیۆ</button>
-      <button class="chip" id="resumeJob" type="button" hidden>بەردەوامبوون لە پشکنینی داواکاریی پێشوو</button>
+      <button class="generate" id="generate" type="button" disabled="">🎬 دروستکردنی ڤیدیۆ</button>
+      <button class="chip" id="resumeJob" type="button" hidden="">بەردەوامبوون لە پشکنینی داواکاریی پێشوو</button>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
       <p class="note">کلیپی نوێ: ٤، ٦ یان ٨ چرکە؛ وێنەی ڕەفەرەنس و 1080p پێویستیان بە ٨ چرکە هەیە. Extension هەر جار ٧ چرکە زیاد دەکات. دیالۆگی سۆرانی داوا دەکرێت، بەڵام Google کوالێتییەکەی مسۆگەر ناکات.</p>
       </div>
@@ -138,21 +136,21 @@ select{line-height:1.6;min-height:48px}
         <div class="mountains back"></div><div class="mountains"></div>
         <div class="preview-content"><div class="play">▶</div><div class="preview-title" id="previewTitle">KurdAI Studio</div><div class="preview-caption" id="previewCaption">چیرۆکە کوردییەکان بە شێوەیەکی نوێ</div></div>
       </div>
-      <video id="resultVideo" controls playsinline preload="metadata" hidden></video>
-      <div class="account-actions"><a class="chip" id="downloadVideo" download="kurdai-video.mp4" hidden>داگرتنی ڤیدیۆ</a><button type="button" class="chip" id="extendResult" hidden>بەردەوامکردنی ئەم ڤیدیۆیە</button></div>
+      <video id="resultVideo" controls="" playsinline="" preload="metadata" hidden=""></video>
+      <div class="account-actions"><a class="chip" id="downloadVideo" download="kurdai-video.mp4" hidden="">داگرتنی ڤیدیۆ</a><button type="button" class="chip" id="extendResult" hidden="">بەردەوامکردنی ئەم ڤیدیۆیە</button></div>
       <p class="note">ڤیدیۆکە لە ماوەی ٤٨ کاتژمێردا دابگرە. دەنگ و بەردەوامیی کارەکتەرەکان پێش بڵاوکردنەوە بپشکنە.</p>
-      <label class="field-label" for="jobHistory">داواکارییەکانی پێشوو</label><select id="jobHistory"><option value="">هێشتا داواکاری نییە</option></select><button type="button" class="chip" id="loadJob">پیشاندان / پشکنین</button>
+      <details class="studio-details"><summary><span class="fold-ku">ڤیدیۆ و داواکارییەکانی پێشوو</span><span class="fold-en" lang="en">Previous videos and requests</span></summary><label class="field-label" for="jobHistory">داواکارییەکانی پێشوو</label><select id="jobHistory"><option value="">هێشتا داواکاری نییە</option></select><button type="button" class="chip" id="loadJob">پیشاندان / پشکنین</button></details>
       <div class="preview-footer"><span class="status"><span class="dot"></span><span id="previewStatus">ڤیدیۆی AI هێشتا پشتڕاست نەکراوەتەوە</span></span><span id="previewDuration">٨ چرکە</span></div>
     </div>
   </section>
-  <section id="billingPanel" class="panel account-panel" aria-labelledby="billingTitle" hidden>
+  <section id="billingPanel" class="panel account-panel" aria-labelledby="billingTitle" hidden="">
     <h2 id="billingTitle">کرییدیتی کڕدراو</h2>
     <p id="billingBalance" class="sub"></p>
     <div id="billingPacks" class="account-actions"></div>
     <p id="billingMessage" role="status" aria-live="polite"></p>
     <button id="billingRefresh" type="button" class="chip">پشکنینی دۆخی پارەدان</button>
   </section>
-  <section id="longPanel" class="panel account-panel" aria-labelledby="longTitle" hidden>
+  <section id="longPanel" class="panel account-panel" aria-labelledby="longTitle" hidden="">
     <h2 id="longTitle">دروستکردنی ڤیدیۆ بە دەنگ</h2>
     <p class="sub">پرۆمپتی سەرەوە بەکاردێت. Omni دیمەنەکان بە ناسنامەی ڤیدیۆی پێشوو بەردەوام دەکات و دەبنە یەک MP4 بە دەنگەوە. کوالێتی شێوەزار و جێگیری ڕوخسار و دەنگ هێشتا بە API تاقی نەکراونەتەوە.</p>
     <fieldset class="form-group"><legend>١. بیرۆکە و دەنگ</legend>
@@ -160,25 +158,25 @@ select{line-height:1.6;min-height:48px}
     </fieldset><fieldset class="form-group"><legend>٢. ڕێکخستنی ڤیدیۆ</legend>
     <label class="field-label" for="longModel">مۆدێلی ڤیدیۆ</label><select id="longModel"><option value="gemini-omni-1.1-flash">Omni 1.1 Flash — دەنگ و ڤیدیۆ</option><option value="p-video-2">Pruna P-Video 2 — سۆرانی پەسەند کراوە</option><option value="pixverse-v6">PixVerse V6 — چاوەڕوانی پەیوەندی API</option><option value="kling-3.0-standard">Kling 3.0 — چاوەڕوانی پەیوەندی API</option><option value="seedance-2.0-mini">Seedance 2.0 Mini — چاوەڕوانی پەیوەندی API</option><option value="heygen-video-1">HeyGen Video — چاوەڕوانی پەیوەندی API</option><option value="wan2.2-i2v-flash">Wan — هەرزان، بێ دیالۆگ</option></select>
     <label class="field-label" for="longMode">جۆری دروستکردن</label><select id="longMode"><option value="new">ڤیدیۆی نوێ</option><option value="extension">Video Extension — بەردەوامکردنی ڤیدیۆی خۆت</option></select>
-    <div id="longSourcePanel" hidden><label class="field-label" for="longSource">ڤیدیۆی تەواوکراو</label><select id="longSource"><option value="">ڤیدیۆ هەڵبژێرە</option></select><button id="longSourcesRefresh" class="chip" type="button">نوێکردنەوەی لیستی ڤیدیۆکان — بێ پارە</button><p class="note">ماوەی هەڵبژێردراو بۆ بەشی نوێیە؛ دەرئەنجام تەنها بەردەوامکردنەکەیە. زمان و ڕەهەندی ڤیدیۆی پێشوو دەپارێزرێن. کوالێتی بەردەوامی هێشتا بە AI تاقی نەکراوەتەوە.</p></div>
-    <label class="field-label" for="longDuration">ماوەی ڤیدیۆ</label><select id="longDuration"><option value="5">5 چرکە</option><option value="10">10 چرکە</option><option value="15">15 چرکە</option><option value="20">20 چرکە</option><option value="25">25 چرکە</option><option value="30">30 چرکە</option><option value="35">35 چرکە</option><option value="40">40 چرکە</option><option value="45">45 چرکە</option><option value="50">50 چرکە</option><option value="55">55 چرکە</option><option value="60" selected>60 چرکە</option><option value="65">65 چرکە</option><option value="70">70 چرکە</option></select>
+    <div id="longSourcePanel" hidden=""><label class="field-label" for="longSource">ڤیدیۆی تەواوکراو</label><select id="longSource"><option value="">ڤیدیۆ هەڵبژێرە</option></select><button id="longSourcesRefresh" class="chip" type="button">نوێکردنەوەی لیستی ڤیدیۆکان — بێ پارە</button><p class="note">ماوەی هەڵبژێردراو بۆ بەشی نوێیە؛ دەرئەنجام تەنها بەردەوامکردنەکەیە. زمان و ڕەهەندی ڤیدیۆی پێشوو دەپارێزرێن. کوالێتی بەردەوامی هێشتا بە AI تاقی نەکراوەتەوە.</p></div>
+    <label class="field-label" for="longDuration">ماوەی ڤیدیۆ</label><select id="longDuration"><option value="5">5 چرکە</option><option value="10">10 چرکە</option><option value="15">15 چرکە</option><option value="20">20 چرکە</option><option value="25">25 چرکە</option><option value="30">30 چرکە</option><option value="35">35 چرکە</option><option value="40">40 چرکە</option><option value="45">45 چرکە</option><option value="50">50 چرکە</option><option value="55">55 چرکە</option><option value="60" selected="">60 چرکە</option><option value="65">65 چرکە</option><option value="70">70 چرکە</option></select>
     <div class="two">
       <p class="note" id="longModelNotice" role="status"></p>
-      <div><label class="field-label" for="longResolution">کوالێتی ڤیدیۆی درێژ</label><select id="longResolution"><option value="720p">720p — Omni و Wan</option><option value="704p">704p — P-Video 2، قەبارەی ڕاستەقینە</option><option value="520p" disabled>520p — چاوەڕوانی پشتگیری API</option><option value="460p" disabled>460p — چاوەڕوانی پشتگیری API</option><option value="480p">480p — تەنها Wan</option><option value="768p" disabled>768p — HeyGen، چاوەڕوانی API</option></select></div>
-      <div><label class="field-label" for="longIdentity">ناسنامەی جێگیری کارەکتەرەکان</label><input id="longIdentity" maxlength="2000" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></div>
+      <div><label class="field-label" for="longResolution">کوالێتی ڤیدیۆی درێژ</label><select id="longResolution"><option value="720p">720p — Omni و Wan</option><option value="704p">704p — P-Video 2، قەبارەی ڕاستەقینە</option><option value="520p" disabled="">520p — چاوەڕوانی پشتگیری API</option><option value="460p" disabled="">460p — چاوەڕوانی پشتگیری API</option><option value="480p">480p — تەنها Wan</option><option value="768p" disabled="">768p — HeyGen، چاوەڕوانی API</option></select></div>
+      <details class="studio-details"><summary><span class="fold-ku">ڕێکخستنی پێشکەوتوو — کارەکتەر و وێنە</span><span class="fold-en" lang="en">Advanced settings — character and images</span></summary><div><label class="field-label" for="longIdentity">ناسنامەی جێگیری کارەکتەرەکان</label><input id="longIdentity" maxlength="2000" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></div><label class="field-label" for="longReference">وێنەی سەرەتایی / ڕەفەرەنسی کارەکتەر (تا ٣ وێنە بۆ Omni)</label><input id="longReference" type="file" multiple="" accept="image/png,image/jpeg"></details>
     </div>
     </fieldset><fieldset class="form-group"><legend>٣. کارەکتەر و دیالۆگ</legend>
-    <label class="field-label" for="longReference">وێنەی سەرەتایی / ڕەفەرەنسی کارەکتەر (تا ٣ وێنە بۆ Omni)</label><input id="longReference" type="file" multiple accept="image/png,image/jpeg">
+    
     <label class="field-label" for="longLanguage">زمانی دیالۆگی ڤیدیۆی درێژ</label><select id="longLanguage"><option value="sorani">کوردی سۆرانی</option><option value="badini">کوردی بادینی — هێشتا تاقی نەکراوەتەوە</option><option value="none">بێ دیالۆگ</option></select>
     <label class="field-label" for="longDialogue">دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو</label><textarea id="longDialogue" maxlength="5000" placeholder="هەر هێڵێک بۆ دیمەنێک، تا ١٤٠ پیت. شێوەزارەکە وەرناگێڕدرێت."></textarea>
     <p class="note">Omni ڕاستەوخۆ بە دەق یان وێنە کار دەکات. تا سێ ڕەفەرەنس ڕوخسار و جل ڕوونتر دەکەن؛ یەکسانیی تەواو گەرەنتی نییە. Wan بەبێ وێنە، خەرجی وێنەی سەرەتایی زیاد دەکات.</p>
     </fieldset>
-    <div class="account-actions"><button class="chip" id="longSmoke" type="button">تاقیکردنەوەی MP4 ـی ٧٠ چرکە — بێ API، ڤیدیۆی AI نییە</button>
-    <button class="chip" id="longReadiness" type="button">پشکنینی سێرڤەری ڤیدیۆی درێژ — بێ پارە</button>
-      <button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled>قبوڵکردنی خەرجی و دروستکردنی ڤیدیۆی درێژ</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
+    <div class="account-actions"><details class="studio-details"><summary><span class="fold-ku">پشکنینی تەکنیکی</span><span class="fold-en" lang="en">Technical checks</span></summary><button class="chip" id="longSmoke" type="button">تاقیکردنەوەی MP4 ـی ٧٠ چرکە — بێ API، ڤیدیۆی AI نییە</button><button class="chip" id="longReadiness" type="button">پشکنینی سێرڤەری ڤیدیۆی درێژ — بێ پارە</button></details>
+    
+      <button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled="">قبوڵکردنی خەرجی و دروستکردنی ڤیدیۆی درێژ</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
     <div id="longCost" class="toast" role="status" aria-live="polite"></div>
     <p class="note">نرخی Admin = خەرجیی API و خەرجیی ڕاستەقینەی پرۆسێسکردن. قازانجی فرۆشتن زیاد ناکرێت. تا کۆی خەرجی دیاری نەکرێت، دروستکردن داخراوە. دووبارەکردنەوەی داواکاریی بە پارە بە خۆکار ناکرێت.</p>
-    <video id="longVideo" controls playsinline hidden style="width:100%;max-height:500px"></video><a class="chip" id="longDownload" download="KurdAI-video.mp4" hidden>داگرتنی ڤیدیۆی درێژ</a>
+    <video id="longVideo" controls="" playsinline="" hidden="" style="width:100%;max-height:500px"></video><a class="chip" id="longDownload" download="KurdAI-video.mp4" hidden="">داگرتنی ڤیدیۆی درێژ</a>
   </section>
   <section class="features">
     <div class="feature"><div class="ico">🗣️</div><h3>سۆرانی و بادینی</h3><p>داواکردنی دیالۆگی کوردی لەگەڵ ڤیدیۆ. کوالێتی دەنگ و زمان پێویستی بە پشکنین هەیە.</p></div>
@@ -190,6 +188,8 @@ select{line-height:1.6;min-height:48px}
 <script type="module" src="/app.js"></script>
 <script type="module" src="/long-app.js"></script>
 <script type="module" src="/billing-app.js"></script>
-</body>
-</html>
 
+
+
+<script type="module" src="/navigation.js"></script>
+</body></html>
