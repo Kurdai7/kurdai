@@ -332,6 +332,8 @@ $('extendResult').addEventListener('click', () => {
 });
 // Translate text nodes rather than replacing h1/button markup or restoring stale account states.
 const translations = new Map([
+  ["ستۆدیۆ", "Studio"], ["پێشبینین", "Preview"], ["ئەکاونت", "Account"], ["٣. کارەکتەر و دیالۆگ", "3. Character and dialogue"],
+  ["دروستکردنی ڤیدیۆ بە دەنگ", "Create video with audio"], ["وەسفی دیمەنی ڤیدیۆ", "Describe your scene"], ["ناسنامەی جێگیری کارەکتەرەکان", "Character identity"],
   ['داهێنان بە زمانی کوردی', 'Innovation in Kurdish'], ['هەنگاوێکی نوێ بۆ داهێنانی کوردی', 'A new era of Kurdish creativity'],
   ['بیرۆکەکەت بکە بە ', 'Turn your idea into '], ['ڤیدیۆ', 'video'], ['ئەکاونتی KurdAI', 'KurdAI Account'],
   ['ئیمەیڵ', 'Email'], ['وشەی نهێنی', 'Password'], ['دروستکردنی ئەکاونت', 'Create account'], ['چوونەژوورەوە', 'Log in'], ['دەرچوون', 'Log out'],
@@ -365,3 +367,4 @@ api('/api/health').then(state=>{
 }).catch(()=>{});
 
 for (const id of ['prompt','language','videoMode','resolution','duration','sourceJob','aspectRatio','model','referenceImages','previousFrame']) $(id).addEventListener('input', () => { $('nativeCost').textContent = ''; $('nativeCost').classList.remove('show'); });
+
