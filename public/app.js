@@ -332,6 +332,24 @@ $('extendResult').addEventListener('click', () => {
 });
 // Translate text nodes rather than replacing h1/button markup or restoring stale account states.
 const translations = new Map([
+  ["چیرۆکەکەت بنووسە، شێوەزاری کوردی هەڵبژێرە و ئامادەبە بۆ دروستکردنی ڤیدیۆی AI.", "Write your story, choose a Kurdish dialect and prepare your AI video."],
+  ["هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.", "Create an account or log in to view your credits."],
+  ["وردەکارییەکان دیاری بکە بۆ ئامادەکردنی ڤیدیۆکەت.", "Set up the details for your video."],
+  ["شوێنی پیشاندانی ڤیدیۆی دروستکراو.", "Your generated video appears here."],
+  ["چیرۆکە کوردییەکان بە شێوەیەکی نوێ", "A new way to tell Kurdish stories"],
+  ["سۆرانی و بادینی", "Sorani and Badini"],
+  ["بە ناسنامەی کوردی", "Kurdish identity"],
+  ["لۆگۆی KurdAI بە ئاڵای کوردستان و دیزاینێکی مۆدێرن.", "KurdAI brings Kurdish identity to a modern creative studio."],
+  ["پیشاندانی خەرجی API — بێ پارە", "View API cost — free"],
+  ["پیشاندانی خەرجی — بێ پارە", "View cost — free"],
+  ["پشکنینی پێشکەوتن", "Check progress"],
+  ["کوردی سۆرانی (Sorani Kurdish)", "Sorani Kurdish"],
+  ["کوردی بادینی (Badini Kurdish)", "Badini Kurdish"],
+  ["کوالێتی ڤیدیۆی درێژ", "Video resolution"],
+  ["زمانی دیالۆگی ڤیدیۆی درێژ", "Dialogue language"],
+  ["دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو", "Dialogue in your selected language"],
+  ["قبوڵکردنی خەرجی و دروستکردنی ڤیدیۆی درێژ", "Approve cost and generate video"],
+
   ["ستۆدیۆ", "Studio"], ["پێشبینین", "Preview"], ["ئەکاونت", "Account"], ["٣. کارەکتەر و دیالۆگ", "3. Character and dialogue"],
   ["دروستکردنی ڤیدیۆ بە دەنگ", "Create video with audio"], ["وەسفی دیمەنی ڤیدیۆ", "Describe your scene"], ["ناسنامەی جێگیری کارەکتەرەکان", "Character identity"],
   ['داهێنان بە زمانی کوردی', 'Innovation in Kurdish'], ['هەنگاوێکی نوێ بۆ داهێنانی کوردی', 'A new era of Kurdish creativity'],
@@ -352,7 +370,7 @@ const translations = new Map([
 ]);
 const textNodes = [];
 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-while (walker.nextNode()) { const node = walker.currentNode; if (translations.has(node.textContent)) textNodes.push([node, node.textContent]); }
+while (walker.nextNode()) { const node = walker.currentNode; if (translations.has(node.textContent)) textNodes.push([node, node.textContent]); else if (translations.has(node.textContent.trim())) textNodes.push([node, node.textContent.trim()]); }
 $('languageToggle').addEventListener('click', () => {
   const english = document.documentElement.lang !== 'en'; document.documentElement.lang = english ? 'en' : 'ckb'; document.documentElement.dir = english ? 'ltr' : 'rtl';
   for (const [node, original] of textNodes) if (node.isConnected) node.textContent = english ? translations.get(original) : original;
