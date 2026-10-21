@@ -2,7 +2,7 @@ import {advanceNative} from './native-engine.js';
 import {NATIVE_CANDIDATE_MODELS} from '../native-candidate-cost.js';
 // Separate FFmpeg host, NOT a Cloudflare Worker. One process per durable data directory.
 import http from 'node:http';
-import { spendingPolicy, budgetAllows, euroBudgetAllows, budgetMonth } from '../spending.js';
+import { spendingPolicy, budgetAllows, euroBudgetAllows, budgetMonth, adminMonthlyBudgetAllows } from '../spending.js';
 import { buildLtxRequest, submitLtxOnce, pollLtx } from '../ltx-provider.js';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile, unlink, access, rm } from 'node:fs/promises';
@@ -205,6 +205,8 @@ export async function createProcessor(config, dependencies = {}) {
         const flags=configurationStatus(config);
         return send(res,{
           processorOnline:true,
+          adminAccountingVersion:1,
+          adminMonthlyLimitEUR:Math.min(10,Number(config.ADMIN_AI_MAX_MONTH_EUR ?? '10')) || 0,
           durableStorageAcknowledged,
           storageReadWriteOK,
           r2StorageProbeOK,
@@ -231,6 +233,7 @@ export async function createProcessor(config, dependencies = {}) {
       if (!timingSafeEqual(hash(req.headers.authorization || ''), hash(`Bearer ${config.LONG_VIDEO_SERVICE_SECRET}`))) return send(res, { error: 'Unauthorized.' }, 401);
       const owner = req.headers['x-kurdai-owner'];
       if (typeof owner !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(owner)) return send(res, { error: 'Invalid owner.' }, 400);
+      const billingClass=req.headers['x-kurdai-billing']==='customer'?'customer':'admin';
       const url = new URL(req.url, 'http://processor');
       if (config.PROCESSOR_DIAGNOSTICS === 'true') console.info('processor_request', JSON.stringify({method: req.method,
         route: ['/v1/health','/v1/quote','/v1/start','/v1/jobs','/v1/status','/v1/file'].includes(url.pathname) ? url.pathname : 'unknown'}));
@@ -433,7 +436,7 @@ export async function createProcessor(config, dependencies = {}) {
             await rm(join(root, stale.id), {recursive:true,force:true}); jobs.delete(stale.id);
           }
           const id = randomUUID(), expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
-          const job = { id, owner, input, quote:costQuote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0,
+          const job = { id, owner, billingClass, input, quote:costQuote, expiresAt, status: 'quoted', completedSegments: 0, reservedAPIUSD: 0,
             ...(previousInteractionId?{previousInteractionId}:{}) };
           await save(job, join(root, id)); jobs.set(id, job);
           return send(res, { ...costQuote, id, expiresAt });
@@ -441,6 +444,7 @@ export async function createProcessor(config, dependencies = {}) {
         if (url.pathname !== '/v1/start') return send(res, { error: 'Unknown route.' }, 404);
         const job = jobs.get(body.id);
         if (!job || job.owner !== owner) return send(res, { error: 'Not found.' }, 404);
+        if((job.billingClass || 'admin')!==billingClass) return send(res,{error:'Billing identity changed; request a new quote.'},409);
         if (job.status !== 'quoted') return send(res, publicLongJob(job)); // Replay never generates again.
         if(config.LONG_DURABLE_STORAGE!=='true' || !jobStore?.healthy || config.R2_VIDEO_ARCHIVE_ENABLED!=='true')
           return send(res,{error:'Verified durable job metadata and final video storage are required before paid generation.'},409);
@@ -467,6 +471,8 @@ export async function createProcessor(config, dependencies = {}) {
         }
         if (!euroBudgetAllows(config, job.quote.totalEUR, monthlyEUR, lifetimeEUR))
           return send(res,{error:'Monthly or total EUR reservation limit reached. No paid request was sent.'},409);
+        if(billingClass==='admin' && !adminMonthlyBudgetAllows(config,jobs.values(),job.quote.totalEUR))
+          return send(res,{error:'Admin monthly EUR10 reservation limit reached. No paid request was sent.'},409);
         // Approval and its full reservation are saved together before any provider submission.
         job.status = 'running'; job.approvedAt = new Date().toISOString(); job.approvedTotalEUR=body.approvedTotalEUR;
         await save(job, join(root, job.id)); send(res, publicLongJob(job), 202);
@@ -566,3 +572,4 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const shutdown = () => processor.server.close(async () => { await processor.close(); process.exit(0); });
   process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 }
+

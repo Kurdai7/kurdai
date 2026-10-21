@@ -27,6 +27,7 @@ export function publicLongJob(job) {
     totalSegments: job.input.model==='p-video-2'?Math.ceil(job.input.duration/20):['pixverse-v6','kling-3.0-standard'].includes(job.input.model)?1:(job.input.duration ?? 70) / 5, duration: job.status === 'ready' ? (job.input.duration ?? 70) : null, quote: job.quote,
     error: job.error || null, approvedAt: job.approvedAt || null,
     reservedAPIUSD: job.reservedAPIUSD || 0,
+    billingClass:job.billingClass || 'admin',
     canExtend:job.status==='ready' && (job.input.model==='p-video-2' || (job.input.model==='gemini-omni-1.1-flash' &&
       typeof job.previousInteractionId==='string' && /^[A-Za-z0-9_-]{1,300}$/.test(job.previousInteractionId))),
     language:job.input.language || 'none',aspectRatio:job.input.aspectRatio,resolution:job.input.resolution,
@@ -89,3 +90,4 @@ export async function advance(job, directory, config, dependencies = {}) {
     job.error = error.message; await persist();
   }
 }
+

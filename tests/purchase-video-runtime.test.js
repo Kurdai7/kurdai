@@ -29,7 +29,7 @@ test('isolated Worker/D1: signed test purchase funds one synthetic video; replay
  const bundle=await build({entryPoints:['worker.js'],bundle:true,write:false,format:'esm',platform:'browser'});
  const token='synthetic-owner-session',secret='whsec_syntheticOnlySecret';let session,checkouts=0;
  const mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2026-09-25',d1Databases:['DB'],
-  bindings:{VIDEO_TEST_EMAIL:'owner@example.test',STRIPE_MODE:'test',STRIPE_RESTRICTED_KEY:'rk_test_syntheticOnly',STRIPE_WEBHOOK_SECRET:secret,
+  bindings:{VIDEO_ADMIN_EMAIL:'admin@example.test',VIDEO_TEST_EMAIL:'owner@example.test',STRIPE_MODE:'test',STRIPE_RESTRICTED_KEY:'rk_test_syntheticOnly',STRIPE_WEBHOOK_SECRET:secret,
    STRIPE_CHECKOUT_ENABLED:'true',STRIPE_CREDIT_PACKS:JSON.stringify([{id:'small',priceId:'price_synthetic',amountCents:200,credits:200}]),
    LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:serviceSecret,VIDEO_PURCHASED_CREDITS_ENABLED:'true',VIDEO_CREDITS_PER_EUR:'100'},
   outboundService:async request=>{
@@ -89,3 +89,4 @@ test('isolated Worker/D1: signed test purchase funds one synthetic video; replay
  assert.equal((await db.prepare('SELECT status FROM video_credit_reservations').first()).status,'captured');
  assert.equal((await mf.dispatchFetch('https://kurdai.net/api/long/file?id='+quote.id)).status,401);
 });
+

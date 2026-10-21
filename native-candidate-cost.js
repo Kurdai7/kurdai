@@ -1,4 +1,5 @@
 // Candidate quotes are deliberately non-payable until their actual routes are qualified.
+import {prunaOutputCost,PRUNA_PRICE_REVIEWED} from './pruna-pricing.js';
 export const NATIVE_CANDIDATE_MODELS=Object.freeze(['pixverse-v6','kling-3.0-standard','p-video-2']);
 export function validateNativeCandidate(body,{internalPrompt=false}={}) {
  if(!NATIVE_CANDIDATE_MODELS.includes(body?.model))throw new Error('Unknown candidate model.');
@@ -50,7 +51,11 @@ function quotePruna(input,costs) {
   providerReference:{provider:'Pruna',resolution:'720p',outputUSD:Number((input.duration*.015).toFixed(6)),audio:true,draft:true,invoiceVerified:false,appliesToPreparedAdapter:true,billedBy:'returned whole seconds'},
   segmentDurations:Array.from({length:segments},(_,i)=>Math.min(20,input.duration-i*20)),nativeResolution:'704p',resolutionLabel:'1280×704 (native)',estimateSeconds,blockedReasons:[]};
  // The published USD estimate is available even when EUR conversion and activation are missing.
- result.apiUSD=Number((estimateSeconds*.015).toFixed(6));
+ result.apiUSD=prunaOutputCost(estimateSeconds);
+ result.reviewed=PRUNA_PRICE_REVIEWED;
+ result.providerReference.outputUSD=prunaOutputCost(input.duration);
+ result.providerReference.priceSource='https://docs.api.pruna.ai/guides/models/p-video-2';
+ result.providerReference.priceReviewed=PRUNA_PRICE_REVIEWED;
  const missing=[];
  if(costs.prunaEnabled!==true||costs.prunaConfigured!==true)missing.push('پەیوەندی P-Video 2 بۆ داواکارییە گشتییەکان چالاک نەکراوە.');
  if(costs.durableStorage!==true)missing.push('پاشەکەوتکردنی پارێزراوی داواکاری و ڤیدیۆ هێشتا پشتڕاست نەکراوەتەوە.');
@@ -60,10 +65,11 @@ function quotePruna(input,costs) {
  const known=['mediaEUR','fxPercent','vatPercent','usdPerEUR'].every(valid)&&Number(costs.usdPerEUR)>0&&Number(costs.fxPercent)<=100&&Number(costs.vatPercent)<=100;
  if(!known)missing.push('خەرجی، گۆڕینی دراو و باج دیاری نەکراون.');
  if(known){
-  const apiUSD=Number((estimateSeconds*.015).toFixed(6)),apiEUR=apiUSD/Number(costs.usdPerEUR),mediaEUR=Number(costs.mediaEUR),fxEUR=apiEUR*Number(costs.fxPercent)/100,vatEUR=(apiEUR+mediaEUR+fxEUR)*Number(costs.vatPercent)/100;
+  const apiUSD=prunaOutputCost(estimateSeconds),apiEUR=apiUSD/Number(costs.usdPerEUR),mediaEUR=Number(costs.mediaEUR),fxEUR=apiEUR*Number(costs.fxPercent)/100,vatEUR=(apiEUR+mediaEUR+fxEUR)*Number(costs.vatPercent)/100;
   Object.assign(result,{apiUSD,apiEUR,mediaEUR,fxEUR,vatEUR,totalEUR:Math.ceil((apiEUR+mediaEUR+fxEUR+vatEUR)*10000)/10000});
  }
  result.blockedReasons=missing;result.canStart=known&&missing.length===0;
  result.limitations=[...(input.language==='badini'?['کوالێتی بادینی هێشتا پەسەند نەکراوە؛ ئەنجامەکە پێویستی بە گوێگرتن هەیە.']:[]),'نرخەکە هەڵسەنگاندنە؛ یەک چرکە بۆ خەرجی ڕاوێژکراوی ماوە زیاد کراوە.', '704pی ڕاستەقینە؛ گەورەکردنەوە بۆ 720p نییە.'];
  return result;
 }
+
