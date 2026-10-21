@@ -4,15 +4,16 @@ import {readFile} from 'node:fs/promises';
 import Stripe from 'stripe';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import {build} from 'esbuild';
+import {TEST_CREDIT_PACKS} from '../billing-packs.js';
 
-test('actual Worker SDK signs and verifies an isolated test Checkout workflow against D1',async t=>{
+for (const pack of TEST_CREDIT_PACKS) test(`actual Worker/D1: EUR${pack.amountCents/100} grants ${pack.credits} test credits exactly once`,async t=>{
  const bundle=await build({entryPoints:['worker.js'],bundle:true,write:false,format:'esm',platform:'browser'});
  const sessions=new Map();let providerCreates=0;
  const secret='whsec_syntheticOnlySecret',token='test-only-owner-session';
  const mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:bundle.outputFiles[0].text,
   compatibilityDate:'2026-09-25',d1Databases:['DB'],bindings:{VIDEO_TEST_EMAIL:'owner@example.test',
    STRIPE_MODE:'test',STRIPE_RESTRICTED_KEY:' \nrk_test_syn\nthetic\tOnly\n ',STRIPE_WEBHOOK_SECRET:secret,STRIPE_CHECKOUT_ENABLED:'true',
-   STRIPE_CREDIT_PACKS:JSON.stringify([{id:'testpack',priceId:'price_synthetic',amountCents:200,credits:200}])},
+   STRIPE_CREDIT_PACKS:JSON.stringify(TEST_CREDIT_PACKS)},
   outboundService:async request=>{
    const url=new URL(request.url);assert.equal(url.hostname,'api.stripe.com');
    assert.equal(request.headers.get('authorization'),'Bearer rk_test_syntheticOnly');
@@ -20,11 +21,11 @@ test('actual Worker SDK signs and verifies an isolated test Checkout workflow ag
     providerCreates++;assert.equal(url.pathname,'/v1/checkout/sessions');
     assert.ok(request.headers.get('idempotency-key'));
     const form=new URLSearchParams(await request.text());assert.equal(form.get('mode'),'payment');
-    assert.equal(form.get('line_items[0][price]'),'price_synthetic');assert.equal(form.get('payment_method_types'),null);
+    assert.equal(form.get('line_items[0][price]'),pack.priceId);assert.equal(form.get('payment_method_types'),null);
     const id='cs_test_worker1',orderId=form.get('client_reference_id');
-    const session={id,object:'checkout.session',livemode:false,mode:'payment',currency:'eur',amount_total:200,
+    const session={id,object:'checkout.session',livemode:false,mode:'payment',currency:'eur',amount_total:pack.amountCents,
      status:'open',payment_status:'unpaid',metadata:{app:'kurdai',order_id:orderId},client_reference_id:orderId,
-     url:'https://checkout.stripe.com/c/pay/'+id,line_items:{data:[{quantity:1,price:{id:'price_synthetic'}}],has_more:false}};
+     url:'https://checkout.stripe.com/c/pay/'+id,line_items:{data:[{quantity:1,price:{id:pack.priceId}}],has_more:false}};
     sessions.set(id,session);return Response.json(session);
    }
    assert.equal(request.method,'GET');return Response.json(sessions.get('cs_test_worker1'));
@@ -37,9 +38,11 @@ test('actual Worker SDK signs and verifies an isolated test Checkout workflow ag
  await db.prepare('INSERT INTO sessions VALUES (?,?,?,?)').bind(hash,'owner',new Date(Date.now()+3600000).toISOString(),new Date().toISOString()).run();
  const signed=(path,options={})=>mf.dispatchFetch('https://kurdai.net/api/billing/'+path,{...options,headers:{Authorization:'Bearer '+token,...options.headers}});
  const cap=await(await signed('capabilities')).json();assert.equal(cap.enabled,true);assert.equal(cap.mode,'test');assert.equal(cap.publicPaymentsEnabled,false);
- const body=JSON.stringify({packId:'testpack',requestId:crypto.randomUUID()});
+ const body=JSON.stringify({packId:pack.id,requestId:crypto.randomUUID()});
  const response=await signed('checkout',{method:'POST',headers:{'content-type':'application/json'},body});assert.equal(response.status,201);
  const checkout=await response.json();assert.ok(checkout.orderId);
+ const stored=await db.prepare('SELECT amount_cents,credits,price_id FROM billing_orders WHERE id=?').bind(checkout.orderId).first();
+ assert.deepEqual(stored,{amount_cents:pack.amountCents,credits:pack.credits,price_id:pack.priceId});
  await signed('checkout',{method:'POST',headers:{'content-type':'application/json'},body});assert.equal(providerCreates,1);
  // A valid signed completion event while payment is pending must not grant credits.
  const session=sessions.get('cs_test_worker1');
@@ -64,7 +67,7 @@ test('actual Worker SDK signs and verifies an isolated test Checkout workflow ag
   const webhook=await mf.dispatchFetch('https://kurdai.net/api/billing/webhook',{method:'POST',body:payload,headers:{'stripe-signature':signature}});
   assert.equal(webhook.status,200);
  }
- const balance=await(await signed('balance')).json();assert.equal(balance.credits,200);
+ const balance=await(await signed('balance')).json();assert.equal(balance.credits,pack.credits);
  assert.equal((await(await signed('order?id='+checkout.orderId)).json()).status,'paid');
  const anonymous=await mf.dispatchFetch('https://kurdai.net/api/billing/balance');assert.equal(anonymous.status,401);
 });
