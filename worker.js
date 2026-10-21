@@ -185,11 +185,14 @@ export default {
           catch { missingSchema.push(table); }
         }
         const databaseReady = !!env.DB && missingSchema.length === 0;
+        // Configuration names only: never expose the key, sender or account data.
+        const missingEmailConfiguration = ['EMAIL_API_KEY','EMAIL_FROM'].filter(name=>!env[name]);
         return json({ ok: databaseReady && !!env.ASSETS, service: 'KurdAI API',
-          version: 'public-readiness-v4', databaseConfigured: !!env.DB,
+          version: 'public-readiness-v5', databaseConfigured: !!env.DB,
           databaseReady, missingSchema,
           assetsConfigured: !!env.ASSETS,
-          registrationConfigured:databaseReady && !!env.EMAIL_API_KEY && !!env.EMAIL_FROM,
+          registrationConfigured:databaseReady && missingEmailConfiguration.length===0,
+          missingEmailConfiguration,
           emailDeliveryVerified:false,
           publicVideoEnabled:false,
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled
