@@ -77,6 +77,7 @@ function checkoutOrigin(requestUrl,mode) {
   // Only explicitly reviewed project test origins may receive sandbox returns.
   // Never trust Origin/Host headers or a return URL supplied in the request body.
   const testOrigins=new Set([
+    'https://fix-exact-video-credit-rounding-kurdai.kurdai.workers.dev',
     'https://codex-stripe-checkout-kurdai.kurdai.workers.dev',
     'https://fix-settled-checkout-return-kurdai.kurdai.workers.dev'
   ]);
@@ -184,3 +185,4 @@ export async function handleBilling(request,env,user,dependencies={}) {
     return json({error:[400,409,413,415].includes(error.status)?error.message:'Billing request failed. Resume the same order; do not make another payment.'},[400,409,413,415].includes(error.status)?error.status:502);
   }
 }
+

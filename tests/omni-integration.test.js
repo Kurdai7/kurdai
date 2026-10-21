@@ -74,6 +74,11 @@ for(const [seconds,language] of [[5,'sorani'],[10,'badini'],[60,'sorani'],[70,'s
   assert.equal((await request('start',{id:quote.id,approved:true,approvedTotalEUR:0})).status,400);
   assert.equal(submissions,0);
   const approval={id:quote.id,approved:true,approvedTotalEUR:quote.totalEUR};
+  if(quote.totalEUR>10) {
+    const blocked=await request('start',approval);
+    assert.equal(blocked.status,409);assert.match((await blocked.json()).error,/Admin monthly EUR10/);
+    assert.equal(submissions,0);return;
+  }
   assert.equal((await request('start',approval)).status,202);assert.equal((await request('start',approval)).status,200);
   for(let i=0;i<seconds/5*2+1;i++)await processor.tick();
   const job=await(await request('status?id='+quote.id)).json();assert.equal(job.status,'ready');assert.equal(submissions,seconds/5);
@@ -108,3 +113,4 @@ for(const [seconds,language] of [[5,'sorani'],[10,'badini'],[60,'sorani'],[70,'s
     assert.equal((await request('file?id='+result.id)).status,200);
   }
 });
+

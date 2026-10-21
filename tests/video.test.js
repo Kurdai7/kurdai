@@ -1,10 +1,13 @@
-import { test } from 'node:test';
+import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { handleVideo as rawHandleVideo, validateInput, downloadVideo, VIDEO_SCHEMA } from '../video.js';
 import worker from '../worker.js';
 import { authLimit } from '../auth-guard.js';
+// Exercise quote mechanics within the published review window. Production still
+// fails closed after expiry; wall-clock passage must not invalidate fixtures.
+beforeEach(t=>t.mock.method(Date,'now',()=>Date.parse('2026-10-20T12:00:00Z')));
 
 function d1() {
   const db = new DatabaseSync(':memory:');
@@ -234,3 +237,4 @@ test('video write quota shares an atomic D1 counter and stores no raw IP',async(
   assert.equal(rows.length,1);assert.equal(rows[0].attempts,10);
   assert.ok(!JSON.stringify(rows).includes(ip));
 });
+

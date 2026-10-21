@@ -1,4 +1,4 @@
-import {canUseVideoWorkflow} from './video-access.js';
+import {canUseVideoWorkflow,isVideoAdmin} from './video-access.js';
 import {NATIVE_CANDIDATE_MODELS,validateNativeCandidate,quoteNativeCandidate} from './native-candidate-cost.js';
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
 import { audioPreview } from './dialogue.js';
@@ -104,10 +104,12 @@ export async function handleLong(request, env, user) {
     if (url.searchParams.has('id')) upstream.searchParams.set('id', url.searchParams.get('id'));
     // Opt-in only: keep the existing owner-only gate and require an approved
     // retail rate. Never infer a selling price from a client's request body.
-    const chargeCredits = env.VIDEO_PURCHASED_CREDITS_ENABLED === 'true';
+    const admin = isVideoAdmin(env,user);
+    const chargeCredits = !admin && env.VIDEO_PURCHASED_CREDITS_ENABLED === 'true';
     const billingMode = env.STRIPE_MODE;
     let startBody;
     const processorHeaders = { Authorization: `Bearer ${serviceSecret}`, 'X-KurdAI-Owner': user.id,
+      'X-KurdAI-Billing': admin ? 'admin' : 'customer',
       'Content-Type': 'application/json' };
     if (chargeCredits && path === '/start') {
       startBody = await request.clone().json();
@@ -125,8 +127,7 @@ export async function handleLong(request, env, user) {
     // Bound each readiness probe below client connection timeouts; the UI retries
     // only this read. Synthetic media and downloads retain their longer windows.
     const response = await fetch(upstream, { method: request.method, redirect: 'manual', signal: AbortSignal.timeout(path === '/file' ? 120000 : path === '/health' ? 10000 : path === '/smoke' ? 90000 : 30000),
-      headers: { Authorization: `Bearer ${serviceSecret}`, 'X-KurdAI-Owner': user.id,
-        'Content-Type': 'application/json' },
+      headers: processorHeaders,
       ...(request.method === 'POST' ? { body: await request.text() } : {}) });
     // workerd supports manual/follow only. Never follow a redirect with credentials.
     if (response.status >= 300 && response.status < 400) {
@@ -135,8 +136,13 @@ export async function handleLong(request, env, user) {
     }
     if (path === '/health' && [401,403].includes(response.status))
       return json({error: 'Render وەڵامی دا، بەڵام Secret ـی Cloudflare لەگەڵ Render یەکسان نییە.', code: 'PROCESSOR_AUTH_REJECTED'}, 503);
-    if (chargeCredits && ['/quote','/start','/status'].includes(path)) {
+    if ((chargeCredits || admin) && ['/quote','/start','/status'].includes(path)) {
       const data=await response.json();
+      if(admin) {
+        data.creditBilling='admin'; data.creditPrice=0;
+        data.adminMonthlyLimitEUR=10;
+        return json(data,response.status);
+      }
       if (path==='/quote' && response.ok) {
         try { data.creditPrice=videoCreditPrice(env,data); data.creditMode=billingMode; }
         catch { data.canStart=false; data.blockedReasons=[...(data.blockedReasons || []),'Video credit pricing is not ready.']; }
@@ -163,3 +169,4 @@ export async function handleLong(request, env, user) {
     return json({ error: error.message }, 400);
   }
 }
+
