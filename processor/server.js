@@ -205,6 +205,8 @@ export async function createProcessor(config, dependencies = {}) {
         const flags=configurationStatus(config);
         return send(res,{
           processorOnline:true,
+          adminAccountingVersion:1,
+          adminMonthlyLimitEUR:Math.min(10,Number(config.ADMIN_AI_MAX_MONTH_EUR ?? '10')) || 0,
           durableStorageAcknowledged,
           storageReadWriteOK,
           r2StorageProbeOK,
