@@ -338,7 +338,7 @@ const translations = new Map([
   ['ڤیدیۆی نوێ دروست بکە', 'Create a video'], ['چیرۆک یان بیرۆکەی ڤیدیۆ', 'Video story or prompt'], ['شێوەزاری کوردی', 'Dialogue language'],
   ['کوردی سۆرانی', 'Sorani Kurdish'], ['کوردی بادینی', 'Badini Kurdish'], ['بەبێ دیالۆگ', 'No dialogue'], ['ماوەی ڤیدیۆ', 'Video duration'],
   ['قەبارەی ڤیدیۆ', 'Aspect ratio'], ['کوالێتی', 'Resolution'], ['مۆدێلی ڤیدیۆ', 'Video model'], ['جۆری دروستکردن', 'Generation mode'],
-  ['١. بیرۆکە و دەنگ', '1. Idea and dialogue'], ['٢. ڕێکخستنی ڤیدیۆ', '2. Video settings'], ['٣. شێوەی ڤیدیۆ', '3. Video style'], ['جۆری ڤیدیۆ', 'Video style'], ['پێشبینینی ڤیدیۆ', 'Video preview'], ['سینەمایی', 'Cinematic'], ['کارتۆن', 'Cartoon'], ['وەک ژیانی ڕاستەقینە', 'Realistic'],
+  ['١. بیرۆکە و دەنگ', '1. Idea and dialogue'], ['٢. ڕێکخستنی ڤیدیۆ', '2. Video settings'], ['٣. شێوەی ڤیدیۆ', '3. Video style'], ['جۆری ڤیدیۆ', 'Video style'], ['پێشبینینی ڤیدیۆ', 'Video preview'], ['سینەمایی', 'Cinematic'], ['کارتۆن', 'Cartoon'], ['ڕاستەقینە', 'Realistic'],
   ['٣D ئەنیمەیشن', '3D Animation'], ['🎬 دروستکردنی ڤیدیۆ', '🎬 Generate video'], ['داگرتنی ڤیدیۆ', 'Download video'],
   ['بەردەوامکردنی ئەم ڤیدیۆیە', 'Extend this video'], ['داواکارییەکانی پێشوو', 'Previous requests'], ['پیشاندان / پشکنین', 'Load / check status'],
   ['بەردەوامبوون لە پشکنینی داواکاریی پێشوو', 'Resume previous request'], ['ڤیدیۆی نوێ / Reference Images', 'New video / Reference Images'],
