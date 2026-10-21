@@ -39,3 +39,22 @@ export function budgetMonth(stamp) {
     .formatToParts(date);
   return `${parts.find(p=>p.type==='year').value}-${parts.find(p=>p.type==='month').value}`;
 }
+
+// Conservative reservations survive failure and uncertainty. Legacy unclassified
+// jobs were owner-only and count as admin exposure. Customers have a separate cap.
+export function adminMonthlyBudgetAllows(config,jobs,estimate,stamp=new Date().toISOString()) {
+ const configured=config.ADMIN_AI_MAX_MONTH_EUR ?? '10';
+ if(typeof configured!=='string'||!/^\d+(?:\.\d{1,6})?$/.test(configured))return false;
+ const limit=Math.min(10,Number(configured)),month=budgetMonth(stamp);
+ if(!(limit>0)||!month||!Number.isFinite(estimate)||estimate<=0)return false;
+ let reserved=0;
+ for(const job of jobs) {
+  if(!job.approvedAt || job.billingClass==='customer')continue;
+  const previousMonth=budgetMonth(job.approvedAt);
+  if(previousMonth!==month && previousMonth!==null)continue;
+  if(!Number.isFinite(job.approvedTotalEUR)||job.approvedTotalEUR<=0)return false;
+  reserved+=job.approvedTotalEUR;
+ }
+ return Math.round(reserved*1e6)+Math.ceil(estimate*1e6)<=Math.floor(limit*1e6);
+}
+

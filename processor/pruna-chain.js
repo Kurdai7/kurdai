@@ -7,6 +7,7 @@ import {save} from './engine.js';
 import {createPrunaNativeClient} from './pruna-native.js';
 import {validateNativeCandidate} from '../native-candidate-cost.js';
 import {lastFrame} from './media.js';
+import {prunaOutputCost,recordPrunaUsage} from '../pruna-pricing.js';
 const exec=promisify(execFile);
 export function prunaSegments(input){
  const words=input.dialogueText.match(/\S+\s*/gu)||[];let offset=0;
@@ -39,7 +40,7 @@ export async function advancePrunaChain(job,directory,config,deps={}){
    if(config.PRUNA_NATIVE_ENABLED!=='true'||config.NATIVE_GENERATION_ENABLED!=='true'||config.NATIVE_BILLING_VERIFIED!=='true'||config.LONG_DURABLE_STORAGE!=='true')throw new Error('Disabled chain.');
    if(q?.model!=='p-video-2'||q.provider!=='pruna'||q.draft!==true||q.canStart!==true||q.outputSeconds!==input.duration||!Number.isFinite(q.totalEUR)||q.totalEUR<=0||job.approvedTotalEUR!==q.totalEUR||!Number.isFinite(age)||age<0||age>86400000||!Number.isFinite(q.apiUSD)||q.apiUSD<=0)throw new Error('Current complete approval required.');
    if(index>=parts.length)throw new Error('Saved chain needs reconciliation.');
-   const part=parts[index],cost=Number(((part.seconds+1)*.015).toFixed(6));
+   const part=parts[index],cost=prunaOutputCost(part.seconds+1);
    if(!Number.isFinite(job.reservedAPIUSD)||job.reservedAPIUSD<0||job.reservedAPIUSD+cost>q.apiUSD+.000001)throw new Error('Approved budget exceeded.');
    let image=index?null:input.image;
    if(index){const path=join(directory,'continuation.jpg');await (deps.lastFrame||lastFrame)(join(directory,`clip-${index-1}.mp4`),path);image='data:image/jpeg;base64,'+(await readFile(path)).toString('base64');}
@@ -51,6 +52,7 @@ export async function advancePrunaChain(job,directory,config,deps={}){
   const result=await client.poll(pending.task);if(result.status!=='completed')return;
   const source=join(directory,`source-${index}.mp4`),clip=join(directory,`clip-${index}.mp4`);
   await (deps.download||client.download)(result.url,source);const info=await (deps.inspect||inspect)(source);
+  recordPrunaUsage(job,pending.task.id,info.duration);await persist();
   const expected=input.aspectRatio==='16:9'?[1280,704]:[704,1280];
   if(info.width!==expected[0]||info.height!==expected[1]||!info.audioPresent||!Number.isFinite(info.duration)||Math.abs(info.duration-pending.seconds)>.15)throw new Error('Native media mismatch.');
   await (deps.trim||trimPrunaClip)(source,clip,pending.seconds);
@@ -59,3 +61,4 @@ export async function advancePrunaChain(job,directory,config,deps={}){
   await persist();
  }catch{job.status=job.inflight?.state==='submitting'?'uncertain':'failed';job.error='Native continuation stopped; retain tasks and completed clips. No automatic generation retry.';await persist();}
 }
+

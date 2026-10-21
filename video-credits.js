@@ -56,6 +56,8 @@ export async function settleVideoCredits(db,userId,mode,jobId,outcome) {
 }
 export function videoCreditPrice(env,quote) {
   const rate=Number(env.VIDEO_CREDITS_PER_EUR ?? (env.STRIPE_MODE==='test'?VIDEO_COST_CREDITS_PER_EUR:NaN));
+  if(env.STRIPE_MODE==='live' && rate!==VIDEO_COST_CREDITS_PER_EUR)
+    throw failure('Live video rate must match the reviewed credit-pack economics.',503);
   if (!Number.isSafeInteger(rate) || rate<1 || rate>1000000 ||
     !Number.isFinite(quote?.totalEUR) || quote.totalEUR<=0 || quote.canStart!==true)
     throw failure('Video credit price or processor readiness is not confirmed.',503);
@@ -69,3 +71,4 @@ export function videoCreditPrice(env,quote) {
     throw failure('Video credit price is outside the supported limit.',503);
   return credits;
 }
+

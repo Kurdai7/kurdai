@@ -90,7 +90,8 @@ $('longQuote').addEventListener('click', async () => {
     show(`${data.model}\n${data.outputSeconds} چرکە · ${data.segmentDurations?data.segmentDurations.join(' + '):`${data.segments} × ${data.segmentSeconds || 5}`} · ${$('longResolution').value} · ${data.nativeAudio?(data.ownerReview?.apiSpeechVerified && data.audioQuote?.language==='sorani'?'دەنگ و ڤیدیۆ پێکەوەن؛ دەنگی سۆرانی لە تاقیکردنەوەی API پەسەند کراوە':'دەنگ و ڤیدیۆ پێکەوەن؛ کوالێتی ئەم زمانە هێشتا پەسەند نەکراوە'):'بێ دەنگ'}\nAPI: ${data.apiUSD==null?'کۆی تۆکنەکان دیاری نەکراوە':`$${data.apiUSD.toFixed(3)} ≈ ${money(data.apiEUR)}`}\n${data.apiMinimumEUR==null?'':`تەنها دەرئەنجامی ڤیدیۆی داواکراو: ${money(data.apiMinimumEUR)}؛ تێکست، مێژووی دیمەن و خەرجییەکانی تر زیاد دەبن.\n`}پرۆسێسکردن: ${money(data.mediaEUR)} · گۆڕینی دراو: ${money(data.fxEUR)} · باج: ${money(data.vatEUR)}\nکۆی خەرجی: ${money(data.totalEUR)} · قازانجی فرۆشتن: €0\n${data.canStart ? 'ئەمە هەڵسەنگاندنی پارێزراوی خەرجییە، پسوڵە یان سنووری گەرەنتیکراوی پارەدان نییە. پێش دەستپێکردن قبوڵی بکە.' : (data.blockedReasons || ['هێشتا چالاک نییە؛ دەستگەیشتنی API و کۆی خەرجی پێویستیان بە ڕێکخستن هەیە.']).join('\n')}`);
     if(data.providerReference) show(`${$('longCost').textContent}\nنرخی بڵاوکراوەی ${data.providerReference.provider}: $${data.providerReference.outputUSD.toFixed(3)} بۆ دەرئەنجامی ڤیدیۆ بە دەنگ؛ باج و خەرجییەکانی تر لەخۆ ناگرێت. ئەمە نرخی کۆتایی فرۆشتن نییە.`);
     if(data.limitations?.length)show(`${$('longCost').textContent}\n${data.limitations.join('\n')}`);
-    if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
+    if(data.creditBilling==='admin') show(`${$('longCost').textContent}\nئەدمین: کرێدیتی کڕیار کەم ناکرێتەوە. سنووری مانگانەی خەرجی: ١٠ یۆرۆ.`);
+    else if(data.creditPrice) show(`${$('longCost').textContent}\nکرێدیتی پێویست: ${data.creditPrice}${data.creditMode==='test'?' (تاقیکردنەوە)':''}`);
     if(data.serviceCostBreakdown) {
       const b=data.serviceCostBreakdown;
       show(`${$('longCost').textContent}\n${b.mode==='image-to-video'?'بە وێنە':'بە دەق'} — دەرئەنجامی دیمەنی یەکەم: ${money(b.firstSegmentVideoEUR)}\nدەرئەنجامی بەردەوامکردن: ${money(b.continuationVideoEUR)}؛ لە کۆی دەرئەنجامەکەدا هەژمار کراوە.\nتۆکنی چوونەژوورەوە/مێژوو: دیاری نەکراوە · تێکستی دەرچوو: دیاری نەکراوە\nدەنگی ناوخۆی Omni: خەرجی جیاوازی نییە؛ کوالێتی سۆرانی/بادینی تاقی نەکراوەتەوە.`);
@@ -192,3 +193,4 @@ $('longReadiness').addEventListener('click', async () => {
   } catch (error) { if (session === token() && version === generation) show(error.message); }
   finally { button.disabled = false; }
 });
+

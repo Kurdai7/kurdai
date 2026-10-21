@@ -1,4 +1,5 @@
 import {advancePrunaChain} from './pruna-chain.js';
+import {recordPrunaUsage} from '../pruna-pricing.js';
 // Single native video/audio job; no TTS, image generator, or paid retry.
 import {copyFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -42,6 +43,7 @@ export async function advanceNative(job,directory,config,dependencies={}) {
   const source=join(directory,'native-source.mp4'),clip=join(directory,'clip-0.mp4');
   await (dependencies.download||(pruna?client.download:download))(result.url,source);
   const info=await (dependencies.inspect||inspect)(source);
+  if(pruna) { recordPrunaUsage(job,job.inflight.task.id,info.duration); await persist(); }
   const dimensions=input.aspectRatio==='16:9'?[1280,pruna?704:720]:[pruna?704:720,1280];
   if(info.width<dimensions[0]||info.height<dimensions[1]||!info.audioPresent||!Number.isFinite(info.duration)||Math.abs(info.duration-input.duration)>.15)throw new Error('Native output does not meet the approved duration, audio or resolution.');
   if(pruna)await (dependencies.copy||copyFile)(source,clip);
@@ -55,3 +57,4 @@ export async function advanceNative(job,directory,config,dependencies={}) {
   await persist();
  }
 }
+
