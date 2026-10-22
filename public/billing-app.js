@@ -38,18 +38,24 @@
    Object.assign(c,await api('capabilities',c));
    if(!active(c) || !c.configured || !c.accountId)return;
    const balance=await api('balance',c);if(!active(c))return;
-   c.credits=balance.credits;context=c;render(c);panel.hidden=false;
+   c.credits=balance.credits;c.latestPurchase=balance.latestPurchase;context=c;render(c);panel.hidden=false;
+   const receiptMessage=()=>ku(`دوایین کڕین پشتڕاست کرایەوە؛ ${c.latestPurchase.credits} کرێدیت زیاد کراوە.`,`Latest purchase verified; ${c.latestPurchase.credits} credits added.`);
+   if(c.latestPurchase)$('billingMessage').textContent=receiptMessage();
    if(!c.enabled)$('billingMessage').textContent=ku('کڕینی کرییدیت ئێستا بەردەست نییە.','Credit purchases are currently unavailable.');
    const saved=pending();
    const own=saved?.accountId===c.accountId && saved?.mode===c.mode;
    if(returnedOrder || (own && saved.orderId)) {
-    const order=await api('order?id='+encodeURIComponent(returnedOrder || saved.orderId),c);if(!active(c))return;
+    const requestedOrder=returnedOrder || saved.orderId;
+    const order=await api('order?id='+encodeURIComponent(requestedOrder),c);if(!active(c))return;
+    if(order.id!==requestedOrder || !['creating','open','paid','expired'].includes(order.status))throw Error('Invalid order response');
+    if(c.latestPurchase?.id===order.id)order.status='paid';
     if(order.status==='paid') {
      const settled=await api('balance',c);if(!active(c))return;
      c.credits=settled.credits;render(c);
     }
     $('billingMessage').textContent=order.status==='paid'?ku('پارەدان پشتڕاست کرایەوە.','Payment verified.'):
       order.status==='expired'?ku('کاتی پارەدانەکە بەسەرچووە.','Checkout expired.'):
+      c.latestPurchase?receiptMessage()+ku(' داواکارییەکی تری پارەدان هێشتا تەواو نەبووە.',' A different checkout is still incomplete.'):
       ku('پارەدان هێشتا پشتڕاست نەکراوەتەوە؛ دواتر دۆخەکە بپشکنە.','Payment is not verified yet; check its status again later.');
     if(own && saved.orderId===order.id && ['paid','expired'].includes(order.status))sessionStorage.removeItem(pendingKey);
     if(order.id===returnedOrder && ['paid','expired'].includes(order.status)) {
@@ -87,3 +93,4 @@
  $('languageToggle').addEventListener('click',()=>{if(context && active(context))render(context);});
  refresh();
 })();
+

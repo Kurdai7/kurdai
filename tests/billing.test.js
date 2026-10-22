@@ -138,6 +138,10 @@ test('order checks reconcile missed webhooks once and recognize an existing ledg
  assert.equal((await(await check()).json()).status,'paid');
  assert.equal(config.DB.raw.prepare('SELECT SUM(amount) AS credits FROM billing_ledger').get().credits,200);
  config.DB.raw.prepare("UPDATE billing_orders SET status='open' WHERE id=?").run(checkout.orderId);
+ const balance=await(await handleBilling(request('balance'),config,owner,{client})).json();
+ assert.deepEqual(balance.latestPurchase,{id:checkout.orderId,credits:200,amountCents:200});
+ const other=await(await handleBilling(request('balance'),config,{...owner,id:'other'},{client})).json();
+ assert.equal(other.latestPurchase,null);
  client.checkout.sessions.retrieve=async()=>{throw Error('Provider unavailable');};
  assert.equal((await(await check()).json()).status,'paid');
  assert.equal(client.submissions,1);
@@ -225,3 +229,4 @@ test('new test catalogue never enables live checkout without independent economi
  assert.equal(billingConfiguration({...live,STRIPE_CREDIT_PACKS:JSON.stringify(livePacks),STRIPE_PACK_ECONOMICS_VERIFIED:'true'}).enabled,true);
  assert.equal(billingConfiguration({...live,STRIPE_CREDIT_PACKS:JSON.stringify(livePacks),STRIPE_PACK_ECONOMICS_VERIFIED:'true',STRIPE_LIVE_APPROVED:'false'}).enabled,false);
 });
+
