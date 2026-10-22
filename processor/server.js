@@ -203,8 +203,23 @@ export async function createProcessor(config, dependencies = {}) {
       if (req.method === 'GET' && publicPath === '/readiness') {
         // Public diagnostic exposes no keys, billing details, owner IDs or file paths.
         const flags=configurationStatus(config);
+        const pruna=quoteLong({model:'p-video-2',duration:5,language:'sorani',resolution:'704p',aspectRatio:'16:9'},costs());
+        const prunaPending=[
+          ...pruna.blockedReasons,
+          ...(!flags.apiSpendingEnabled?['api_spending_disabled']:[])
+        ];
         return send(res,{
           processorOnline:true,
+          readinessVersion:2,
+          selectedVideoModel:'p-video-2',
+          prunaVideoReady:pruna.canStart && flags.apiSpendingEnabled,
+          prunaSetup:{
+            apiKeyPresent:!!config.PRUNA_API_KEY,
+            generationEnabled:config.PRUNA_NATIVE_ENABLED==='true' && config.NATIVE_GENERATION_ENABLED==='true',
+            billingVerified:config.NATIVE_BILLING_VERIFIED==='true',
+            missingCostSettings:['LONG_USD_PER_EUR','LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT'].filter(key=>config[key]===undefined || String(config[key]).trim()===''),
+            pendingSetup:prunaPending
+          },
           adminAccountingVersion:1,
           adminMonthlyLimitEUR:Math.min(10,Number(config.ADMIN_AI_MAX_MONTH_EUR ?? '10')) || 0,
           durableStorageAcknowledged,
