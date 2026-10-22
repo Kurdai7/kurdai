@@ -51,6 +51,26 @@ test('video balance changes re-read server credits without creating checkout',as
  credits=200;w.document.dispatchEvent(new w.Event('kurdai-balance-change'));await wait();
  assert.match($('billingBalance').textContent,/200/);assert.equal(posts,0);
 });
+test('a ledger-backed purchase receipt identifies a settled return despite a stale order response',async t=>{
+ const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+ const {w,$,start}=setup(t,`https://kurdai.net/?order=${id}`);
+ w.fetch=async(path)=>response(path.endsWith('capabilities')?cap:path.endsWith('balance')?
+  {credits:340,latestPurchase:{id,credits:280,amountCents:500}}:{id,status:'open'});
+ start();await wait();
+ assert.match($('billingMessage').textContent,/پارەدان پشتڕاست کرایەوە/);
+ assert.match($('billingBalance').textContent,/340/);
+ assert.equal(w.location.search,'');
+});
+test('an unrelated pending checkout never marks a verified purchase unverified',async t=>{
+ const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',paid='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+ const {w,$,start}=setup(t,`https://kurdai.net/?order=${id}`);
+ w.fetch=async(path)=>response(path.endsWith('capabilities')?cap:path.endsWith('balance')?
+  {credits:340,latestPurchase:{id:paid,credits:280,amountCents:500}}:{id,status:'open'});
+ start();await wait();
+ assert.match($('billingMessage').textContent,/280/);
+ assert.match($('billingMessage').textContent,/داواکارییەکی تری/);
+ assert.ok(w.location.search.includes(id));
+});
 test('settled returns refresh credits and stop shadowing the next order',async t=>{
  const first='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',second='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
  const {w,$,start}=setup(t,`https://kurdai.net/?checkout=returned&order=${first}&lang=en`);
@@ -69,3 +89,4 @@ test('settled returns refresh credits and stop shadowing the next order',async t
  $('billingRefresh').click();await wait();
  assert.deepEqual(orders,[first,second]);assert.equal(w.sessionStorage.getItem('kurdai_billing_order'),null);assert.equal(posts,0);
 });
+

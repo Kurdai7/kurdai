@@ -144,7 +144,12 @@ export async function handleBilling(request,env,user,dependencies={}) {
     await env.DB.batch(BILLING_SCHEMA.map(sql=>env.DB.prepare(sql)));
     if(url.pathname==='/api/billing/balance' && request.method==='GET') {
       const row=await env.DB.prepare('SELECT COALESCE(SUM(amount),0) AS credits FROM billing_ledger WHERE user_id=? AND mode=?').bind(user.id,config.mode).first();
-      return json({mode:config.mode,credits:row.credits});
+      const latestPurchase=await env.DB.prepare(`SELECT o.id,o.credits,o.amount_cents AS amountCents FROM billing_orders o
+        JOIN billing_fulfillments f ON f.order_id=o.id AND f.session_id=o.session_id
+        JOIN billing_ledger l ON l.id=? || f.session_id AND l.user_id=o.user_id AND l.mode=o.mode AND l.reason='stripe_purchase'
+        WHERE o.user_id=? AND o.mode=? ORDER BY l.created_at DESC,o.created_at DESC,o.id DESC LIMIT 1`)
+        .bind(`stripe:${config.mode}:`,user.id,config.mode).first();
+      return json({mode:config.mode,credits:row.credits,latestPurchase:latestPurchase || null});
     }
     if(url.pathname==='/api/billing/order' && request.method==='GET') {
       const order=await env.DB.prepare('SELECT * FROM billing_orders WHERE id=? AND user_id=? AND mode=?').bind(url.searchParams.get('id') || '',user.id,config.mode).first();
