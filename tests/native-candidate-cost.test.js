@@ -55,3 +55,19 @@ test('Pruna USD estimates remain visible without inventing missing EUR costs or 
   assert.equal(q.apiEUR,null);assert.equal(q.totalEUR,null);assert.equal(q.canStart,false);
  }
 });
+
+test('planning reserves never become payable costs even with generation flags enabled',()=>{
+ for(const [duration,expected] of [[5,.14],[10,.24],[60,1.31]]){
+  const input=longInput({...base,model:'p-video-2',resolution:'704p',duration});
+  const flags={prunaEnabled:true,prunaConfigured:true,prunaBillingVerified:true,durableStorage:true};
+  const q=quoteLong(input,flags);
+  assert.equal(q.planningEstimate.totalEUR,expected);
+  assert.equal(q.planningEstimate.invoiceVerified,false);
+  assert.equal(q.planningEstimate.payable,false);
+  assert.equal(q.totalEUR,null);assert.equal(q.canStart,false);
+  const verified=quoteLong(input,{...flags,usdPerEUR:1.1,mediaEUR:.01,fxPercent:2,vatPercent:0});
+  assert.equal(verified.planningEstimate,undefined);
+  assert.equal(verified.canStart,true);
+ }
+});
+

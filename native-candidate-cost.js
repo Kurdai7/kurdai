@@ -63,7 +63,15 @@ function quotePruna(input,costs) {
  if(input.resolution!=='704p')missing.push('P-Video 2 لەم ڕێگەیەدا 704p دروست دەکات؛ 704p هەڵبژێرە.');
  const valid=k=>['string','number'].includes(typeof costs[k])&&String(costs[k]).trim()!==''&&Number.isFinite(Number(costs[k]))&&Number(costs[k])>=0;
  const known=['mediaEUR','fxPercent','vatPercent','usdPerEUR'].every(valid)&&Number(costs.usdPerEUR)>0&&Number(costs.fxPercent)<=100&&Number(costs.vatPercent)<=100;
- if(!known)missing.push('خەرجی، گۆڕینی دراو و باج دیاری نەکراون.');
+ if(!known){
+  missing.push('خەرجی، گۆڕینی دراو و باج دیاری نەکراون.');
+  // Planning only: never substitute assumed reserves for verified payable costs.
+  const apiReserveEUR=result.apiUSD;
+  result.planningEstimate={basis:'unverified-planning-reserve',currency:'EUR',
+   assumptions:{usdPerEUR:1,fxReservePercent:5,taxReservePercent:30,mediaReserveEUR:0.01},
+   totalEUR:Math.ceil((apiReserveEUR*1.05+0.01)*1.30*100)/100,
+   invoiceVerified:false,payable:false};
+ }
  if(known){
   const apiUSD=prunaOutputCost(estimateSeconds),apiEUR=apiUSD/Number(costs.usdPerEUR),mediaEUR=Number(costs.mediaEUR),fxEUR=apiEUR*Number(costs.fxPercent)/100,vatEUR=(apiEUR+mediaEUR+fxEUR)*Number(costs.vatPercent)/100;
   Object.assign(result,{apiUSD,apiEUR,mediaEUR,fxEUR,vatEUR,totalEUR:Math.ceil((apiEUR+mediaEUR+fxEUR+vatEUR)*10000)/10000});
