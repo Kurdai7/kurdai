@@ -10,7 +10,7 @@
  function pending(){try{return JSON.parse(sessionStorage.getItem(pendingKey));}catch{return null;}}
  function active(c){return c && c.epoch===epoch && token()===c.token;}
  async function api(path,c,options={}) {
-  const response=await fetch('/api/billing/'+path,{...options,headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.token},signal:AbortSignal.timeout(20000)});
+  const response=await fetch('/api/billing/'+path,{...options,cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.token},signal:AbortSignal.timeout(20000)});
   const data=await response.json();if(!response.ok)throw Error('Billing request failed');return data;
  }
  function buttons(){for(const b of $('billingPacks').querySelectorAll('button'))b.disabled=busy || b.dataset.preview==='true';}
