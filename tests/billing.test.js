@@ -126,6 +126,31 @@ test('signed webhook fulfills paid sessions exactly once across delayed, duplica
  assert.equal((await deliver('checkout.session.completed')).status,200);
  assert.equal(config.DB.raw.prepare('SELECT COUNT(*) AS n FROM billing_ledger').get().n,1);
 });
+test('order checks reconcile missed webhooks once and recognize an existing ledger settlement',async()=>{
+ const config=env(),client=mockClient();
+ const checkout=await(await handleBilling(request('checkout',{requestId:crypto.randomUUID(),packId:'small'}),config,owner,{client})).json();
+ const session=client.sessions.values().next().value;
+ const check=()=>handleBilling(request('order?id='+checkout.orderId),config,owner,{client});
+ assert.equal((await(await check()).json()).status,'open');
+ assert.equal(config.DB.raw.prepare('SELECT COUNT(*) AS n FROM billing_ledger').get().n,0);
+ session.payment_status='paid';session.status='complete';
+ assert.equal((await(await check()).json()).status,'paid');
+ assert.equal((await(await check()).json()).status,'paid');
+ assert.equal(config.DB.raw.prepare('SELECT SUM(amount) AS credits FROM billing_ledger').get().credits,200);
+ config.DB.raw.prepare("UPDATE billing_orders SET status='open' WHERE id=?").run(checkout.orderId);
+ client.checkout.sessions.retrieve=async()=>{throw Error('Provider unavailable');};
+ assert.equal((await(await check()).json()).status,'paid');
+ assert.equal(client.submissions,1);
+ assert.equal((await handleBilling(request('order?id='+checkout.orderId),config,{...owner,id:'other'},{client})).status,404);
+});
+test('order reconciliation rejects paid sessions with mismatched totals',async()=>{
+ const config=env(),client=mockClient();
+ const checkout=await(await handleBilling(request('checkout',{requestId:crypto.randomUUID(),packId:'small'}),config,owner,{client})).json();
+ const session=client.sessions.values().next().value;session.payment_status='paid';session.amount_total=1;
+ assert.equal((await handleBilling(request('order?id='+checkout.orderId),config,owner,{client})).status,409);
+ assert.equal(config.DB.raw.prepare('SELECT COUNT(*) AS n FROM billing_ledger').get().n,0);
+ assert.equal(client.submissions,1);
+});
 test('signature, body alteration, stale timestamps and mismatched paid totals cannot grant credits',async()=>{
  const config=env(),client=mockClient();
  await handleBilling(request('checkout',{requestId:crypto.randomUUID(),packId:'small'}),config,owner,{client});

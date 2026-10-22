@@ -147,8 +147,21 @@ export async function handleBilling(request,env,user,dependencies={}) {
       return json({mode:config.mode,credits:row.credits});
     }
     if(url.pathname==='/api/billing/order' && request.method==='GET') {
-      const order=await env.DB.prepare('SELECT id,status FROM billing_orders WHERE id=? AND user_id=? AND mode=?').bind(url.searchParams.get('id') || '',user.id,config.mode).first();
-      return order?json(order):json({error:'Order not found.'},404);
+      const order=await env.DB.prepare('SELECT * FROM billing_orders WHERE id=? AND user_id=? AND mode=?').bind(url.searchParams.get('id') || '',user.id,config.mode).first();
+      if(!order)return json({error:'Order not found.'},404);
+      // A credited order is settled even if an older order status was retained.
+      const credited=order.session_id && await env.DB.prepare("SELECT id FROM billing_ledger WHERE id=? AND user_id=? AND mode=? AND reason='stripe_purchase'")
+        .bind(`stripe:${config.mode}:${order.session_id}`,user.id,config.mode).first();
+      if(credited)return json({id:order.id,status:'paid'});
+      // Recover delayed/missed webhook delivery using the same provider validation
+      // and atomic, idempotent fulfillment. Never create a Checkout or charge here.
+      if(order.session_id && order.status!=='paid' && order.status!=='expired') {
+        await fulfill(env.DB,client,{livemode:config.mode==='live',type:'checkout.session.completed',
+          data:{object:{id:order.session_id,metadata:{app:'kurdai',order_id:order.id}}}},config.mode);
+        const current=await env.DB.prepare('SELECT id,status FROM billing_orders WHERE id=? AND user_id=? AND mode=?').bind(order.id,user.id,config.mode).first();
+        return json(current);
+      }
+      return json({id:order.id,status:order.status});
     }
     if(url.pathname!=='/api/billing/checkout' || request.method!=='POST')return json({error:'Not found.'},404);
     if(!config.enabled)return json({error:'Checkout is disabled. No payment was created.'},503);
