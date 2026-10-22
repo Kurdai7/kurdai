@@ -13,7 +13,8 @@ test('70-second UI quotes freely, blocks unknown costs, requires approval, inval
   w.fetch = async (path, options = {}) => {
     records.push({ path, options });
     const q = { id: 'quote', model:'gemini-omni-1.1-flash',nativeAudio:true, outputSeconds: serverSeconds, segments:serverSeconds/5, apiUSD: 1.053, apiEUR: 1.053 / 1.1188, mediaEUR: enabled ? 0.01 : null,
-      fxEUR: enabled ? 0 : null, vatEUR: enabled ? 0 : null, totalEUR: enabled ? 0.9512 : null, canStart: enabled };
+      fxEUR: enabled ? 0 : null, vatEUR: enabled ? 0 : null, totalEUR: enabled ? 0.9512 : null, canStart: enabled,
+      planningEstimate:enabled?undefined:{basis:'unverified-planning-reserve',payable:false,totalEUR:1.31} };
     if (path.endsWith('/capabilities')) return {ok:true,json:async()=>({processorReachable:false,missingConfiguration:['LONG_VIDEO_SERVICE_URL']})};
     if (path.endsWith('/quote')) return { ok: true, json: async () => q };
     if (path.endsWith('/jobs')) return { ok: true, json: async () => ({ jobs: [{ id: 'quote', status: 'ready' }] }) };
@@ -27,6 +28,7 @@ test('70-second UI quotes freely, blocks unknown costs, requires approval, inval
   $('prompt').value = 'Kurdish animation';
   assert.equal($('longDuration').value,'60');
   $('longQuote').click(); await wait(); assert.equal($('longStart').disabled, true);
+  assert.match($('longCost').textContent,/بودجەی خەمڵێنراوی کاتی: €1.3100/);
   assert.match($('longCost').textContent, /0.9412/);
   assert.equal(JSON.parse(records.find(x=>x.path.endsWith('/quote')).options.body).duration,60);
   serverSeconds=70; $('longQuote').click(); await wait(); assert.equal($('longStart').disabled,true); assert.match($('longCost').textContent,/Deploy/);
