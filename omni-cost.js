@@ -68,7 +68,7 @@ export function quoteOmni(input,costs={}) {
   if(costs.durableStorage!==true) blockers.push('هەڵگرتنی بەردەوامی فایل و دۆخی داواکاری هێشتا پشتڕاست نەکراوەتەوە.');
   if(costs.omniBillingVerified!==true) blockers.push('ژمێریاری تۆکن و دەرئەنجامی بەردەوامکردنی Omni پێویستی بە پشتڕاستکردنەوە هەیە.');
   if(costs.omniEnabled!==true) blockers.push('دروستکردنی Omni لە سێرڤەر هێشتا داخراوە.');
-  if(new Date().toISOString().slice(0,10)>OMNI_PRICES.expires) blockers.push('نرخەکان پێویستیان بە نوێکردنەوە هەیە.');
+  if((costs.pricingDate ?? new Date().toISOString().slice(0,10))>OMNI_PRICES.expires) blockers.push('نرخەکان پێویستیان بە نوێکردنەوە هەیە.');
   return {...OMNI_PRICES,model:OMNI_MODEL,mode:input.mode || 'new',
     ...(input.mode==='extension'?{sourceJobId:input.sourceJobId}:{}),outputSeconds:input.duration,segments:count,segmentSeconds:5,
     apiMinimumUSD:Number(minimum.toFixed(6)),apiMinimumEUR:minimum/OMNI_PRICES.usdPerEUR,
@@ -89,3 +89,4 @@ export function quoteOmni(input,costs={}) {
       'Identity and seamless continuation are requested, not guaranteed.',
       'Failed/short outputs can incur charges. Uncertain submissions are never automatically retried.']};
 }
+

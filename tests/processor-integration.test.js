@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {createProcessor} from '../processor/server.js';
+import {createProcessor} from './helpers/reviewed-processor.js';
 import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';
 import {handleLong,quoteLong} from '../long-video.js';
 import {duration} from '../processor/media.js';

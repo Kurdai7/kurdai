@@ -8,7 +8,7 @@ import {promisify} from 'node:util';
 import Stripe from 'stripe';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import {build} from 'esbuild';
-import {createProcessor} from '../processor/server.js';
+import {createProcessor} from './helpers/reviewed-processor.js';
 import {duration} from '../processor/media.js';
 import {TEST_CREDIT_PACKS} from '../billing-packs.js';
 import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';

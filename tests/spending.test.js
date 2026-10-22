@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spendingPolicy, budgetAllows, euroBudgetAllows, budgetMonth } from '../spending.js';
-import { createProcessor } from '../processor/server.js';
+import { createProcessor } from './helpers/reviewed-processor.js';
 import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';
 import { save } from '../processor/engine.js';
 import { OMNI_MODEL } from '../omni-cost.js';

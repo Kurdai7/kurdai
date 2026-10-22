@@ -157,6 +157,7 @@ export async function createProcessor(config, dependencies = {}) {
   };
   // One bounded, global write counter also protects disk and FFmpeg from repeated requests.
   let writeWindow = 0, writes = 0;
+  const pricingDate=()=> (dependencies.now ? dependencies.now() : new Date()).toISOString().slice(0,10);
   const costs = input => ({ prunaEnabled:config.PRUNA_NATIVE_ENABLED==='true'&&config.NATIVE_GENERATION_ENABLED==='true',prunaConfigured:!!config.PRUNA_API_KEY,prunaBillingVerified:config.NATIVE_BILLING_VERIFIED==='true',usdPerEUR:config.LONG_USD_PER_EUR,mediaEUR: config.LONG_MEDIA_EUR, fxPercent: config.LONG_FX_PERCENT,
     vatPercent: config.LONG_VAT_PERCENT,
     omniInputTokensPerSegment: config.OMNI_INPUT_TOKENS_PER_SEGMENT,
@@ -164,9 +165,10 @@ export async function createProcessor(config, dependencies = {}) {
     omniConfigured: !!config.GEMINI_API_KEY,
     omniEnabled: config.OMNI_GENERATION_ENABLED === 'true',
     omniBillingVerified: config.OMNI_BILLING_VERIFIED === 'true',
+    pricingDate:pricingDate(),
     durableStorage: config.LONG_DURABLE_STORAGE === 'true' && storageReadWriteOK && jobStore?.healthy===true && config.R2_VIDEO_ARCHIVE_ENABLED==='true',
     enabled: config.LONG_DURABLE_STORAGE==='true' && jobStore?.healthy===true && config.R2_VIDEO_ARCHIVE_ENABLED==='true' && config.LONG_VIDEO_ENABLED === 'true' && !!config.DASHSCOPE_API_KEY && (!!input?.image || !!config.FAL_KEY)
-      && new Date().toISOString().slice(0, 10) <= '2026-10-21' });
+      && pricingDate() <= '2026-10-21' });
   const send = (res, data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
   const hash = value => createHash('sha256').update(value).digest();
   const server = http.createServer(async (req, res) => {

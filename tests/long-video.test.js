@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
 import { longInput, quoteLong, handleLong } from '../long-video.js';
 import { advance, load } from '../processor/engine.js';
-import { createProcessor } from '../processor/server.js';
+import { createProcessor } from './helpers/reviewed-processor.js';
 import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';
 import { normalize, prepareOpening, lastFrame, assemble, duration } from '../processor/media.js';
 import { submitWan, submitImage, imageResult, download } from '../processor/providers.js';
