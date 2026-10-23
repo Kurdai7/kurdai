@@ -19,8 +19,8 @@ Conversion uses ECB 2026-10-23: EUR 1 = USD 1.1193. Bank conversion, VAT and acc
 | Omni 720p first 5 seconds of video output, from text OR uploaded image | 0.5068 | 0.452783 |
 | Omni remaining 65 seconds of continuation video output | 6.5884 | 5.886179 |
 | Omni requested 70 seconds of video output, combined | 7.0952 | 6.338962 |
-| Omni input/context/history | 1.50 per million input tokens | 1.339884 per million |
-| Omni generated text/thinking | 9.00 per million output text tokens | 8.039303 per million |
+| Omni input/context/history | 1.50 per million input tokens | 1.340123 per million |
+| Omni generated text/thinking | 9.00 per million output text tokens | 8.040740 per million |
 | Omni native audio | Included in video output | No separate audio surcharge |
 | Local FFmpeg software / separate stitching API | No stitching API called | Software fee 0; hosting resources separate |
 
