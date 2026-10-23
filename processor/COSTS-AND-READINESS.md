@@ -1,4 +1,4 @@
-# KurdAI owner cost and readiness review — 2026-10-15
+# KurdAI owner cost and readiness review — 2026-10-23
 
 No spending is authorized. Paid generation, Render upgrades and R2 activation remain disabled. A successful synthetic test is not evidence that the AI provider, Kurdish speech or character consistency has been validated.
 
@@ -12,13 +12,13 @@ Free Render is suitable for this test, not a promise of durable public generatio
 
 ## Verified list prices, not an invoice
 
-Conversion uses ECB 2026-10-14: EUR 1 = USD 1.1195. Bank conversion, VAT and account-specific discounts are unknown. Values below exclude them. No paid request was made to measure actual usage.
+Conversion uses ECB 2026-10-23: EUR 1 = USD 1.1193. Bank conversion, VAT and account-specific discounts are unknown. Values below exclude them. No paid request was made to measure actual usage.
 
 | Service item | USD | EUR reference estimate |
 | --- | ---: | ---: |
-| Omni 720p first 5 seconds of video output, from text OR uploaded image | 0.5068 | 0.452702 |
-| Omni remaining 65 seconds of continuation video output | 6.5884 | 5.885127 |
-| Omni requested 70 seconds of video output, combined | 7.0952 | 6.337829 |
+| Omni 720p first 5 seconds of video output, from text OR uploaded image | 0.5068 | 0.452783 |
+| Omni remaining 65 seconds of continuation video output | 6.5884 | 5.886179 |
+| Omni requested 70 seconds of video output, combined | 7.0952 | 6.338962 |
 | Omni input/context/history | 1.50 per million input tokens | 1.339884 per million |
 | Omni generated text/thinking | 9.00 per million output text tokens | 8.039303 per million |
 | Omni native audio | Included in video output | No separate audio surcharge |
