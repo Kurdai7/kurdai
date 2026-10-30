@@ -1,5 +1,4 @@
 const MODEL='@cf/google/gemma-4-26b-a4b-it';
-const MAX_DAILY_MESSAGES=200;
 const MAX_IP_WINDOW=5;
 const MAX_MESSAGE_CHARS=2000;
 const MAX_HISTORY_CHARS=4000;
@@ -85,10 +84,6 @@ export async function handleChat(request,env){
     const window=Math.floor(now/900),windowKey=String(window);
     const ipHits=await increment(env.DB,ipHash,windowKey,MAX_IP_WINDOW,(window+1)*900);
     if(ipHits===null) return json({error:'زۆر داواکاری نێردراوە. ١٥ خولەک چاوەڕێ بکە.'},429);
-    const day=new Date().toISOString().slice(0,10);
-    const dayEnd=Math.floor(Date.parse(day+'T00:00:00Z')/1000)+86400;
-    const globalHits=await increment(env.DB,'global',day,MAX_DAILY_MESSAGES,dayEnd);
-    if(globalHits===null) return json({error:'سنووری خۆڕایی ئەمڕۆی چات پڕ بووە. سبەی دووبارە هەوڵ بدە.'},429);
     const result=await env.AI.run(MODEL,{
       messages:buildChatMessages(body),
       max_completion_tokens:256,
@@ -98,7 +93,7 @@ export async function handleChat(request,env){
     });
     const answer=text(result?.response)||text(result?.choices?.[0]?.message?.content)||text(result?.output_text);
     if(!answer) return json({error:'وەڵامێک لە مۆدێلەوە وەرنەگیرا. دووبارە هەوڵ بدە.'},502);
-    return json({ok:true,answer,remainingToday:Math.max(0,MAX_DAILY_MESSAGES-globalHits),model:'KurdAI Free Chat'});
+    return json({ok:true,answer,model:'KurdAI Free Chat'});
   }catch(error){
     console.error('KurdAI chat failed',{name:error?.name||'Error'});
     return json({error:'چات بەردەست نییە یان سنووری خزمەتگوزاری گەیشتووە. تکایە دواتر هەوڵ بدە.'},503);
