@@ -366,7 +366,24 @@ const translations = new Map([
   ['وێنەی سەرەتا یان دوا فڕەیم (PNG / JPEG)', 'Previous final frame (PNG / JPEG)'], ['وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو', 'Capture final frame from loaded video'],
   ['وێنەکانی کارەکتەر و جل‌وبەرگ (تا ٣ وێنە)', 'Character and clothing references (up to 3 images)'], ['ڤیدیۆی پێشووی ئەم ئەکاونتە', 'Previous video from this account'],
   ['٤ چرکە', '4 seconds'], ['٦ چرکە', '6 seconds'], ['٨ چرکە', '8 seconds'], ['16:9 — ئاسۆیی', '16:9 — landscape'], ['9:16 — ستوونی / Reels', '9:16 — portrait / Reels'],
-  ['720p — گونجاو بۆ Extension', '720p — supports extension'], ['1080p — ٨ چرکە', '1080p — 8 seconds']
+  ['720p — گونجاو بۆ Extension', '720p — supports extension'], ['1080p — ٨ چرکە', '1080p — 8 seconds'],
+  ['KurdAI Public Beta', 'KurdAI Public Beta'],
+  ['بەخێربێیت بۆ وەشانی گشتیی تاقیکردنەوەی KurdAI؛ هەژمار دروست بکە و ستۆدیۆ و ڕێکخستنەکانی ببینە.', 'Welcome to the KurdAI public beta. Create an account to explore the studio and settings.'],
+  ['وەشانی Public Beta کراوەیە. هەژمار و ستۆدیۆ بەردەستن؛ بەڵام دروستکردنی ڤیدیۆی AI لەم وەشانەدا ناچالاکە. هیچ پارەیەک بۆ ڤیدیۆ وەرناگیرێت.', 'The Public Beta is open. Accounts and the studio are available, but AI video generation is disabled in this release. No video-generation charges will be made.'],
+  ['داهێنان بە زمانی کوردی', 'Create in Kurdish'],
+  ['بیرۆکەکەت بکە بە ', 'Turn your idea into '],
+  ['بیرۆکە و دەنگ', 'Idea and dialogue'],
+  ['ڕێکخستنی ڤیدیۆ', 'Video settings'],
+  ['کارەکتەر و دیالۆگ', 'Characters and dialogue'],
+  ['ڕێنمایی زمان و مۆدێل', 'Language and model guidance'],
+  ['وێنە و ڤیدیۆی ڕەفەرەنس', 'Reference images and video'],
+  ['ڤیدیۆ و داواکارییەکانی پێشوو', 'Previous videos and requests'],
+  ['کرییدیتی کڕدراو', 'Purchased credits'],
+  ['کرییدیت و پاکێجەکان', 'Credits and packages'],
+  ['هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.', 'Create an account or log in to view your credits.'],
+  ['هەژمار و ستۆدیۆ بەردەستن', 'Accounts and studio are available'],
+  ['دروستکردنی ڤیدیۆی AI هێشتا چالاک نییە', 'AI video generation is not enabled yet'],
+  ['هیچ پارەیەک بۆ دروستکردنی ڤیدیۆ وەرناگیرێت.', 'No charges are made for video generation.']
 ]);
 const textNodes = [];
 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
