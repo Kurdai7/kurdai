@@ -1,27 +1,18 @@
-const $=id=>document.getElementById(id);
-const messages=$('messages'),form=$('chatForm'),prompt=$('prompt'),send=$('send'),status=$('status'),language=$('language'),mode=$('mode'),targetLanguage=$('targetLanguage');
-let history=[],busy=false;
-const welcome='سڵاو! لە «وەرگێڕان» زمانەکەی دەقەکەت خۆکار دەناسمەوە و بۆ زمانی هەڵبژێردراو وەریدەگێڕم. هەروەها دەتوانیت بە چاتی زیرەک گفتوگۆ بکەیت.';
-const copy={ckb:{send:'ناردن ↑',placeholder:'دەق یان پرسیارەکەت لێرە بنووسە...',wait:'KurdAI ئامادەیە...',fail:'نەتوانرا وەڵام وەربگیرێت.'},en:{send:'Send ↑',placeholder:'Write your text or question here...',wait:'KurdAI is working...',fail:'Could not get a reply.'}};
-function setLanguage(value){const en=value==='english';document.documentElement.lang=en?'en':'ckb';document.documentElement.dir=en?'ltr':'rtl';send.textContent=en?copy.en.send:copy.ckb.send;prompt.placeholder=en?copy.en.placeholder:copy.ckb.placeholder;$('clear').textContent=en?'New chat':'چاتی نوێ';}
-function setMode(){const translating=mode.value==='translate';$('targetLabel').hidden=!translating;targetLanguage.hidden=!translating;language.disabled=translating;if(translating)language.value='auto';status.textContent=translating?'زمانی سەرچاوە خۆکارانە دەناسرێتەوە.':' ';prompt.placeholder=translating?'دەقەکەت بنووسە؛ زمانەکەی خۆکار دەناسرێتەوە...':copy[language.value==='english'?'en':'ckb'].placeholder;}
-language.addEventListener('change',()=>setLanguage(language.value));
-mode.addEventListener('change',setMode);
-function addBubble(role,text){const box=document.createElement('article');box.className='bubble '+role;const name=document.createElement('strong');name.textContent=role==='user'?'تۆ':'KurdAI';const p=document.createElement('p');p.textContent=text;box.append(name,p);messages.append(box);messages.scrollTop=messages.scrollHeight;return box;}
-function newChat(){history=[];messages.replaceChildren();addBubble('assistant',welcome);status.textContent='';}
-$('clear').addEventListener('click',newChat);
-form.addEventListener('submit',async event=>{
- event.preventDefault();if(busy)return;const message=prompt.value.trim();if(!message)return;
- const translating=mode.value==='translate';
- busy=true;send.disabled=true;status.textContent=language.value==='english'?copy.en.wait:copy.ckb.wait;addBubble('user',message);prompt.value='';
- const pending=addBubble('assistant','…');
- try{
-  const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,mode:mode.value,language:language.value,targetLanguage:targetLanguage.value,history:translating?[]:history})});
-  const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Chat unavailable');
-  pending.querySelector('p').textContent=data.answer;
-  if(!translating){history.push({role:'user',content:message},{role:'assistant',content:data.answer});history=history.slice(-8);}
-  status.textContent=language.value==='english'?data.remainingToday+' free uses left today.':data.remainingToday+' جار بەخۆڕایی ماوە بۆ ئەمڕۆ.';
- }catch(error){pending.remove();status.textContent=error.message||copy.ckb.fail;addBubble('assistant',error.message||copy.ckb.fail);}
- finally{busy=false;send.disabled=false;prompt.focus();messages.scrollTop=messages.scrollHeight;}
-});
-setLanguage(language.value);setMode();
+const $=id=>document.getElementById(id),messages=$('messages'),welcome=$('welcome'),form=$('chatForm'),prompt=$('prompt'),send=$('send'),status=$('status'),language=$('language'),mode=$('mode'),target=$('targetLanguage');
+const STORE='kurdai-chat-history-v1';let chats=loadChats(),activeId=null,history=[],busy=false;
+function loadChats(){try{const x=JSON.parse(localStorage.getItem(STORE)||'[]');return Array.isArray(x)?x:[]}catch{return[]}}
+function save(){localStorage.setItem(STORE,JSON.stringify(chats.slice(0,40)))}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function titleOf(s){return s.trim().slice(0,42)||'چاتی نوێ'}
+function renderHistory(){const nav=$('chatHistory');nav.replaceChildren();for(const c of chats){const b=document.createElement('button');b.className='history-item'+(c.id===activeId?' active':'');b.textContent=c.title;b.title=c.title;b.onclick=()=>openChat(c.id);nav.append(b)}}
+function addMessage(role,text){const row=document.createElement('article');row.className='message '+role;const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=role==='user'?'ت':'☀';const body=document.createElement('div');body.className='message-body';const p=document.createElement('p');p.textContent=text;body.append(p);if(role==='assistant'){const tools=document.createElement('div');tools.className='message-tools';const copy=document.createElement('button');copy.textContent='کۆپی';copy.onclick=()=>navigator.clipboard?.writeText(text);tools.append(copy);body.append(tools)}row.append(avatar,body);messages.append(row);messages.scrollTop=messages.scrollHeight;return p}
+function newChat(){activeId=null;history=[];messages.replaceChildren();welcome.hidden=false;prompt.focus();renderHistory();closeSidebar()}
+function openChat(cid){const c=chats.find(x=>x.id===cid);if(!c)return;activeId=cid;history=c.messages.slice(-8);messages.replaceChildren();welcome.hidden=true;for(const m of c.messages){addMessage(m.role,m.content)}renderHistory();closeSidebar()}
+function persist(message,answer){if(!activeId){activeId=id();chats.unshift({id:activeId,title:titleOf(message),messages:[]})}const c=chats.find(x=>x.id===activeId);c.messages.push({role:'user',content:message},{role:'assistant',content:answer});c.updated=Date.now();chats.sort((a,b)=>(b.updated||0)-(a.updated||0));save();renderHistory()}
+function closeSidebar(){$('sidebar').classList.remove('open');$('scrim').classList.remove('show')}
+$('newChat').onclick=newChat;$('openSidebar').onclick=()=>{$('sidebar').classList.add('open');$('scrim').classList.add('show')};$('closeSidebar').onclick=closeSidebar;$('scrim').onclick=closeSidebar;
+document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>{prompt.value=b.dataset.prompt;prompt.focus();prompt.setSelectionRange(prompt.value.length,prompt.value.length)});
+mode.onchange=()=>{target.hidden=mode.value!=='translate';language.disabled=mode.value==='translate';prompt.placeholder=mode.value==='translate'?'دەقەکەت بنووسە بۆ وەرگێڕان...':'نامەیەک بۆ KurdAI بنووسە...'};
+prompt.addEventListener('input',()=>{prompt.style.height='auto';prompt.style.height=Math.min(prompt.scrollHeight,180)+'px'});prompt.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
+form.addEventListener('submit',async e=>{e.preventDefault();if(busy)return;const message=prompt.value.trim();if(!message)return;const translating=mode.value==='translate';busy=true;send.disabled=true;welcome.hidden=true;addMessage('user',message);prompt.value='';prompt.style.height='auto';const pending=addMessage('assistant','…');status.textContent='KurdAI وەڵام ئامادە دەکات...';try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,mode:mode.value,language:language.value,targetLanguage:target.value,history:translating?[]:history})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'چات بەردەست نییە');pending.textContent=d.answer;if(!translating){history.push({role:'user',content:message},{role:'assistant',content:d.answer});history=history.slice(-8);persist(message,d.answer)}status.textContent='بەکارهێنانی بەخۆڕایی: '+d.remainingToday+' جار ماوە.'}catch(err){pending.textContent=err.message;status.textContent=err.message}finally{busy=false;send.disabled=false;prompt.focus();}});
+renderHistory();
