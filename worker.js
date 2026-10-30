@@ -4,6 +4,7 @@ import { spendingPolicy } from './spending.js';
 import { handleVideo } from './video.js';
 import { handleLong } from './long-video.js';
 import { authLimit, authBody } from './auth-guard.js';
+import { handleChat } from './chat.js';
 
 /**
  * KurdAI API for Cloudflare Workers + D1.
@@ -199,6 +200,7 @@ export default {
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled
         }, databaseReady && env.ASSETS ? 200 : 503);
       }
+      if (url.pathname === '/api/chat') return handleChat(request, env);
       if (url.pathname.startsWith('/api/fib/')) return handleFib(request);
       if (url.pathname.startsWith('/api/billing/')) {
         const user=url.pathname==='/api/billing/webhook'?null:env.DB?await currentUser(request,env):null;

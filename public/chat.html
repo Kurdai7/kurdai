@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101816"><title>KurdAI — چات و وەرگێڕانی بەخۆڕایی</title>
+<link rel="stylesheet" href="/chat.css">
+</head>
+<body>
+<header><a class="brand" href="/" aria-label="KurdAI Home"><span class="flag">☀</span><span>Kurd<span>AI</span></span></a><a class="back" href="/">گەڕانەوە بۆ KurdAI</a></header>
+<main>
+<section class="intro"><span class="eyebrow">FREE AI CHAT & TRANSLATOR · بەخۆڕایی</span><h1>چات و وەرگێڕانی KurdAI</h1><p>لە کوردییەوە بۆ هەموو زمانەکان، و لە هەموو زمانەکانەوە بۆ کوردی سۆرانی و بادینی.</p></section>
+<section class="chat" aria-label="KurdAI chat and translator">
+<div class="toolbar"><label for="mode">جۆری خزمەتگوزاری</label><select id="mode"><option value="chat">چاتی زیرەک</option><option value="translate">وەرگێڕان</option></select><label for="language">زمانی وەڵام لە چاتدا</label><select id="language"><option value="auto">خۆکار — هەمان زمانی پرسیار</option><option value="sorani">کوردی سۆرانی</option><option value="badini">کوردی بادینی</option><option value="english">English</option><option value="arabic">العربية</option><option value="finnish">Suomi</option><option value="turkish">Türkçe</option><option value="german">Deutsch</option><option value="russian">Русский</option><option value="persian">فارسی</option></select><label for="targetLanguage" id="targetLabel" hidden>وەرگێڕان بۆ</label><select id="targetLanguage" hidden><option value="sorani">کوردی سۆرانی</option><option value="badini">کوردی بادینی</option><option value="english">English</option><option value="arabic">العربية</option><option value="finnish">Suomi</option><option value="turkish">Türkçe</option><option value="german">Deutsch</option><option value="russian">Русский</option><option value="persian">فارسی</option></select><button id="clear" type="button">چاتی نوێ</button></div>
+<div id="messages" class="messages" aria-live="polite"><div class="bubble assistant"><strong>KurdAI</strong><p>سڵاو! لە «وەرگێڕان» زمانەکەی دەقەکەت خۆکار دەناسمەوە و بۆ زمانی هەڵبژێردراو وەریدەگێڕم. هەروەها دەتوانیت بە چاتی زیرەک گفتوگۆ بکەیت.</p></div></div>
+<form id="chatForm"><label class="sr-only" for="prompt">دەق یان پرسیارەکەت</label><textarea id="prompt" rows="2" maxlength="2000" placeholder="دەق یان پرسیارەکەت لێرە بنووسە..." required></textarea><button id="send" type="submit">ناردن ↑</button></form>
+<div id="status" role="status" aria-live="polite"></div>
+<p class="privacy">چاتەکان لە سێرڤەری KurdAI هەڵناگیرێن. بۆ پاراستنی خزمەتگوزاری، سنووری بەکارهێنانی ڕۆژانە هەیە. وەرگێڕانەکان بە AI ئەنجام دەدرێن؛ دەقی گرنگ پێداچوونەوەی بۆ بکە.</p>
+</section>
+</main>
+<script type="module" src="/chat.js"></script>
+</body></html>

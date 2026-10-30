@@ -4,6 +4,10 @@ compatibility_date = "2026-10-10"
 # Preserve runtime variables configured in the dashboard during Git deployments.
 keep_vars = true
 
+# Cloudflare Workers AI free daily allocation powers KurdAI Chat.
+[ai]
+binding = "AI"
+
 # Public staging origin only; its shared credential belongs in Worker secrets.
 # Provider credentials are runtime secrets. Spending stays disabled.
 [vars]
