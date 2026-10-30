@@ -4,7 +4,7 @@ import {normalizeImageRequest,quotaWindow} from '../image.js';
 
 test('image prompts are required and bounded',()=>{
  assert.deepEqual(normalizeImageRequest({prompt:'  a Kurdish mountain village  '}),{prompt:'a Kurdish mountain village'});
- assert.throws(()=>normalizeImageRequest({prompt:''}),/وەسفی/);
+ assert.throws(()=>normalizeImageRequest({prompt:''}),/داواکاریی/);
  assert.throws(()=>normalizeImageRequest({prompt:'x'.repeat(1201)}),/١٢٠٠/);
  assert.throws(()=>normalizeImageRequest([]),/دروست/);
 });
