@@ -67,7 +67,7 @@ export async function handleImage(request,env,user){
       return json({code:'IMAGE_FREE_LIMIT',error:'You used your 2 free images. More image credits are not available yet.',remaining:0,resetsAt:resetAt,paidCreditsEnabled:false},402);
     }
     try{
-      const result=await env.AI.run(MODEL,{prompt:input.prompt,width:512,height:512,steps:4});
+      const result=await env.AI.run(MODEL,{prompt:input.prompt,steps:4});
       if(!result?.image||typeof result.image!=='string') throw new Error('Image model returned no image.');
       return json({ok:true,image:'data:image/jpeg;base64,'+result.image,remaining:Math.max(0,FREE_IMAGES-reservation.used),resetsAt:reservation.window_started_at+WINDOW_SECONDS,model:MODEL});
     }catch(error){
