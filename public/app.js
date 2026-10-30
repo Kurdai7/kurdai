@@ -383,7 +383,19 @@ const translations = new Map([
   ['هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.', 'Create an account or log in to view your credits.'],
   ['هەژمار و ستۆدیۆ بەردەستن', 'Accounts and studio are available'],
   ['دروستکردنی ڤیدیۆی AI هێشتا چالاک نییە', 'AI video generation is not enabled yet'],
-  ['هیچ پارەیەک بۆ دروستکردنی ڤیدیۆ وەرناگیرێت.', 'No charges are made for video generation.']
+  ['هیچ پارەیەک بۆ دروستکردنی ڤیدیۆ وەرناگیرێت.', 'No charges are made for video generation.'],
+  ['سۆرانی و بادینی', 'Sorani and Badini'],
+  ['داواکردنی دیالۆگی کوردی لەگەڵ ڤیدیۆ. کوالێتی دەنگ و زمان پێویستی بە پشکنین هەیە.', 'Kurdish dialogue can be requested for videos. Speech and dialect quality still need verification.'],
+  ['Extension — لە تاقیکردنەوەدایە', 'Extension — experimental'],
+  ['بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.', 'Video extension has not yet been verified with the live API and is not enabled for public use.'],
+  ['ڕێنمایی زمان و مۆدێل', 'Language and model guidance'],
+  ['پێشنیار بەپێی ئەزموونی خاوەن پڕۆژە؛ دەنگی هەردوو مۆدێل لە API ـی KurdAI هێشتا پشتڕاست نەکراوەتەوە. هەڵبژاردن هیچ ڤیدیۆیەک دروست ناکات.', 'Recommendations are based on project testing. Neither model’s speech output has been verified through the KurdAI API. Selecting a model does not generate a video.'],
+  ['Veo: داواکردنی سۆرانی؛ کوالێتیی دەنگ و شێوەزار هێشتا تاقی نەکراوەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.', 'Veo: Sorani can be requested, but speech and dialect quality have not been verified. Native audio is included in Veo pricing; separate TTS is disabled.'],
+  ['Extension تەنها بۆ ڤیدیۆی Veo بە 720p ـە کە لەم ئەکاونتە دروست کراوە و لە ٤٨ کاتژمێری ڕابردوودا هێشتا بەردەستە.', 'Extension is only available for 720p Veo videos created in this account and still available within the last 48 hours.'],
+  ['دروستکردنی ڤیدیۆ خەرجی Google API هەیە. کرێدیتی ڕۆژانەی پیشاندراو لێرە پارەی Google نادات. ئێستا دروستکردن بۆ ئەکاونتی تاقیکردنەوەی ڕێکخراوە.', 'Video generation uses Google API billing. Daily credits shown here do not pay Google. Generation is currently restricted to the configured test account.'],
+  ['کلیپی نوێ: ٤، ٦ یان ٨ چرکە؛ وێنەی ڕەفەرەنس و 1080p پێویستیان بە ٨ چرکە هەیە. Extension هەر جار ٧ چرکە زیاد دەکات. دیالۆگی سۆرانی داوا دەکرێت، بەڵام Google کوالێتییەکەی مسۆگەر ناکات.', 'New clips: 4, 6 or 8 seconds. Reference images and 1080p require 8 seconds. Extension adds 7 seconds each time. Sorani dialogue can be requested, but Google does not guarantee its quality.'],
+  ['پرۆمپتی سەرەوە بەکاردێت. Omni دیمەنەکان بە ناسنامەی ڤیدیۆی پێشوو بەردەوام دەکات و دەبنە یەک MP4 بە دەنگەوە. کوالێتی شێوەزار و جێگیری ڕوخسار و دەنگ هێشتا بە API تاقی نەکراونەتەوە.', 'Uses the prompt above. Omni continues scenes using the previous video identity and combines them into one MP4 with audio. Dialect quality and face/voice consistency have not yet been verified through the API.'],
+  ['بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.', 'Video extension has not yet been verified with the live API and is not enabled for public use.']
 ]);
 const textNodes = [];
 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
