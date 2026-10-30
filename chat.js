@@ -75,8 +75,8 @@ export async function handleChat(request,env){
     if(globalHits===null) return json({error:'سنووری خۆڕایی ئەمڕۆی چات پڕ بووە. سبەی دووبارە هەوڵ بدە.'},429);
     const result=await env.AI.run(MODEL,{
       messages:buildChatMessages(body),
-      max_tokens:256,
       max_completion_tokens:256,
+      chat_template_kwargs:{enable_thinking:false},
       temperature:0.4,
       top_p:0.9
     });
