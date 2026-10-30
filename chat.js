@@ -6,14 +6,17 @@ const MAX_HISTORY_CHARS=4000;
 const JSON_HEADERS={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:JSON_HEADERS});
 const text=value=>typeof value==='string'?value.trim():'';
+const LANGUAGES={auto:'the same language as the latest user message',sorani:'Sorani Kurdish (کوردیی سۆرانی, Arabic-based Kurdish script)',badini:'Badini Kurdish (Kurmanji dialect)',english:'English',arabic:'Arabic',finnish:'Finnish',turkish:'Turkish',german:'German',russian:'Russian',persian:'Persian'};
 
 export function normalizeChatRequest(body){
   if(!body||typeof body!=='object'||Array.isArray(body)) throw new Error('داواکاریی چات دروست نییە.');
   const message=text(body.message);
-  if(!message||message.length>MAX_MESSAGE_CHARS) throw new Error('پرسیارەکەت بنووسە (تا ٢٠٠٠ پیت).');
-  const allowed=['auto','sorani','badini','english','arabic','finnish','turkish','german','russian','persian'];
+  if(!message||message.length>MAX_MESSAGE_CHARS) throw new Error('دەقەکەت بنووسە (تا ٢٠٠٠ پیت).');
+  const allowed=Object.keys(LANGUAGES);
   const language=allowed.includes(body.language)?body.language:'auto';
-  const history=Array.isArray(body.history)?body.history.slice(-8):[];
+  const mode=body.mode==='translate'?'translate':'chat';
+  const targetLanguage=allowed.includes(body.targetLanguage)&&body.targetLanguage!=='auto'?body.targetLanguage:'sorani';
+  const history=mode==='translate'?[]:(Array.isArray(body.history)?body.history.slice(-8):[]);
   let total=message.length;
   const clean=[];
   for(const item of history){
@@ -25,14 +28,26 @@ export function normalizeChatRequest(body){
     clean.push({role:item.role,content});
   }
   if(total>MAX_HISTORY_CHARS) throw new Error('مێژووی گفتوگۆ زۆر درێژە؛ چاتێکی نوێ دەست پێ بکە.');
-  return {message,language,history:clean};
+  return {message,language,mode,targetLanguage,history:clean};
 }
 
 export function buildChatMessages(input){
-  const languageNames={auto:'the same language as the latest user message',sorani:'Sorani Kurdish (کوردیی سۆرانی, Arabic-based Kurdish script)',badini:'Badini Kurdish (Kurmanji dialect)',english:'English',arabic:'Arabic',finnish:'Finnish',turkish:'Turkish',german:'German',russian:'Russian',persian:'Persian'};
-  const system=[
+  let system;
+  if(input.mode==='translate'){
+    system=[
+      'You are KurdAI, a professional multilingual translator.',
+      'Detect the source language automatically. Translate the user text faithfully into '+LANGUAGES[input.targetLanguage]+'.',
+      'Return only the translated text. Do not explain, summarize, answer questions inside the text, or add quotation marks.',
+      'Preserve meaning, names, numbers, tone, paragraph breaks, lists, and formatting.',
+      'For Sorani Kurdish, write natural Sorani in Arabic-based Kurdish script; never substitute Arabic or Persian.',
+      'For Badini Kurdish, use natural Badini Kurdish and do not mix dialects.',
+      'If the input is already in the requested target language, return it unchanged.'
+    ].join(' ');
+    return [{role:'system',content:system},{role:'user',content:input.message}];
+  }
+  system=[
     'You are KurdAI Chat, a helpful, accurate, respectful multilingual assistant.',
-    'Reply in '+languageNames[input.language]+'. If auto, identify the language of the latest user message and reply in that language.',
+    'Reply in '+LANGUAGES[input.language]+'. If auto, identify the language of the latest user message and reply in that language.',
     'For Sorani Kurdish, use natural Sorani Kurdish and the Arabic-based Kurdish script. Do not answer Sorani in Arabic or Persian.',
     'For Badini, use Badini Kurdish. Do not mix dialects unless the user asks.',
     'Be clear and concise. If you are unsure, say so. Never claim to browse, perform actions, or access private data unless tools actually provide that ability.',
@@ -78,7 +93,7 @@ export async function handleChat(request,env){
       messages:buildChatMessages(body),
       max_completion_tokens:256,
       chat_template_kwargs:{enable_thinking:false},
-      temperature:0.4,
+      temperature:body.mode==='translate'?0.1:0.4,
       top_p:0.9
     });
     const answer=text(result?.response)||text(result?.choices?.[0]?.message?.content)||text(result?.output_text);
