@@ -19,7 +19,8 @@ export function normalizeChatRequest(body){
   for(const item of history){
     if(!item||!['user','assistant'].includes(item.role)) continue;
     const content=text(item.content);
-    if(!content||content.length>MAX_MESSAGE_CHARS) continue;
+    if(!content) continue;
+    if(content.length>MAX_MESSAGE_CHARS) throw new Error('مێژووی گفتوگۆ زۆر درێژە؛ چاتێکی نوێ دەست پێ بکە.');
     total+=content.length;
     clean.push({role:item.role,content});
   }
