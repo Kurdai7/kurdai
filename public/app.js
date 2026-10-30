@@ -388,6 +388,7 @@ const translations = new Map([
   ['داواکردنی دیالۆگی کوردی لەگەڵ ڤیدیۆ. کوالێتی دەنگ و زمان پێویستی بە پشکنین هەیە.', 'Kurdish dialogue can be requested for videos. Speech and dialect quality still need verification.'],
   ['Extension — لە تاقیکردنەوەدایە', 'Extension — experimental'],
   ['بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.', 'Video extension has not yet been verified with the live API and is not enabled for public use.'],
+  ['💬 چاتی بەخۆڕایی', '💬 Free AI chat'],
   ['ڕێنمایی زمان و مۆدێل', 'Language and model guidance'],
   ['پێشنیار بەپێی ئەزموونی خاوەن پڕۆژە؛ دەنگی هەردوو مۆدێل لە API ـی KurdAI هێشتا پشتڕاست نەکراوەتەوە. هەڵبژاردن هیچ ڤیدیۆیەک دروست ناکات.', 'Recommendations are based on project testing. Neither model’s speech output has been verified through the KurdAI API. Selecting a model does not generate a video.'],
   ['Veo: داواکردنی سۆرانی؛ کوالێتیی دەنگ و شێوەزار هێشتا تاقی نەکراوەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.', 'Veo: Sorani can be requested, but speech and dialect quality have not been verified. Native audio is included in Veo pricing; separate TTS is disabled.'],
