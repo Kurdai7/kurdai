@@ -5,7 +5,7 @@ compatibility_date = "2026-10-10"
 keep_vars = true
 
 # Cloudflare Workers AI free daily allocation powers KurdAI Chat.
-[[ai]]
+[ai]
 binding = "AI"
 
 # Public staging origin only; its shared credential belongs in Worker secrets.
