@@ -160,7 +160,7 @@ export async function createProcessor(config, dependencies = {}) {
   const pricingDate=()=> (dependencies.now ? dependencies.now() : new Date()).toISOString().slice(0,10);
   // Legacy Wan pricing is usable only while an explicitly reviewed price window is valid.
   // Missing or malformed review dates fail closed; this is not a spending authorization.
-  const pricingReviewValidUntil=typeof config.LONG_PRICING_REVIEW_VALID_UNTIL==='string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(config.LONG_PRICING_REVIEW_VALID_UNTIL)
+  const pricingReviewValidUntil=typeof config.LONG_PRICING_REVIEW_VALID_UNTIL==='string' && /^\d{4}-\d{2}-\d{2}$/.test(config.LONG_PRICING_REVIEW_VALID_UNTIL)
     && Number.isFinite(Date.parse(`${config.LONG_PRICING_REVIEW_VALID_UNTIL}T23:59:59Z`))
     && new Date(`${config.LONG_PRICING_REVIEW_VALID_UNTIL}T23:59:59Z`).toISOString().slice(0,10)===config.LONG_PRICING_REVIEW_VALID_UNTIL
     && pricingDate() <= config.LONG_PRICING_REVIEW_VALID_UNTIL;
