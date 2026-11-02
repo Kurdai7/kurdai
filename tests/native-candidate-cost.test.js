@@ -25,7 +25,7 @@ test('P-Video 2 keeps both dialects and published Draft pricing without authoriz
   const q=quoteLong(i,{enabled:true,omniEnabled:true,omniConfigured:true});
   assert.equal(q.canStart,false);assert.equal(q.totalEUR,null);assert.equal(q.apiUSD,.315);
   assert.equal(q.providerReference.outputUSD,.3);assert.equal(q.providerReference.draft,true);
-  assert.equal(q.providerReference.provider,'Pruna');assert.equal(q.ownerReview.apiVerified,true);
+  assert.equal(q.providerReference.provider,'Pruna');assert.equal(q.ownerReview.apiVerified,true);assert.equal(q.ownerReview.apiTransportVerified,true);assert.equal(q.ownerReview.apiSpeechVerified,false);
   assert.equal(q.audioQuote.language,language);assert.equal(i.dialogueText,base.dialogueText);
  }
  assert.equal(longInput({...base,model:'p-video-2',duration:70}).duration,70);assert.throws(()=>longInput({...base,model:'p-video-2',duration:71}),/3–70/);
