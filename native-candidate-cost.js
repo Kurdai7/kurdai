@@ -36,7 +36,7 @@ export function quoteNativeCandidate(input, costs={}) {
   providerReference:{provider:pruna?'Pruna':'fal',resolution:'720p',audio:true,
    outputUSD:Number((input.duration*(pruna?0.015:kling?0.126:0.06)).toFixed(6)),invoiceVerified:false,appliesToPreparedAdapter:true,...(pruna?{draft:true,billedBy:'returned whole seconds'}:{})},
   canStart:false,blockedReasons:[
-   ...(pruna?['سۆرانی لە VdoBloom پەسەند کراوە؛ تاقیکردنەوەی API بە دەنگ سەرکەوتوو بوو؛ قەبارەی ڕاستەقینە 1280×704 بوو، نەک 1280×720. گوێگرتنی ئەنجامی API هێشتا ماوە.']:[]),
+   ...(pruna?['سۆرانی لە VdoBloom وەک زمانێکی پشتیوانیکراو نیشان دراوە؛ لە نموونەی پێشوو تڕاکی دەنگ هەبوو، بەڵام تاقیکردنەوەی دەنگی API و گوێگرتن لە کوالێتی سۆرانی هێشتا پشتڕاست نەکراونەتەوە. قەبارەی نموونەکە 1280×704 بوو، نەک 1280×720.']:[]),
    ...(pruna?[]:['چالاککردنی API و تاقیکردنەوەی ڤیدیۆی ڕاستەقینە هێشتا ماون؛ هیچ پارەیەک وەرناگیرێت.']),
    'نرخی کۆتایی، باج و خەرجییە زیادەکان پشتڕاست نەکراونەتەوە.',
    ...(kling?['ڕێگای Kling لە fal بۆ پاراستنی دیالۆگی کوردی هێشتا پەسەند نەکراوە.']:[]),
@@ -47,7 +47,7 @@ export function quoteNativeCandidate(input, costs={}) {
 function quotePruna(input,costs) {
  const segments=Math.ceil(input.duration/20),estimateSeconds=input.duration+segments;
  const result={model:'p-video-2',provider:'pruna',draft:true,outputSeconds:input.duration,segments,segmentSeconds:Math.min(20,input.duration),reviewed:'2026-10-20',nativeAudio:true,audio:true,audioQuote:{native:true,language:input.language},retailMarkupEUR:0,apiUSD:null,apiEUR:null,mediaEUR:null,fxEUR:null,vatEUR:null,totalEUR:null,canStart:false,
-  ownerReview:{soraniAccepted:true,apiVerified:true,apiTransportVerified:true,apiSpeechVerified:true,badiniVerified:false,observedMedia:{width:1280,height:704,duration:4.041667,audioPresent:true}},
+  ownerReview:{soraniAccepted:true,apiVerified:true,apiTransportVerified:true,apiSpeechVerified:false,badiniVerified:false,observedMedia:{width:1280,height:704,duration:4.041667,audioPresent:true}},
   providerReference:{provider:'Pruna',resolution:'720p',outputUSD:Number((input.duration*.015).toFixed(6)),audio:true,draft:true,invoiceVerified:false,appliesToPreparedAdapter:true,billedBy:'returned whole seconds'},
   segmentDurations:Array.from({length:segments},(_,i)=>Math.min(20,input.duration-i*20)),nativeResolution:'704p',resolutionLabel:'1280×704 (native)',estimateSeconds,blockedReasons:[]};
  // The published USD estimate is available even when EUR conversion and activation are missing.

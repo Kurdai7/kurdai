@@ -2,6 +2,10 @@
 
 No spending is authorized. Paid generation, Render upgrades and R2 activation remain disabled. A successful synthetic test is not evidence that the AI provider, Kurdish speech or character consistency has been validated.
 
+## Pricing review gate
+
+Legacy Wan activation now requires an explicit `LONG_PRICING_REVIEW_VALID_UNTIL` date in `YYYY-MM-DD` format. The processor fails closed when this value is absent, malformed or expired. This date only records the validity window of the reviewed legacy price; it does not authorize spending, enable a provider, verify an invoice, or replace the independent billing, storage and budget gates. Do not set or extend it until provider prices, EUR conversion, processing, FX and VAT have been re-reviewed. No production environment value was changed as part of this code review.
+
 ## Free test available now
 
 The verified owner can use the explicit **70-second MP4 test — no API, not AI video** button. It creates fourteen five-second synthetic test-pattern clips with changing test tones, then joins them into one MP4. It uses the existing Free processor, requires no prompt, image, API credits or disk purchase, and supports landscape and portrait. Repeated clicks return the same job for that owner and ratio. Only one running job is allowed. The test cannot enable paid generation.
