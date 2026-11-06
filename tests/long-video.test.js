@@ -65,7 +65,7 @@ test('an ambiguous submission or interrupted submission never retries; approved 
 test('processor binds approval to owner, quote and total, is idempotent and retains its task across restart', async t => {
   const root = await temp(t);
   const config = { BILLABLE_REQUESTS_ENABLED:'true', API_MAX_JOB_USD:'100', API_MAX_DAY_USD:'1000', LONG_DATA_DIR: root, LONG_VIDEO_SERVICE_SECRET: 'x'.repeat(32), LONG_VIDEO_ENABLED: 'true',
-    LONG_MEDIA_EUR: '0.01', LONG_FX_PERCENT: '0', LONG_VAT_PERCENT: '0', FAL_KEY: 'mock', DASHSCOPE_API_KEY: 'mock' };
+    LONG_MEDIA_EUR: '0.01', LONG_FX_PERCENT: '0', LONG_VAT_PERCENT: '0', LONG_PRICING_REVIEW_VALID_UNTIL: '2099-12-31', FAL_KEY: 'mock', DASHSCOPE_API_KEY: 'mock' };
   Object.assign(config,durableTestFlags);const jobStorage=memoryJobStorage();
   const p = await createProcessor(config,{jobStorage});
   await new Promise(resolve => p.server.listen(0, '127.0.0.1', resolve));
