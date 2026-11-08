@@ -11,7 +11,8 @@ export function isVideoAdmin(env,user) {
 }
 export function canUseVideoWorkflow(env,user) {
  if(!user?.verified)return false;
- const owner=!!env.VIDEO_TEST_EMAIL&&typeof user.email==='string'&&user.email.trim().toLowerCase()===env.VIDEO_TEST_EMAIL.trim().toLowerCase();
- return isVideoAdmin(env,user)||owner||paidVideoPublicAccess(env);
+ // The legacy test email is only an admin fallback when VIDEO_ADMIN_EMAIL is unset.
+ // Do not let it bypass a separately configured administrator identity.
+ return isVideoAdmin(env,user)||paidVideoPublicAccess(env);
 }
 
