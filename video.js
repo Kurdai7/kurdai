@@ -175,7 +175,7 @@ export async function handleVideo(request, env, user) {
   const url = new URL(request.url);
   try {
     if (url.pathname === '/api/video-capabilities' && request.method === 'GET') {
-      const allowed = isVideoAdmin(env,user);
+      const allowed = canUseVideoWorkflow(env,user);
       return json({ spending:spendingPolicy(env), configured: !!env.DB && !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled,
         accountAllowed: allowed, longWorkflowAllowed:allowed, accountVerified: !!user?.verified,
         missingConfiguration: [!env.DB && 'DB', !env.GEMINI_API_KEY && 'GEMINI_API_KEY',
