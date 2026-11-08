@@ -13,11 +13,30 @@ async function check(){
   }catch{$('access').textContent='دەستگەیشتنی ئەدمین پشتڕاست کراوەتەوە؛ پشکنینی پڕۆسێسەر ئێستا بەردەست نییە.';}
  }catch(e){$('studio').hidden=true;$('access').textContent=e.message;}
 }
-function input(){return {model:'p-video-2',mode:'new',prompt:$('prompt').value.trim(),identity:$('identity').value.trim(),dialogueText:$('dialogue').value.trim(),language:'sorani',duration:Number($('duration').value),resolution:'704p',aspectRatio:$('ratio').value};}
+function readReferenceImage(){
+ const file=$('referenceImage').files?.[0];
+ if(!file)return Promise.resolve(null);
+ if(!['image/png','image/jpeg'].includes(file.type))return Promise.reject(new Error('تەنها PNG یان JPEG قبوڵ دەکرێت.'));
+ if(file.size>4*1024*1024)return Promise.reject(new Error('قەبارەی وێنە نابێت لە 4MB زیاتر بێت.'));
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onload=()=>resolve(String(reader.result));
+  reader.onerror=()=>reject(new Error('خوێندنەوەی وێنەکە سەرکەوتوو نەبوو.'));
+  reader.readAsDataURL(file);
+ });
+}
+async function input(){return {model:'p-video-2',mode:'new',prompt:$('prompt').value.trim(),identity:$('identity').value.trim(),dialogueText:$('dialogue').value.trim(),language:'sorani',duration:Number($('duration').value),resolution:'704p',aspectRatio:$('ratio').value,image:await readReferenceImage()};}
+$('referenceImage').addEventListener('change',()=>{
+ const file=$('referenceImage').files?.[0],preview=$('referencePreview');
+ if(!file){preview.hidden=true;preview.removeAttribute('src');$('referenceHint').textContent='وێنەی کارەکتەر یان دیمەن باربکە بۆ پاراستنی شێوە و ناسنامەی وێنەکە.';return;}
+ if(!['image/png','image/jpeg'].includes(file.type)||file.size>4*1024*1024){$('referenceHint').textContent='هەڵە: تەنها PNG/JPEG تا 4MB.';preview.hidden=true;return;}
+ preview.src=URL.createObjectURL(file);preview.hidden=false;$('referenceHint').textContent='وێنەکە ئامادەیە؛ لە هەژمارکردنی نرخدا بەکاردێت.';
+ quoteData=null;$('start').disabled=true;$('quoteBox').hidden=true;
+});
 $('quote').addEventListener('click',async()=>{
  const b=$('quote');b.disabled=true;$('start').disabled=true;$('quoteBox').hidden=true;quoteData=null;
  try{
-  const q=await api('/api/admin/video/quote',{method:'POST',body:JSON.stringify(input())});quoteData=q;$('quoteBox').hidden=false;
+  const payload=await input();const q=await api('/api/admin/video/quote',{method:'POST',body:JSON.stringify(payload)});quoteData=q;$('quoteBox').hidden=false;
   $('price').textContent=q.totalEUR==null?(q.planningEstimate?'€'+q.planningEstimate.totalEUR.toFixed(2)+' (تەنها هەڵسەنگاندن)':'نرخ دیاری نەکراوە'):'€'+q.totalEUR.toFixed(4);
   $('details').textContent='مۆدێل: P-Video 2 · '+q.outputSeconds+' چرکە · خەرجی API: '+(q.apiUSD==null?'—':'$'+q.apiUSD.toFixed(4))+' · native resolution: '+q.nativeResolution+' · نرخی هەر چرکەی دەرچوو: $0.015';
   $('blockers').textContent=(q.blockedReasons||[]).join(' ');
