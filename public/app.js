@@ -424,8 +424,8 @@ const translations = new Map([
   ['هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.','Create an account or log in to view your credits.'],
   ['بۆ نموونە: خێزانێکی کورد لە گوندێکی جواندا دەژی و ڕووداوێکی سەرنجڕاکێش ڕوودەدات...','For example: A Kurdish family lives in a beautiful village and an interesting event takes place...'],
   ['لانیکەم ١٢ پیت','At least 12 characters'],['داواکارییەک هەڵبژێرە','Choose a request'],['پێویستە بچیتە ژوورەوە. پشتڕاستکردنەوەی ئیمەیڵ پێویستە.','Please log in. Email verification is required.'],
-  ['ستۆدیۆی ئەدمین','Admin studio'],['ڕێکخستنەکان','Settings'],['یارمەتی','Help']
-\n  ['بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.', 'Video extension has not yet been verified with the live API and is not enabled for public use.']
+  ['ستۆدیۆی ئەدمین','Admin studio'],['ڕێکخستنەکان','Settings'],['یارمەتی','Help'],
+  ['بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.', 'Video extension has not yet been verified with the live API and is not enabled for public use.']
 ]);
 const textNodes = [];
 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
