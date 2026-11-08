@@ -233,3 +233,25 @@ footer{margin-top:24px;padding:30px 20px}
  .hero h1{font-size:27px}
  .account-actions .chip{flex:1 1 100%}
 }
+
+/* Hero showcase composition matching the approved KurdAI concept */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);gap:28px;align-items:center;text-align:start;padding:34px 30px 30px;margin:0 0 22px;border:1px solid #3d7652;border-radius:26px;background:linear-gradient(115deg,#0a1710 0%,#10291b 55%,#153a25 100%);box-shadow:0 24px 70px #0006;overflow:hidden;position:relative}
+.hero .eyebrow,.hero h1,.hero>p:not(.toast){grid-column:1; margin-inline:0}
+.hero .eyebrow{width:max-content;background:#42e98713;border-color:#42e98755;color:#baf5cc}
+.hero h1{font-size:clamp(32px,4vw,49px);line-height:1.45;margin:10px 0 4px}
+.hero>p:not(.toast){font-size:14px;max-width:560px}
+.hero #launchStatus{grid-column:1/-1;max-width:none;margin:4px 0 0}
+.hero-showcase{grid-column:2;grid-row:1/4;min-height:250px;position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;overflow:hidden;border:1px solid #4d8d60;border-radius:20px;padding:22px;background:radial-gradient(ellipse at 70% 80%,#317c49a8,transparent 55%),linear-gradient(145deg,#142e20,#09170f)}
+.showcase-copy{position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;max-width:60%}
+.showcase-kicker{font:800 10px system-ui;letter-spacing:2px;color:#8df0ad}
+.showcase-copy strong{font-size:clamp(18px,2vw,25px);line-height:1.65;color:#f1fff4}
+.showcase-copy>span:not(.showcase-kicker){font-size:11px;line-height:1.8;color:#b5cdbb}
+.showcase-pills{display:flex;flex-wrap:wrap;gap:6px}
+.showcase-pills span{font-size:9px;color:#d6f4df;border:1px solid #72b88955;background:#0c2116aa;border-radius:20px;padding:5px 8px}
+.showcase-art{position:absolute;inset-inline-end:0;top:0;width:48%;height:100%;overflow:hidden;background:linear-gradient(155deg,#235b36aa,#0b1d13 68%)}
+.art-orbit{position:absolute;width:190px;height:190px;border:1px solid #a0edb322;border-radius:50%;top:18px;inset-inline-end:-20px;box-shadow:0 0 0 18px #9beab00a,0 0 0 38px #9beab008}
+.art-slate{position:absolute;top:50%;inset-inline-end:18%;transform:translateY(-50%) rotate(-8deg);font:900 68px system-ui;letter-spacing:-8px;color:#eaffef;text-shadow:0 8px 30px #0009;z-index:2}
+.art-slate span{color:#42e987}
+.art-horizon{position:absolute;bottom:-12%;left:-15%;width:130%;height:54%;background:linear-gradient(150deg,#2e7544,#0b1b12 70%);clip-path:polygon(0 75%,20% 20%,37% 66%,55% 0,75% 62%,100% 25%,100% 100%,0 100%)}
+.art-glow{position:absolute;width:130px;height:130px;border-radius:50%;background:#42e98720;filter:blur(30px);top:22%;inset-inline-end:24%}
+@media(max-width:760px){.hero{display:flex;flex-direction:column;align-items:stretch;padding:22px 17px;gap:12px;border-radius:19px}.hero .eyebrow{align-self:flex-start}.hero h1{font-size:29px;line-height:1.55;margin:5px 0}.hero>p:not(.toast){font-size:12px}.hero-showcase{min-height:190px;order:4;padding:15px}.showcase-copy{max-width:68%;gap:8px}.showcase-copy strong{font-size:18px}.showcase-pills span{font-size:8px}.art-slate{font-size:48px}.hero #launchStatus{order:5}}
