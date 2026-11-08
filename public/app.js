@@ -400,16 +400,47 @@ const translations = new Map([
   ['دروستکردنی ڤیدیۆ خەرجی Google API هەیە. کرێدیتی ڕۆژانەی پیشاندراو لێرە پارەی Google نادات. ئێستا دروستکردن بۆ ئەکاونتی تاقیکردنەوەی ڕێکخراوە.', 'Video generation uses Google API billing. Daily credits shown here do not pay Google. Generation is currently restricted to the configured test account.'],
   ['کلیپی نوێ: ٤، ٦ یان ٨ چرکە؛ وێنەی ڕەفەرەنس و 1080p پێویستیان بە ٨ چرکە هەیە. Extension هەر جار ٧ چرکە زیاد دەکات. دیالۆگی سۆرانی داوا دەکرێت، بەڵام Google کوالێتییەکەی مسۆگەر ناکات.', 'New clips: 4, 6 or 8 seconds. Reference images and 1080p require 8 seconds. Extension adds 7 seconds each time. Sorani dialogue can be requested, but Google does not guarantee its quality.'],
   ['پرۆمپتی سەرەوە بەکاردێت. Omni دیمەنەکان بە ناسنامەی ڤیدیۆی پێشوو بەردەوام دەکات و دەبنە یەک MP4 بە دەنگەوە. کوالێتی شێوەزار و جێگیری ڕوخسار و دەنگ هێشتا بە API تاقی نەکراونەتەوە.', 'Uses the prompt above. Omni continues scenes using the previous video identity and combines them into one MP4 with audio. Dialect quality and face/voice consistency have not yet been verified through the API.'],
-  ['بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.', 'Video extension has not yet been verified with the live API and is not enabled for public use.']
+  ['👑 ئەدمین','👑 Admin'],['ماڵەوە','Home'],['وێنە دروستکردن','Create image'],['پڕۆژەکانم','My projects'],['پەسەندکراوەکان','Favorites'],['بەکارهێنان / کرێدیت','Usage / Credits'],['ڕێکخستنەکان','Settings'],['یارمەتی','Help'],
+  ['ستۆدیۆی ڤیدیۆ','Video Studio'],['وەشانی Public Beta کراوەیە. هەژمار و ستۆدیۆ بەردەستن؛ بەڵام دروستکردنی ڤیدیۆی AI لەم وەشانەدا ناچالاکە. هیچ پارەیەک بۆ ڤیدیۆ وەرناگیرێت.','The Public Beta is open. Accounts and the studio are available, but AI video generation is disabled in this release. No video-generation charges will be made.'],
+  ['کرێدیت: پێویستە بچیتە ژوورەوە. پشتڕاستکردنەوەی ئیمەیڵ پێویستە.','Credits: Please log in. Email verification is required.'],
+  ['وردەکارییەکان دیاری بکە بۆ ئامادەکردنی ڤیدیۆکەت.','Set up the details for your video.'],['چیرۆک یان بیرۆکەی ڤیدیۆ','Video story or prompt'],
+  ['١. بیرۆکە و دەنگ','1. Idea and dialogue'],['٢. ڕێکخستنی ڤیدیۆ','2. Video settings'],['ڕێنمایی زمان و مۆدێل','Language and model guidance'],
+  ['Veo: داواکردنی سۆرانی؛ کوالێتیی دەنگ و شێوەزار هێشتا تاقی نەکراوەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.','Veo: Sorani can be requested, but speech and dialect quality have not been verified. Native audio is included in Veo pricing; separate TTS is disabled.'],
+  ['سۆرانی → Omni 1.1 Flash','Sorani → Omni 1.1 Flash'],['بادینی → Veo 3.1 Lite','Badini → Veo 3.1 Lite'],
+  ['پێشنیار بەپێی ئەزموونی خاوەن پڕۆژە؛ دەنگی هەردوو مۆدێل لە API ـی KurdAI هێشتا پشتڕاست نەکراوەتەوە. هەڵبژاردن هیچ ڤیدیۆیەک دروست ناکات.','Recommendations are based on project testing; neither model’s speech output is verified through the KurdAI API. Selecting a model does not generate a video.'],
+  ['وێنە و ڤیدیۆی ڕەفەرەنس','Reference images and video'],['ڤیدیۆیەکی ئامادە هەڵبژێرە','Choose a ready video'],
+  ['وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو','Capture final frame from the displayed video'],['ئەمە کلیپێکی نوێ لەو وێنەیەوە دەست پێ دەکات؛ بە خۆکار لەگەڵ ڤیدیۆی پێشوو یەک ناخات.','This starts a new clip from that image; it does not automatically join the previous video.'],
+  ['وێنەکانی کارەکتەر و جل‌وبەرگ (تا ٣ وێنە)','Character and clothing references (up to 3 images)'],
+  ['PNG یان JPEG، هەر وێنەیەک تا ٤ MiB. وێنەکان یارمەتی پاراستنی ناسنامە دەدەن؛ یەکسانیی تەواو مسۆگەر نییە.','PNG or JPEG, up to 4 MiB each. Images help preserve identity; exact consistency is not guaranteed.'],
+  ['شێوەی ڤیدیۆ — 3D، سینەمایی، کارتۆن، ڕاستەقینە','Video style — 3D, cinematic, cartoon, realistic'],['٣. شێوەی ڤیدیۆ','3. Video style'],['جۆری ڤیدیۆ','Video style'],
+  ['دروستکردنی ڤیدیۆ خەرجی Google API هەیە. کرێدیتی ڕۆژانەی پیشاندراو لێرە پارەی Google نادات. ئێستا دروستکردن بۆ ئەکاونتی تاقیکردنەوەی ڕێکخراوە.','Video generation uses Google API billing. Daily credits shown here do not pay Google. Generation is currently restricted to the configured test account.'],
+  ['بەردەوامبوون لە پشکنینی داواکاریی پێشوو','Resume checking previous request'],['ماوەی کلیپی نوێ: ٤، ٨، ١٠، ١٥، ٢٠، ٢٥، ٣٠، ٤٠، ٥٠، ٦٠ یان ٧٠ چرکە؛ بەردەستبوونی هەموو ماوەکان بە مۆدێل و جۆری داواکاری دەگۆڕێت. Extension هەر جار ٧ چرکە زیاد دەکات. دیالۆگی سۆرانی داوا دەکرێت، بەڵام کوالێتیی دەنگ مسۆگەر ناکرێت.','New clip duration: 4, 8, 10, 15, 20, 25, 30, 40, 50, 60 or 70 seconds; availability depends on model and request type. Extension adds 7 seconds each time. Sorani dialogue can be requested, but speech quality is not guaranteed.'],
+  ['شوێنی پیشاندانی ڤیدیۆی دروستکراو.','Your generated video appears here.'],['ڤیدیۆکە لە ماوەی ٤٨ کاتژمێردا دابگرە. دەنگ و بەردەوامیی کارەکتەرەکان پێش بڵاوکردنەوە بپشکنە.','Download the video within 48 hours. Check the audio and character continuity before publishing.'],
+  ['ڤیدیۆ و داواکارییەکانی پێشوو','Previous videos and requests'],['هێشتا داواکاری نییە','No requests yet'],['ڤیدیۆی AI هێشتا پشتڕاست نەکراوەتەوە','AI video has not yet been verified'],
+  ['دروستکردنی ڤیدیۆ بە دەنگ','Create video with audio'],['شوێنی پێشبینینی ڤیدیۆ','Video preview area'],['پرۆمپت بنووسە، وێنەی ڕەفەرەنس زیاد بکە و مۆدێلەکەت هەڵبژێرە','Write a prompt, add reference images and choose a model'],['پێشبینین دوای دروستکردنی ڤیدیۆ لێرە دەردەکەوێت','The preview will appear here after video generation'],['ئامادەی کار','Ready'],
+  ['وێنەی کارەکتەر، ڕوخسار، جل‌وبەرگ یان دیمەنی سەرەتا زیاد بکە.','Add character, face, clothing or opening-scene reference images.'],['وێنە زیاد بکە','Add images'],['هێشتا هیچ وێنەیەک هەڵنەبژێردراوە','No images selected yet'],
+  ['٣. کارەکتەر و دیالۆگ','3. Characters and dialogue'],['زمانی دیالۆگی ڤیدیۆی درێژ','Long-video dialogue language'],['کوردی بادینی — هێشتا تاقی نەکراوەتەوە','Badini Kurdish — not yet tested'],['بێ دیالۆگ','No dialogue'],['دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو','Actual dialogue in the selected language'],
+  ['پشکنینی تەکنیکی','Technical checks'],['پشکنینی سێرڤەری ڤیدیۆی درێژ — بێ پارە','Check long-video server — free'],['پیشاندانی خەرجی — بێ پارە','Show cost — free'],['پشکنینی پێشکەوتن','Check progress'],['پڕۆژە تازەکان','Recent projects'],['بینینی داواکارییەکان ←','View requests ←'],
+  ['هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.','Create an account or log in to view your credits.'],
+  ['بۆ نموونە: خێزانێکی کورد لە گوندێکی جواندا دەژی و ڕووداوێکی سەرنجڕاکێش ڕوودەدات...','For example: A Kurdish family lives in a beautiful village and an interesting event takes place...'],
+  ['لانیکەم ١٢ پیت','At least 12 characters'],['داواکارییەک هەڵبژێرە','Choose a request'],['پێویستە بچیتە ژوورەوە. پشتڕاستکردنەوەی ئیمەیڵ پێویستە.','Please log in. Email verification is required.'],
+  ['ستۆدیۆی ئەدمین','Admin studio'],['ڕێکخستنەکان','Settings'],['یارمەتی','Help']
+\n  ['بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.', 'Video extension has not yet been verified with the live API and is not enabled for public use.']
 ]);
 const textNodes = [];
 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
 while (walker.nextNode()) { const node = walker.currentNode; if (translations.has(node.textContent)) textNodes.push([node, node.textContent]); else if (translations.has(node.textContent.trim())) textNodes.push([node, node.textContent.trim()]); }
-$('languageToggle').addEventListener('click', () => {
-  const english = document.documentElement.lang !== 'en'; document.documentElement.lang = english ? 'en' : 'ckb'; document.documentElement.dir = english ? 'ltr' : 'rtl';
-  for (const [node, original] of textNodes) if (node.isConnected) node.textContent = english ? translations.get(original) : original;
+function applyWebsiteLanguage(english, save = true) {
+  document.documentElement.lang = english ? 'en' : 'ckb';
+  document.documentElement.dir = english ? 'ltr' : 'rtl';
+  for (const [node, original] of textNodes) if (node.isConnected) node.textContent = english ? (translations.get(original) || original) : original;
   $('languageToggle').textContent = english ? '🌐 EN / KU' : '🌐 KU / EN';
-});
+  const label = $('languageLabel'); if (label) label.textContent = english ? 'EN / KU' : 'KU / EN';
+  if (save) localStorage.setItem('kurdai_site_language', english ? 'en' : 'ckb');
+}
+$('languageToggle').addEventListener('click', () => applyWebsiteLanguage(document.documentElement.lang !== 'en'));
+const savedLanguage = localStorage.getItem('kurdai_site_language');
+if (savedLanguage === 'en' || savedLanguage === 'ckb') applyWebsiteLanguage(savedLanguage === 'en', false);
 updateControls(); updateDialogueSupport(); refreshAccount();
 api('/api/health').then(state=>{
   if(state.registrationConfigured===false) {
