@@ -119,7 +119,7 @@ async function refreshJobs() {
 }
 async function refreshAccount() {
   document.dispatchEvent(new Event('kurdai-account-change'));
-  generationAllowed=false;setBusy(busy);$('longPanel').hidden=$('model').value!=='p-video-2';
+  generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
   $('logoutBtn').hidden = !token();
   if (!token()) { $('creditStatus').textContent = ku('تکایە بچۆ ژوورەوە.', 'Please log in.'); return; }
   const expected = token();
@@ -130,14 +130,14 @@ async function refreshAccount() {
     const capability = await api('/api/video-capabilities');
     if (token() !== expected) return;
     generationAllowed=capability.configured===true && capability.accountAllowed===true && capability.accountVerified!==false;
-    $('longPanel').hidden=$('model').value!=='p-video-2' && !((capability.longWorkflowAllowed===true || capability.accountAllowed===true) && capability.accountVerified!==false);
+    $('longPanel').hidden=capability.isAdmin!==true;
     setBusy(busy);
     if (!capability.configured && !capability.longWorkflowAllowed) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.') + (capability.missingConfiguration?.length ? ` (${capability.missingConfiguration.join(', ')})` : ''), true);
     else if (!capability.accountVerified && capability.accountVerified !== undefined) message('toast', 'Verify your email first.', true);
     else if (!capability.accountAllowed && !capability.longWorkflowAllowed) message('toast', 'Generation is currently available only to the configured test account.', true);
     await refreshJobs();
   } catch (error) {
-    generationAllowed=false;setBusy(busy);$('longPanel').hidden=$('model').value!=='p-video-2';
+    generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
     if(error.status===401){localStorage.removeItem(tokenKey);$('logoutBtn').hidden=true;}
     message('accountMessage', error.message, true);
   }
