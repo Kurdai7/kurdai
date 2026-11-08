@@ -2,7 +2,15 @@
 export const DIALECTS = Object.freeze({
   sorani: { label: 'کوردی سۆرانی (Sorani Kurdish)', code: 'ckb', nativeVideoVerified: false,
     ttsDocumented: 'gemini-3.8-flash-lite-tts', ttsEnabled: false,
-    instruction: 'All spoken dialogue must be natural Sorani Kurdish (Central Kurdish). Use Sorani vocabulary, grammar, pronunciation and intonation only. Never mix Badini or Kurmanji. Read supplied Sorani lines verbatim; do not translate or paraphrase. No English speech.' },
+    instruction: [
+      'LANGUAGE PRIORITY: Sorani Kurdish (Central Kurdish), code ckb. This is the primary Kurdish language for KurdAI.',
+      'Speak in fluent, natural, conversational Sorani Kurdish. Use correct Sorani grammar, word order, idioms, vocabulary, pronunciation, stress and intonation.',
+      'Do not use Badini, Kurmanji, or a generic Kurdish mixture. Do not switch into Arabic, Persian or English. Avoid Arabic/Persian loanwords when a natural, commonly used Sorani word exists.',
+      'Use the Sorani Kurdish writing system when displaying or preparing dialogue. Do not transliterate Sorani into Latin letters.',
+      'Read the user-provided Sorani dialogue exactly as written. Preserve every word, name, sentence order and meaning. Do not translate, paraphrase, shorten, expand, improvise, or add filler speech.',
+      'If a supplied line is unclear, do not silently rewrite it; preserve it and leave the quality review to a Sorani-speaking human.',
+      'Keep the same speaker identity and voice consistently across every continuation. No English speech.'
+    ].join(' ') },
   badini: { label: 'کوردی بادینی (Badini Kurdish)', code: 'badini', nativeVideoVerified: false,
     ttsDocumented: 'kurdishtts-v5-badini', ttsEnabled: false,
     instruction: 'All spoken dialogue must be Badini Kurdish (Behdini), the Northern Kurdish variety spoken in Duhok and Badinan. Use specifically Badini vocabulary, grammar, pronunciation and intonation. Never replace it with Sorani or a generic Kurmanji accent. Read supplied Badini lines verbatim; do not translate or paraphrase. No English speech.' }

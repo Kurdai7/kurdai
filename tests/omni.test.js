@@ -19,7 +19,12 @@ test('Omni preserves separate dialects, references and multi-turn voice context'
     assert.equal(body.model,OMNI_MODEL);assert.equal(body.previous_interaction_id,'v1_previous');
     assert.equal(body.store,true);assert.equal(body.response_format.delivery,'uri');
     assert.match(body.input.at(-1).text,/exact final frame/);
-    assert.match(body.input.at(-1).text,language==='sorani'?/Speak only Sorani Kurdish/:/Speak only Badini Kurdish/);
+    if(language==='sorani') {
+      assert.match(body.input.at(-1).text,/PRIMARY LANGUAGE: Sorani Kurdish/);
+      assert.match(body.input.at(-1).text,/correct Sorani grammar/);
+      assert.match(body.input.at(-1).text,/Never substitute Badini, Kurmanji/);
+      assert.match(body.input.at(-1).text,/exactly as written/);
+    } else assert.match(body.input.at(-1).text,/Speak only Badini Kurdish/);
     assert.ok(body.input.at(-1).text.includes(input.dialogueText));
   }
   const png='data:image/png;base64,iVBORw0KGgo=';

@@ -50,7 +50,7 @@ async function handleVideo(request, config, user) {
 test('validates aspect ratios, durations, reference limits and contradictory combinations', () => {
   const input = validateInput(fresh({ aspectRatio: '9:16', referenceImages: [png] }));
   assert.equal(input.aspectRatio, '9:16'); assert.equal(input.instance.referenceImages.length, 1);
-  assert.match(input.instance.prompt, /natural Sorani Kurdish/); assert.match(input.instance.prompt, /no live-action humans/);
+  assert.match(input.instance.prompt, /fluent, natural, conversational Sorani Kurdish/); assert.match(input.instance.prompt, /no live-action humans/);
   for (const invalid of [{ duration: 70 }, { aspectRatio: '1:1' }, { duration: 4, resolution: '1080p' },
     { duration: 6, referenceImages: [png] }, { referenceImages: Array(4).fill(png) },
     { mode: 'extend', referenceImages: [png] }, { mode: 'frame' }, { firstFrame: png },
@@ -125,7 +125,7 @@ test('Sorani and Badini use distinct instructions and documented capability labe
   const sorani = validateInput(fresh({ language: 'sorani' }));
   const badini = validateInput(fresh({ language: 'badini' }));
   assert.equal(sorani.language, 'sorani'); assert.equal(badini.language, 'badini');
-  assert.match(sorani.instance.prompt, /Sorani vocabulary, grammar, pronunciation/);
+  assert.match(sorani.instance.prompt, /correct Sorani grammar, word order, idioms, vocabulary, pronunciation/);
   assert.match(badini.instance.prompt, /Duhok and Badinan/);
   assert.match(badini.instance.prompt, /Never replace it with Sorani/);
   assert.doesNotMatch(badini.instance.prompt, /All spoken dialogue must be natural Sorani/);
