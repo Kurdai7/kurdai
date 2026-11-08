@@ -6,6 +6,7 @@ import { handleLong } from './long-video.js';
 import { authLimit, authBody } from './auth-guard.js';
 import { handleChat } from './chat.js';
 import { handleImage } from './image.js';
+import { isVideoAdmin } from './video-access.js';
 
 /**
  * KurdAI API for Cloudflare Workers + D1.
@@ -200,6 +201,10 @@ export default {
           publicVideoEnabled:false,
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled
         }, databaseReady && env.ASSETS ? 200 : 503);
+      }
+      if (url.pathname === '/api/admin/access' && request.method === 'GET') {
+        const user = env.DB ? await currentUser(request, env) : null;
+        return json({ authenticated: !!user?.verified, isAdmin: isVideoAdmin(env, user), email: isVideoAdmin(env, user) ? user.email : undefined });
       }
       if (url.pathname.startsWith('/api/image')) {
         const user = env.DB ? await currentUser(request, env) : null;

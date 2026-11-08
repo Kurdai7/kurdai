@@ -128,7 +128,7 @@ test('P-Video 2 allows 20 seconds, preserves Badini, and exposes a blocked free 
 });
 
 test('Pruna missing scene and dialogue focus the correct local field, retain text, and never submit incomplete quotes',async()=>{
- const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
+ const dom=new JSDOM(readFileSync(new URL('../public/admin.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
  const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
  w.fetch=async(path,options)=>{requests.push(JSON.parse(options.body));const i=requests.at(-1);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,nativeAudio:true,canStart:false})};};
  w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));

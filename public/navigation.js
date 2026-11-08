@@ -14,7 +14,7 @@ for (const key of Object.keys(labels)) {
 const move = (key, selector) => { const node = document.querySelector(selector); if (node) pages.get(key).append(node); };
 move('home', '.hero'); move('home', '.features');
 move('videos', '#preview');
-move('studio', '#studio'); move('studio', '#longPanel');
+move('studio', '#longPanel');
 move('account', '#account'); move('credits', '#billingPanel');
 const billingHelp = document.createElement('p'); billingHelp.className = 'credits-help note';
 pages.get('credits').append(billingHelp);
@@ -38,7 +38,10 @@ function language() {
 }
 function route(focus = false) {
   const hash = location.hash.slice(1);
-  const key = hash === 'preview' ? 'videos' : pages.has(hash) ? hash : 'home';
+  let key = hash === 'preview' ? 'videos' : pages.has(hash) ? hash : 'home';
+  // Never show an empty public studio: ask the visitor to sign in until the
+  // authenticated long-video workflow becomes available for this account.
+  if (key === 'studio' && document.querySelector('#longPanel').hidden) key = 'account';
   for (const [name, page] of pages) page.hidden = name !== key;
   for (const a of links) { if (a.dataset.destination === key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   if (focus) { pages.get(key).focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: 'instant' }); }
