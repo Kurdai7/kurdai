@@ -1,4 +1,4 @@
-import {canUseVideoWorkflow} from './video-access.js';
+import {canUseVideoWorkflow,isVideoAdmin} from './video-access.js';
 // Official API contracts: https://ai.google.dev/gemini-api/docs/veo
 // No provider keys, generated URIs, or uploaded image data are returned to clients.
 import { spendingPolicy, budgetAllows } from './spending.js';
@@ -177,7 +177,7 @@ export async function handleVideo(request, env, user) {
     if (url.pathname === '/api/video-capabilities' && request.method === 'GET') {
       const allowed = canUseVideoWorkflow(env,user);
       return json({ spending:spendingPolicy(env), configured: !!env.DB && !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled,
-        accountAllowed: allowed, longWorkflowAllowed:canUseVideoWorkflow(env,user), accountVerified: !!user?.verified,
+        accountAllowed: allowed, longWorkflowAllowed:canUseVideoWorkflow(env,user), isAdmin:isVideoAdmin(env,user), accountVerified: !!user?.verified,
         missingConfiguration: [!env.DB && 'DB', !env.GEMINI_API_KEY && 'GEMINI_API_KEY',
           env.VIDEO_GENERATION_ENABLED !== 'true' && 'VIDEO_GENERATION_ENABLED', !env.VIDEO_TEST_EMAIL && 'VIDEO_TEST_EMAIL'].filter(Boolean),
         publicGenerationEnabled:false,providerGenerationVerified:false,
