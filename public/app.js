@@ -430,10 +430,18 @@ const translations = new Map([
 const textNodes = [];
 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
 while (walker.nextNode()) { const node = walker.currentNode; if (translations.has(node.textContent)) textNodes.push([node, node.textContent]); else if (translations.has(node.textContent.trim())) textNodes.push([node, node.textContent.trim()]); }
+const attributeNodes = [];
+for (const node of document.querySelectorAll('[placeholder],[title],[aria-label]')) {
+  for (const name of ['placeholder','title','aria-label']) {
+    const value = node.getAttribute(name);
+    if (value && translations.has(value)) attributeNodes.push([node,name,value]);
+  }
+}
 function applyWebsiteLanguage(english, save = true) {
   document.documentElement.lang = english ? 'en' : 'ckb';
   document.documentElement.dir = english ? 'ltr' : 'rtl';
   for (const [node, original] of textNodes) if (node.isConnected) node.textContent = english ? (translations.get(original) || original) : original;
+  for (const [node, name, original] of attributeNodes) if (node.isConnected) node.setAttribute(name, english ? (translations.get(original) || original) : original);
   $('languageToggle').textContent = english ? '🌐 EN / KU' : '🌐 KU / EN';
   const label = $('languageLabel'); if (label) label.textContent = english ? 'EN / KU' : 'KU / EN';
   if (save) localStorage.setItem('kurdai_site_language', english ? 'en' : 'ckb');
