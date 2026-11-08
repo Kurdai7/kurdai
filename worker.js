@@ -241,7 +241,7 @@ export default {
         const user=url.pathname==='/api/billing/webhook'?null:env.DB?await currentUser(request,env):null;
         return handleBilling(request,env,user);
       }
-      if (env.DB && request.method === 'POST' && ['/api/generate','/api/video-quote','/api/long/quote','/api/long/start','/api/long/smoke'].includes(url.pathname)) {
+      if (env.DB && request.method === 'POST' && ['/api/generate','/api/video-quote','/api/long/quote','/api/long/start','/api/long/smoke','/api/admin/video/quote','/api/admin/video/start','/api/admin/video/smoke'].includes(url.pathname)) {
         const retry = await authLimit(request,env.DB,'video-write');
         if (retry) return new Response(JSON.stringify({error:'Too many video requests. Try again later.'}), {
           status:429,headers:{...corsHeaders,'Retry-After':String(retry)}});
