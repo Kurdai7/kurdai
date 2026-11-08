@@ -246,6 +246,16 @@ export default {
         if (retry) return new Response(JSON.stringify({error:'Too many video requests. Try again later.'}), {
           status:429,headers:{...corsHeaders,'Retry-After':String(retry)}});
       }
+      if (url.pathname.startsWith('/api/admin/video/')) {
+        const admin = env.DB ? await currentUser(request, env) : null;
+        if (!isVideoAdmin(env, admin)) return json({error:'Admin access required.'},403);
+        const suffix = url.pathname.slice('/api/admin/video'.length);
+        if (!['/capabilities','/quote','/start','/status','/file','/jobs','/smoke'].includes(suffix))
+          return json({error:'Unknown admin video route.'},404);
+        const target = new URL(request.url);
+        target.pathname = '/api/long' + suffix;
+        return handleLong(new Request(target.toString(), request), env, admin);
+      }
       if (url.pathname.startsWith('/api/long/')) {
         const user = env.DB ? await currentUser(request, env) : null;
         return handleLong(request, env, user);
