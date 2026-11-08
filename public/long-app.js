@@ -20,12 +20,12 @@ function modelChanged() {
   const pruna=selected==='p-video-2';
   const pending=['p-video-2','seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes(selected);
   $('longModelNotice').textContent=pruna?'سۆرانیی P-Video 2 لە ڤیدیۆی API پەسەند کراوە. قەبارەی ڕاستەقینەی تاقیکردنەوە 1280×704 بوو؛ 720pی تەواو نییە. هەردوو زمان دەمێننەوە.':['pixverse-v6','kling-3.0-standard'].includes(selected)?'سۆرانی لەلایەن خاوەنی KurdAI تاقی کراوەتەوە؛ پەیوەندی API هێشتا ئامادە نییە. بادینی پێویستی بە تاقیکردنەوە هەیە.':pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
-  for(const option of $('longDuration').options) option.disabled=pending ? Number(option.value)>(pruna?70:15) : (!omni && !['60','70'].includes(option.value));
+  const allowedDurations=pruna?[4,8,10,15,20,25,30,40,50,60,70]:omni?[10,15,20,25,30,40,50,60,70]:pending?[4,8,10,15]:[60,70];
+  for(const option of $('longDuration').options) option.disabled=!allowedDurations.includes(Number(option.value));
   for(const option of $('longResolution').options) option.disabled=!([...(pruna?['704p']:['720p']),...(selected==='wan2.2-i2v-flash'?['480p']:[]),...(selected==='heygen-video-1'?['768p']:[])].includes(option.value)) || (selected==='heygen-video-1' && option.value==='720p');
   if(omni || pending) $('longResolution').value=selected==='heygen-video-1'?'768p':pruna?'704p':'720p';
-  if(pending && Number($('longDuration').value)>(pruna?70:15)) $('longDuration').value='5';
+  if(!allowedDurations.includes(Number($('longDuration').value))) $('longDuration').value=String(pruna?10:omni?10:pending?10:60);
   if(selected==='wan2.2-i2v-flash' && !['720p','480p'].includes($('longResolution').value)) $('longResolution').value='720p';
-  if(!omni && !pending && !['60','70'].includes($('longDuration').value)) $('longDuration').value='60';
   if(selected==='wan2.2-i2v-flash') $('longLanguage').value='none';
   $('longMode').options[1].disabled=!(omni||pruna);
   if(!omni&&!pruna) $('longMode').value='new';
