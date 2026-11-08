@@ -43,3 +43,46 @@ input[type=email],input[type=password]{direction:ltr;text-align:start}input[type
 .brand{flex-direction:row-reverse}.studio-nav{gap:18px;flex-wrap:wrap}.app-page{outline:none;min-width:0}.app-page>.workspace{grid-template-columns:minmax(0,1fr);max-width:850px;margin-inline:auto}.app-page[data-page=studio]>#longPanel{max-width:850px;margin-inline:auto}.app-page[data-page=videos]>.preview{position:static;max-width:850px;margin:auto}.app-page[data-page=account],.app-page[data-page=credits]{max-width:850px;margin:auto}.home-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:20px 0 30px}.home-shortcut{display:flex;align-items:center;justify-content:center;min-height:140px;padding:22px;text-align:center;text-decoration:none;font-weight:750;color:var(--ink);background:linear-gradient(145deg,#284833,#18231e);border:1px solid #47684f;border-radius:18px}.home-shortcut:first-child{color:#10281b;background:linear-gradient(130deg,#b1e9c8,#79cda0)}.home-shortcut:hover{border-color:var(--green2)}.app-page[data-page=credits]:has(#billingPanel:not([hidden])) .credits-help{display:none}
 @media(max-width:900px){header{flex-wrap:wrap}.studio-nav{order:3;flex:1 0 100%;margin:0;justify-content:center}.home-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.studio-nav{display:flex;gap:6px;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}.studio-nav a{white-space:nowrap;font-size:11px;padding:8px;border:1px solid var(--line);border-radius:8px}.studio-nav a[aria-current]{background:#76d6a619}.home-shortcut{min-height:110px;font-size:13px;padding:16px}.home-shortcuts{gap:12px}.app-page>.workspace{margin-bottom:18px}}
+
+
+/* Flow-inspired creation workspace: original KurdAI implementation. */
+#longPanel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;background:#101713;border:1px solid #2b4034;border-radius:20px;padding:clamp(16px,2.2vw,28px);box-shadow:0 24px 70px #0005}
+#longPanel>#longTitle,#longPanel>.sub,#longPanel>.flow-canvas,#longPanel>.account-actions,#longPanel>#longCost,#longPanel>video,#longPanel>#longDownload,#longPanel>.note{grid-column:1/-1}
+#longPanel>#longTitle{font-size:clamp(22px,2.5vw,30px);margin:0}
+#longPanel>.sub{max-width:850px;line-height:1.9;color:#a6b6aa}
+#longPanel .form-group{margin:0;padding:18px;border:1px solid #2a3a31;border-radius:16px;background:#151e19;min-width:0}
+#longPanel .form-group legend{padding:0 9px;color:#9edbb5;font-weight:750}
+#longPanel .form-group:nth-of-type(1){grid-column:1;grid-row:auto}
+#longPanel .form-group:nth-of-type(2){grid-column:1}
+#longPanel .form-group:nth-of-type(3){grid-column:2;grid-row:span 2}
+#longPanel select,#longPanel textarea,#longPanel input:not([type=file]){background:#0d1511;border:1px solid #34473b;border-radius:10px}
+#longPanel select:focus,#longPanel textarea:focus,#longPanel input:focus{outline:2px solid #78c99b;outline-offset:2px}
+.flow-canvas{min-height:260px;position:relative;display:grid;place-items:center;overflow:hidden;border:1px solid #34463b;border-radius:16px;background:radial-gradient(ellipse at 50% 45%,#263a2e 0,#17231c 42%,#0b110e 100%);padding:18px}
+.flow-canvas-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;text-align:center;color:#d7e6dc;min-height:210px}
+.flow-canvas-empty>span:not(.canvas-mark){font-size:12px;color:#a5b6aa}
+.flow-canvas-empty small{font-size:10px;color:#74877a}
+.canvas-mark{display:grid;place-items:center;width:46px;height:46px;border:1px solid #8cc9a4;border-radius:14px;color:#a7e4bd;font-size:24px;font-weight:850;background:#75c99512}
+.flow-canvas video{width:100%;max-height:520px;aspect-ratio:16/9;object-fit:contain;border-radius:10px;background:#050806}
+.flow-canvas-footer{position:absolute;inset-inline:14px;bottom:12px;display:flex;justify-content:space-between;align-items:center;color:#9db0a2;font-size:10px;pointer-events:none}
+.flow-canvas-footer i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#78c99b;margin-inline-end:6px}
+.reference-station{grid-column:2;grid-row:auto;border:1px solid #385342;border-radius:16px;padding:18px;background:linear-gradient(145deg,#18271e,#121a15);min-width:0}
+.reference-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.reference-kicker{font-size:9px;letter-spacing:2px;color:#9bd9b1;font-weight:800}
+.reference-heading h3{font-size:17px;margin:5px 0}
+.reference-heading p{font-size:11px;color:#9aab9f;line-height:1.8;margin:0}
+.reference-count{white-space:nowrap;border:1px solid #3b5946;border-radius:20px;padding:5px 10px;font-size:11px;color:#b7e4c6}
+.reference-drop{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-height:120px;margin-top:15px;border:1px dashed #6b9c7c;border-radius:13px;background:#8dd6a30a;cursor:pointer;text-align:center;color:#e3f0e7}
+.reference-drop:hover{background:#8dd6a316;border-color:#9be2b4}
+.reference-plus{font-size:25px;color:#a4e3b9;line-height:1}
+.reference-drop strong{font-size:13px}
+.reference-drop>span:last-of-type{font-size:10px;color:#93a99a}
+.reference-drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.reference-previews{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px;min-height:36px}
+.reference-empty{font-size:10px;color:#84968a;align-self:center}
+.reference-thumb{width:72px;height:72px;object-fit:cover;border-radius:9px;border:1px solid #46634f}
+#longPanel .account-actions{margin-top:0;padding:14px;border:1px solid #2a3a31;border-radius:15px;background:#151e19}
+#longPanel #longQuote{border-color:#628d6f}
+#longPanel #longStart{background:#9ddbb3;color:#102016;font-weight:800}
+#longPanel #longStart:disabled{opacity:.45}
+#longPanel #longCost{grid-column:1/-1}
+@media(max-width:760px){#longPanel{grid-template-columns:minmax(0,1fr);gap:13px;padding:14px}#longPanel>.form-group,#longPanel .reference-station{grid-column:1!important;grid-row:auto!important}#longPanel .flow-canvas{min-height:205px}.flow-canvas-empty{min-height:160px}.reference-station{padding:14px}}

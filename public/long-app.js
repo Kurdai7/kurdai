@@ -197,3 +197,27 @@ $('longReadiness').addEventListener('click', async () => {
   finally { button.disabled = false; }
 });
 
+
+
+// Reference-image previews are local only; no upload occurs before a quote/start.
+const referenceInput=$('longReference');
+if(referenceInput){
+  const preview=$('longReferencePreview'),count=$('longReferenceCount');
+  let previewURLs=[];
+  referenceInput.addEventListener('change',()=>{
+    previewURLs.forEach(url=>URL.revokeObjectURL(url));previewURLs=[];
+    preview.replaceChildren();
+    const files=Array.from(referenceInput.files||[]);
+    const max=$('longModel').value==='gemini-omni-1.1-flash'?3:1;
+    count.textContent=String(files.length)+' / '+String(max);
+    if(!files.length){const empty=document.createElement('span');empty.className='reference-empty';empty.textContent='هێشتا هیچ وێنەیەک هەڵنەبژێردراوە';preview.append(empty);return;}
+    files.slice(0,max).forEach(file=>{
+      if(!['image/png','image/jpeg'].includes(file.type)||file.size>4*1024*1024)return;
+      const url=URL.createObjectURL(file);previewURLs.push(url);
+      const img=document.createElement('img');img.className='reference-thumb';img.src=url;img.alt='Reference image preview';preview.append(img);
+    });
+  });
+}
+const canvasFormat=()=>{const ratio=$('aspectRatio')?.value||'16:9';const quality=$('longResolution')?.value||'720p';$('longCanvasFormat').textContent=ratio+' · '+quality;};
+for(const id of ['aspectRatio','longResolution'])$(id)?.addEventListener('change',canvasFormat);
+canvasFormat();

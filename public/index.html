@@ -156,6 +156,11 @@ select{line-height:1.6;min-height:48px}
   <section id="longPanel" class="panel account-panel" aria-labelledby="longTitle" hidden="">
     <h2 id="longTitle">دروستکردنی ڤیدیۆ بە دەنگ</h2>
     <p class="sub">پرۆمپتی سەرەوە بەکاردێت. Omni دیمەنەکان بە ناسنامەی ڤیدیۆی پێشوو بەردەوام دەکات و دەبنە یەک MP4 بە دەنگەوە. کوالێتی شێوەزار و جێگیری ڕوخسار و دەنگ هێشتا بە API تاقی نەکراونەتەوە.</p>
+    <div class="flow-canvas" id="longCanvas">
+      <div class="flow-canvas-empty" id="longCanvasEmpty"><span class="canvas-mark">K</span><strong>شوێنی پێشبینینی ڤیدیۆ</strong><span>پرۆمپت بنووسە، وێنەی ڕەفەرەنس زیاد بکە و مۆدێلەکەت هەڵبژێرە</span><small>پێشبینین دوای دروستکردنی ڤیدیۆ لێرە دەردەکەوێت</small></div>
+      <video id="longVideo" controls playsinline hidden></video>
+      <div class="flow-canvas-footer"><span><i></i> ئامادەی کار</span><span id="longCanvasFormat">16:9 · 720p</span></div>
+    </div>
     <fieldset class="form-group"><legend>١. بیرۆکە و دەنگ</legend>
     <label class="field-label" for="longPrompt">وەسفی دیمەنی ڤیدیۆ</label><textarea id="longPrompt" maxlength="5000" placeholder="دیمەنەکە باس بکە: کێ لە کوێیە و چی دەکات؟ دیالۆگ لە خانەی جیاوازی خوارەوە دابنێ."></textarea>
     </fieldset><fieldset class="form-group"><legend>٢. ڕێکخستنی ڤیدیۆ</legend>
@@ -166,8 +171,13 @@ select{line-height:1.6;min-height:48px}
     <div class="two">
       <p class="note" id="longModelNotice" role="status"></p>
       <div><label class="field-label" for="longResolution">کوالێتی ڤیدیۆی درێژ</label><select id="longResolution"><option value="720p">720p — Omni و Wan</option><option value="704p">704p — P-Video 2، قەبارەی ڕاستەقینە</option><option value="520p" disabled="">520p — چاوەڕوانی پشتگیری API</option><option value="460p" disabled="">460p — چاوەڕوانی پشتگیری API</option><option value="480p">480p — تەنها Wan</option><option value="768p" disabled="">768p — HeyGen، چاوەڕوانی API</option></select></div>
-      <details class="studio-details"><summary><span class="fold-ku">ڕێکخستنی پێشکەوتوو — کارەکتەر و وێنە</span><span class="fold-en" lang="en">Advanced settings — character and images</span></summary><div><label class="field-label" for="longIdentity">ناسنامەی جێگیری کارەکتەرەکان</label><input id="longIdentity" maxlength="2000" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></div><label class="field-label" for="longReference">وێنەی سەرەتایی / ڕەفەرەنسی کارەکتەر (تا ٣ وێنە بۆ Omni)</label><input id="longReference" type="file" multiple="" accept="image/png,image/jpeg"></details>
     </div>
+    <section class="reference-station" aria-labelledby="referenceTitle">
+      <div class="reference-heading"><div><span class="reference-kicker">REFERENCE IMAGES</span><h3 id="referenceTitle">وێنەی ڕەفەرەنس</h3><p>وێنەی کارەکتەر، ڕوخسار، جل‌وبەرگ یان دیمەنی سەرەتا زیاد بکە.</p></div><span class="reference-count" id="longReferenceCount">٠ / ٣</span></div>
+      <label class="reference-drop" for="longReference"><span class="reference-plus">＋</span><strong>وێنە زیاد بکە</strong><span>PNG یان JPG · هەر وێنەیەک تا 4MB</span><input id="longReference" type="file" multiple accept="image/png,image/jpeg"></label>
+      <div class="reference-previews" id="longReferencePreview" aria-live="polite"><span class="reference-empty">هێشتا هیچ وێنەیەک هەڵنەبژێردراوە</span></div>
+      <details class="studio-details"><summary>ناسنامەی جێگیری کارەکتەرەکان</summary><label class="field-label" for="longIdentity">وەسفی ڕوخسار و جل‌وبەرگ</label><input id="longIdentity" maxlength="2000" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></details>
+    </section>
     </fieldset><fieldset class="form-group"><legend>٣. کارەکتەر و دیالۆگ</legend>
     
     <label class="field-label" for="longLanguage">زمانی دیالۆگی ڤیدیۆی درێژ</label><select id="longLanguage"><option value="sorani">کوردی سۆرانی</option><option value="badini">کوردی بادینی — هێشتا تاقی نەکراوەتەوە</option><option value="none">بێ دیالۆگ</option></select>
@@ -179,7 +189,7 @@ select{line-height:1.6;min-height:48px}
       <button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled="">قبوڵکردنی خەرجی و دروستکردنی ڤیدیۆی درێژ</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
     <div id="longCost" class="toast" role="status" aria-live="polite"></div>
     <p class="note">نرخی Admin = خەرجیی API و خەرجیی ڕاستەقینەی پرۆسێسکردن. قازانجی فرۆشتن زیاد ناکرێت. تا کۆی خەرجی دیاری نەکرێت، دروستکردن داخراوە. دووبارەکردنەوەی داواکاریی بە پارە بە خۆکار ناکرێت.</p>
-    <video id="longVideo" controls="" playsinline="" hidden="" style="width:100%;max-height:500px"></video><a class="chip" id="longDownload" download="KurdAI-video.mp4" hidden="">داگرتنی ڤیدیۆی درێژ</a>
+    <a class="chip" id="longDownload" download="KurdAI-video.mp4" hidden="">داگرتنی ڤیدیۆی درێژ</a>
   </section>
   <section class="features">
     <div class="feature"><div class="ico">🗣️</div><h3>سۆرانی و بادینی</h3><p>داواکردنی دیالۆگی کوردی لەگەڵ ڤیدیۆ. کوالێتی دەنگ و زمان پێویستی بە پشکنین هەیە.</p></div>
