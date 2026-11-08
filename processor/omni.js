@@ -26,9 +26,15 @@ export function omniRequest(input, previousInteractionId) {
   const dialogue = String(input.dialogueText || '').trim();
   if (dialogue.length > 5000 || (input.language === 'none' && dialogue)) throw new Error('Invalid dialogue input.');
   const language = input.language === 'sorani'
-    ? 'Speak only Sorani Kurdish (Central Kurdish), with natural Sorani pronunciation and expressions. Do not switch to Badini, Kurmanji, Arabic or English.'
+    ? [
+        'PRIMARY LANGUAGE: Sorani Kurdish (Central Kurdish), code ckb. Sorani is the required first-priority Kurdish variety.',
+        'Speak fluent, natural, conversational Sorani with correct Sorani grammar, word order, idioms, vocabulary, pronunciation, stress and intonation.',
+        'Never substitute Badini, Kurmanji, or generic Kurdish. Do not switch to Arabic, Persian or English. Prefer natural Sorani words over Arabic/Persian loanwords where a common Sorani word exists.',
+        'Read the supplied Sorani dialogue exactly as written. Preserve all words, names, order and meaning. Do not translate, paraphrase, shorten, expand, improvise or add filler.',
+        'Keep each character voice consistent across segments and extensions. No English speech.'
+      ].join(' ')
     : input.language === 'badini'
-      ? 'Speak only Badini Kurdish, with natural Badini pronunciation and expressions. Do not switch to Sorani, Arabic or English.'
+      ? 'Speak only Badini Kurdish, with natural Badini pronunciation and expressions. Do not switch to Sorani, Kurmanji, Arabic, Persian or English. Read supplied lines exactly as written.'
       : 'No spoken dialogue.';
   const text = [previousInteractionId
     ? 'Extend the previously generated video from its exact final frame. Output only the new continuation. Preserve the same camera motion, setting, faces, clothes, proportions and character voices. No cut, reset, black frame or recap.'
