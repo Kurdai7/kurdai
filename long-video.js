@@ -1,4 +1,4 @@
-import {canUseVideoWorkflow,isVideoAdmin} from './video-access.js';
+import {isVideoAdmin} from './video-access.js';
 import {NATIVE_CANDIDATE_MODELS,validateNativeCandidate,quoteNativeCandidate} from './native-candidate-cost.js';
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
 import { audioPreview } from './dialogue.js';
@@ -73,7 +73,7 @@ export async function handleLong(request, env, user) {
   const json = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'private, no-store' } });
   try {
     if (!user) return json({ error: 'Please log in.' }, 401);
-    if (!canUseVideoWorkflow(env,user))
+    if (!isVideoAdmin(env,user))
       return json({ error: 'Video generation is not available for this account.' }, 403);
     const url = new URL(request.url);
     const missingConfiguration = ['LONG_VIDEO_SERVICE_URL','LONG_VIDEO_SERVICE_SECRET'].filter(k => !env[k]);
