@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ckb" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#061a13"><title>KurdAI — ستۆدیۆی ئەدمین</title>
+<style>
+:root{color-scheme:dark;--bg:#04140f;--panel:#0b241a;--line:#28543d;--green:#00dc78;--gold:#e8c75c;--muted:#a7b9ad}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#174832,#04140f 55%);color:#f2fff6;font-family:system-ui,"Segoe UI",sans-serif}header{display:flex;align-items:center;justify-content:space-between;padding:18px max(16px,calc((100% - 1120px)/2));border-bottom:1px solid var(--line);background:#061a13}a{color:#a8f3c9;text-decoration:none}button{border:1px solid #467b5b;border-radius:12px;background:#123725;color:#fff;padding:10px 14px;font:inherit;cursor:pointer;min-height:42px}.wrap{max-width:1120px;margin:auto;padding:24px 16px 60px}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.head h1{margin:0;font-size:clamp(25px,5vw,38px)}.muted{color:var(--muted);line-height:1.8}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:22px 0}.card,.section{background:linear-gradient(145deg,#0d2a1e,#071a13);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}.metric{font-size:clamp(26px,4vw,36px);font-weight:850;color:var(--green);margin-top:8px;direction:ltr;text-align:right}.section{margin-top:16px}.section h2{margin:0 0 12px;font-size:20px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:560px}th,td{text-align:start;padding:12px;border-bottom:1px solid #244332;font-size:14px}th{color:#a7f0c2}.pill{display:inline-block;border:1px solid #477a59;border-radius:999px;padding:3px 9px;font-size:12px}.danger{color:#ffd58b}.status{padding:12px;border-radius:12px;background:#172b1f;color:#f1e4b7}.error{color:#ffb6a9}.actions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:18px 12px 40px}.card,.section{padding:14px}}@media(max-width:360px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<header><a href="/" style="font-weight:900;font-size:24px;color:#fff">🎬 Kurd<span style="color:#00dc78">AI</span></a><div class="actions"><button id="language">KU / EN</button><a href="/">ماڵەوە ←</a></div></header>
+<main class="wrap"><div class="head"><div><p style="color:#72e6a6;font-weight:800;letter-spacing:2px;margin:0 0 6px">KURDAI CONTROL CENTER</p><h1 id="title">ستۆدیۆی ئەدمین</h1><p class="muted" id="intro">چاودێری هەژمارەکان، پڕۆژەکان، کرێدیت و پارەدان.</p></div><button id="refresh">نوێکردنەوە</button></div>
+<div id="message" class="status" role="status">پشکنینی دەستگەیشتن...</div>
+<div id="dashboard" hidden>
+<div class="grid">
+<div class="card"><div id="usersLabel">کۆی هەژمارەکان</div><div class="metric" id="users">—</div></div>
+<div class="card"><div id="verifiedLabel">هەژماری پشتڕاستکراو</div><div class="metric" id="verified">—</div></div>
+<div class="card"><div id="jobsLabel">داواکاریی ڤیدیۆ</div><div class="metric" id="jobs">—</div></div>
+<div class="card"><div id="creditsLabel">کرێدیتی تۆمارکراو</div><div class="metric" id="credits">—</div></div>
+</div>
+<div class="grid">
+<div class="card"><div id="readyLabel">ڤیدیۆی ئامادە</div><div class="metric" id="ready">—</div></div>
+<div class="card"><div id="failedLabel">ڤیدیۆی سەرنەکەوتوو</div><div class="metric" id="failed">—</div></div>
+<div class="card"><div id="ordersLabel">داواکاریی پارەدان</div><div class="metric" id="orders">—</div></div>
+<div class="card"><div id="revenueLabel">پارەی وەرگیراو (EUR)</div><div class="metric" id="revenue">—</div></div>
+</div>
+<section class="section"><h2 id="settingsTitle">دۆخی خزمەتگوزارییەکان</h2><p id="controls" class="muted"></p><p class="danger" id="safeNote">دروستکردنی ڤیدیۆ و پارەدان لەم داشبۆردەوە ناگۆڕدرێن؛ ئەم پەڕەیە تەنها چاودێرییە.</p></section>
+<section class="section"><h2 id="usersTitle">دوایین هەژمارەکان</h2><div class="table-wrap"><table><thead><tr><th id="emailHead">ئیمەیڵ</th><th id="verifiedHead">پشتڕاستکراو</th><th id="dateHead">بەروار</th></tr></thead><tbody id="usersRows"></tbody></table></div></section>
+<section class="section"><h2 id="videoTitle">دوایین داواکارییەکانی ڤیدیۆ</h2><div class="table-wrap"><table><thead><tr><th id="userHead">بەکارهێنەر</th><th id="modelHead">مۆدێل</th><th id="durationHead">ماوە</th><th id="statusHead">دۆخ</th><th id="jobDateHead">بەروار</th></tr></thead><tbody id="videoRows"></tbody></table></div></section>
+</div></main><script type="module" src="/admin.js"></script></body></html>
