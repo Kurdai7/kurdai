@@ -87,11 +87,11 @@ test('polling stores result, streams privately and prevents another user accessi
     return Response.json({ done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: videoURI } }] } } });
   });
   const created = await (await handleVideo(post(fresh()), config, owner)).json();
-  assert.equal((await handleVideo(get(`/api/video-status?job=${created.id}`), config, other)).status, 404);
+  assert.equal((await handleVideo(get(`/api/video-status?job=${created.id}`), config, other)).status, 403);
   const ready = await (await handleVideo(get(`/api/video-status?job=${created.id}`), config, owner)).json();
   assert.equal(ready.ready, true); assert.equal(ready.canExtend, true); assert.ok(!JSON.stringify(ready).includes(videoURI));
   const file = await handleVideo(get(ready.videoUrl), config, owner); assert.equal(await file.text(), 'mp4-fixture'); assert.equal(file.headers.get('Cache-Control'), 'private, no-store');
-  assert.equal((await handleVideo(get(ready.videoUrl), config, other)).status, 404);
+  assert.equal((await handleVideo(get(ready.videoUrl), config, other)).status, 403);
   assert.equal(calls, 3);
 });
 
