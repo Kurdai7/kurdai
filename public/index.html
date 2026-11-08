@@ -50,7 +50,17 @@ select{line-height:1.6;min-height:48px}
   <button type="button" id="languageToggle">🌐 KU / EN</button>
 </div>
 </header>
-         <main>
+<aside class="dashboard-sidebar" aria-label="KurdAI dashboard navigation">
+  <div class="sidebar-user"><div class="user-avatar">DB</div><div><strong>Darin Barznji</strong><small>ئەکاونتی KurdAI</small></div></div>
+  <nav class="sidebar-links">
+    <a href="#home" class="side-link active"><span>⌂</span> ماڵەوە</a><a href="#studio" class="side-link"><span>▣</span> ستۆدیۆ</a>
+    <a href="/image.html" class="side-link"><span>▧</span> وێنە دروستکردن</a><a href="#longPanel" class="side-link"><span>▱</span> ڤیدیۆی درێژکردن</a>
+    <a href="#recentProjects" class="side-link"><span>▤</span> پڕۆژەکانم</a><a href="#recentProjects" class="side-link"><span>☆</span> پەسەندکراوەکان</a>
+    <a href="#billingPanel" class="side-link"><span>◉</span> بەکارهێنان / کرێدیت</a><a href="#account" class="side-link"><span>⚙</span> ڕێکخستنەکان</a>
+    <a href="#account" class="side-link"><span>?</span> یارمەتی</a><a href="#account" class="side-link"><span>⇥</span> دەرچوون</a>
+  </nav><div class="sidebar-landscape"><span>Kurdistan</span></div>
+</aside>
+         <main id="home">
   <section class="hero">
     <div class="eyebrow"><span class="sun">☀</span> KurdAI Public Beta</div>
     <h1>بیرۆکەکەت بکە بە <em>ڤیدیۆ</em></h1>
@@ -62,6 +72,12 @@ select{line-height:1.6;min-height:48px}
     </div>
   </section>
 
+  <section class="dashboard-shortcuts" aria-label="KurdAI tools">
+    <a class="shortcut shortcut-image" href="/image.html"><span>▧</span><strong>وێنە دروستکردن</strong></a>
+    <a class="shortcut shortcut-video" href="#studio"><span>▣</span><strong>دروستکردنی ڤیدیۆ</strong></a>
+    <a class="shortcut shortcut-extend" href="#longPanel"><span>▤</span><strong>ڤیدیۆ درێژکردن</strong></a>
+    <a class="shortcut shortcut-projects" href="#recentProjects"><span>▱</span><strong>پڕۆژەکانم</strong></a>
+  </section>
   <section id="account" class="panel account-panel" aria-labelledby="accountTitle">
     <h2 id="accountTitle">ئەکاونتی KurdAI</h2>
     <p class="sub">هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.</p>
@@ -195,6 +211,7 @@ select{line-height:1.6;min-height:48px}
     <p class="note">نرخی Admin = خەرجیی API و خەرجیی ڕاستەقینەی پرۆسێسکردن. قازانجی فرۆشتن زیاد ناکرێت. تا کۆی خەرجی دیاری نەکرێت، دروستکردن داخراوە. دووبارەکردنەوەی داواکاریی بە پارە بە خۆکار ناکرێت.</p>
     <a class="chip" id="longDownload" download="KurdAI-video.mp4" hidden="">داگرتنی ڤیدیۆی درێژ</a>
   </section>
+  <section id="recentProjects" class="recent-projects panel"><div class="recent-heading"><div><span class="section-kicker">YOUR WORKSPACE</span><h2>پڕۆژە تازەکان</h2></div><a href="#preview">بینینی داواکارییەکان ←</a></div><div class="recent-empty"><span class="recent-empty-icon">▣</span><strong>پڕۆژەکانت لێرە دەردەکەون</strong><p>کاتێک ڤیدیۆیەک دروست بکەیت، لە بەشی پێشبینین و داواکارییەکانی پێشوو دەیبینیت.</p><a class="chip" href="#preview">چوون بۆ پێشبینین</a></div></section>
   <section class="features">
     <div class="feature"><div class="ico">🗣️</div><h3>سۆرانی و بادینی</h3><p>داواکردنی دیالۆگی کوردی لەگەڵ ڤیدیۆ. کوالێتی دەنگ و زمان پێویستی بە پشکنین هەیە.</p></div>
     <div class="feature"><div class="ico">🎬</div><h3>Extension — لە تاقیکردنەوەدایە</h3><p>بەردەوامکردنی ڤیدیۆ هێشتا بە API ـی ڕاستەقینە پشتڕاست نەکراوەتەوە و بۆ خەڵک چالاک نییە.</p></div>
