@@ -6,6 +6,7 @@ import { handleLong } from './long-video.js';
 import { authLimit, authBody } from './auth-guard.js';
 import { handleChat } from './chat.js';
 import { handleImage } from './image.js';
+import { isVideoAdmin } from './video-access.js';
 
 /**
  * KurdAI API for Cloudflare Workers + D1.
@@ -200,6 +201,35 @@ export default {
           publicVideoEnabled:false,
           videoConfigured: !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled
         }, databaseReady && env.ASSETS ? 200 : 503);
+      }
+      if (url.pathname === '/api/admin/overview' && request.method === 'GET') {
+        if (!env.DB) return json({error:'Database unavailable.'},503);
+        const admin = await currentUser(request, env);
+        if (!isVideoAdmin(env, admin)) return json({error:'Admin access required.'},403);
+        const [users, verified, credits, recentUsers] = await Promise.all([
+          env.DB.prepare('SELECT COUNT(*) AS total FROM users').first(),
+          env.DB.prepare('SELECT COUNT(*) AS total FROM users WHERE verified=1').first(),
+          env.DB.prepare('SELECT COALESCE(SUM(amount),0) AS total FROM credit_ledger').first(),
+          env.DB.prepare('SELECT email,verified,created_at AS createdAt FROM users ORDER BY created_at DESC LIMIT 10').all()
+        ]);
+        let video = {total:0,ready:0,failed:0,recent:[]};
+        try {
+          const [counts,recent] = await Promise.all([
+            env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status='ready' THEN 1 ELSE 0 END) AS ready, SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) AS failed FROM video_jobs").first(),
+            env.DB.prepare("SELECT j.status,j.model,j.duration,j.created_at AS createdAt,u.email FROM video_jobs j JOIN users u ON u.id=j.user_id ORDER BY j.created_at DESC LIMIT 10").all()
+          ]);
+          video = {total:counts?.total||0,ready:counts?.ready||0,failed:counts?.failed||0,recent:recent.results||[]};
+        } catch {}
+        let billing = {orders:0,paid:0,revenueCents:0};
+        try {
+          const row=await env.DB.prepare("SELECT COUNT(*) AS orders,SUM(CASE WHEN status='paid' THEN 1 ELSE 0 END) AS paid,SUM(CASE WHEN status='paid' THEN amount_cents ELSE 0 END) AS revenueCents FROM billing_orders").first();
+          billing={orders:row?.orders||0,paid:row?.paid||0,revenueCents:row?.revenueCents||0};
+        } catch {}
+        return json({ok:true,generatedAt:nowIso(),users:{total:users?.total||0,verified:verified?.total||0},creditsIssued:credits?.total||0,
+          video,billing, recentUsers:recentUsers.results||[],
+          controls:{videoGenerationEnabled:env.VIDEO_GENERATION_ENABLED==='true',publicVideoEnabled:env.PUBLIC_VIDEO_ENABLED==='true',
+            stripeMode:env.STRIPE_MODE||'not-configured',checkoutEnabled:env.STRIPE_CHECKOUT_ENABLED==='true',
+            billableRequestsEnabled:env.BILLABLE_REQUESTS_ENABLED==='true',apiMaxJobUSD:env.API_MAX_JOB_USD||'0',apiMaxDayUSD:env.API_MAX_DAY_USD||'0'}});
       }
       if (url.pathname.startsWith('/api/image')) {
         const user = env.DB ? await currentUser(request, env) : null;
