@@ -9,7 +9,7 @@ test('public workflow requires verified users and all live credit gates; owner a
  assert.equal(canUseVideoWorkflow({VIDEO_TEST_EMAIL:'owner@example.com'},{verified:true,email:' Owner@example.com '}),true);
 });
 
-test('video administration is granted only to the verified configured admin email',()=>{
+test('video administration is granted only to the verified dedicated admin email',()=>{
  const env={VIDEO_ADMIN_EMAIL:'admin@example.com',VIDEO_TEST_EMAIL:'owner@example.com'};
  assert.equal(isVideoAdmin(env,{verified:true,email:' ADMIN@example.com '}),true);
  assert.equal(isVideoAdmin(env,{verified:true,email:'owner@example.com'}),false);
@@ -18,5 +18,5 @@ test('video administration is granted only to the verified configured admin emai
  assert.equal(canUseVideoWorkflow(env,{verified:true,email:'admin@example.com'}),true);
  assert.equal(isVideoAdmin(env,{verified:false,email:'admin@example.com'}),false);
  assert.equal(isVideoAdmin(env,null),false);
- assert.equal(isVideoAdmin({VIDEO_TEST_EMAIL:'owner@example.com'},{verified:true,email:'owner@example.com'}),true);
+ assert.equal(isVideoAdmin({VIDEO_TEST_EMAIL:'owner@example.com'},{verified:true,email:'owner@example.com'}),false);
 });
