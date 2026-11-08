@@ -591,3 +591,42 @@ main>.features{order:7!important}
  .project-thumbnails{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
  .project-thumb{min-height:84px!important}
 }
+
+
+/* Final dashboard reference pass */
+body{background:#020d0b!important;color:#f3fff7!important}
+header{margin-left:258px!important;width:calc(100% - 258px)!important;min-height:100px!important;background:#03130f!important;border-bottom:1px solid #1d4b36!important}
+header .brand{position:absolute!important;left:50%!important;top:12px!important;transform:translateX(-50%)!important}
+header .brand-name{font-size:34px!important;font-weight:900!important}
+header .brand-name span{color:#31f18b!important;text-shadow:0 0 16px #20e87888!important}
+.dashboard-sidebar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:258px!important;z-index:10!important;background:linear-gradient(180deg,#031711,#03110e 82%,#062319)!important;border-right:1px solid #1e4a36!important}
+.side-link{min-height:58px!important;border-radius:14px!important;font-size:15px!important}
+.side-link.active{background:linear-gradient(90deg,#087d49,#075332)!important;border:1px solid #27ed84!important;box-shadow:0 0 18px #19e87988!important}
+main{margin-left:258px!important;width:calc(100% - 258px)!important;max-width:none!important;padding:16px 18px 42px!important;display:flex!important;flex-direction:column!important;gap:14px!important}
+main>.hero{order:1!important}main>.dashboard-shortcuts{order:2!important}main>#studio{order:3!important}main>#recentProjects{order:4!important}main>#longPanel{order:5!important}main>#account{order:6!important}main>.features{order:7!important}
+.hero{min-height:258px!important;padding:24px!important;border:1px solid #2d7853!important;border-radius:22px!important;background:linear-gradient(110deg,#061910,#09271b 65%,#06160f)!important}
+.kurdai-hero-art{width:66%!important;height:100%!important;object-fit:cover!important;object-position:center 38%!important}
+.hero>*:not(.hero-showcase){width:43%!important;max-width:43%!important}
+.hero h1{font-size:clamp(24px,3vw,38px)!important}.hero h1 em{color:#2df18a!important}
+.hero-cta{background:linear-gradient(90deg,#20ef7a,#00bb5a)!important;color:#03150b!important;border-radius:32px!important;box-shadow:0 0 24px #16e87977!important}
+.dashboard-shortcuts{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin:0!important}
+.shortcut{min-height:112px!important;border-radius:18px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:8px!important}
+.shortcut span{font-size:34px!important}.shortcut strong{font-size:15px!important}
+.shortcut-image{color:#e783ff!important;background:linear-gradient(145deg,#30113b,#120d21)!important;border-color:#9c46b6!important}
+.shortcut-video{color:#48cfff!important;background:linear-gradient(145deg,#062d43,#071a2b)!important;border-color:#167fa9!important}
+.shortcut-extend{color:#ffdc45!important;background:linear-gradient(145deg,#332c0c,#171708)!important;border-color:#9d8421!important}
+.shortcut-projects{color:#36e88a!important;background:linear-gradient(145deg,#063c29,#071c15)!important;border-color:#168e55!important}
+.workspace{display:grid!important;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr)!important;gap:14px!important;margin:0!important;direction:ltr!important;align-items:stretch!important}
+.workspace>.preview{order:1!important;direction:rtl!important;min-width:0!important;position:relative!important;border:1px solid #2b7956!important;border-radius:20px!important;background:linear-gradient(145deg,#08271c,#04140f)!important}
+.workspace>.panel:first-child{order:2!important;direction:rtl!important;min-width:0!important;border:1px solid #2b7956!important;border-radius:20px!important;background:linear-gradient(145deg,#08251b,#04140f)!important}
+.workspace>.preview .preview-screen{min-height:320px!important;border-radius:16px!important;border:1px solid #347657!important;background:linear-gradient(160deg,#0a3324,#061711)!important}
+.workspace .form-group{border-color:#24583f!important;background:#061a14!important;border-radius:14px!important}
+.workspace textarea,.workspace select,.workspace input{background:#071b15!important;border:1px solid #315b46!important;border-radius:12px!important;color:#f1fff6!important}
+.workspace .generate{background:linear-gradient(90deg,#20ef7a,#00bd5c)!important;color:#03150b!important;border-radius:15px!important;box-shadow:0 0 20px #16e87955!important}
+.recent-projects{margin:0!important;border:1px solid #245b40!important;border-radius:20px!important;background:linear-gradient(145deg,#071c15,#03110d)!important}
+.project-thumbnails{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+.project-thumb{min-height:150px!important;border-radius:16px!important;overflow:hidden!important;border:1px solid #3a7954!important}
+.project-scene{min-height:130px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important}
+.project-scene .scene-person{font-size:54px!important}
+@media(max-width:900px){header{margin-left:184px!important;width:calc(100% - 184px)!important;min-height:78px!important;padding:8px 12px!important}.dashboard-sidebar{width:184px!important}main{margin-left:184px!important;width:calc(100% - 184px)!important;padding:10px!important}.dashboard-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))!important}.shortcut{min-height:92px!important}.workspace{grid-template-columns:minmax(0,1fr)!important}.workspace>.preview{order:1!important}.workspace>.panel:first-child{order:2!important}.hero{min-height:230px!important}.hero>*:not(.hero-showcase){width:48%!important;max-width:48%!important}}
+@media(max-width:600px){header{margin-left:0!important;width:100%!important;min-height:68px!important;padding:8px!important}header .brand{position:static!important;transform:none!important;margin:auto!important}header .top-profile{display:none!important}.dashboard-sidebar{display:none!important}main{margin-left:0!important;width:100%!important;padding:10px!important}.hero{min-height:220px!important;padding:12px!important}.kurdai-hero-art{width:58%!important;object-position:38% center!important}.hero>*:not(.hero-showcase){width:53%!important;max-width:53%!important}.hero h1{font-size:17px!important}.hero>p:not(.toast){font-size:9px!important}.hero .eyebrow{font-size:8px!important;padding:5px 8px!important}.hero-cta{font-size:9px!important;padding:7px 12px!important}.hero #launchStatus{font-size:7px!important;padding:5px 7px!important}.dashboard-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.shortcut{min-height:84px!important}.workspace{grid-template-columns:minmax(0,1fr)!important}.workspace>.preview .preview-screen{min-height:170px!important}.project-thumbnails{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}.project-thumb{min-height:84px!important}.project-scene .scene-person{font-size:30px!important}}
