@@ -1,4 +1,4 @@
-import {isVideoAdmin} from './video-access.js';
+import {canUseVideoWorkflow,isVideoAdmin} from './video-access.js';
 // Official API contracts: https://ai.google.dev/gemini-api/docs/veo
 // No provider keys, generated URIs, or uploaded image data are returned to clients.
 import { spendingPolicy, budgetAllows } from './spending.js';
@@ -190,7 +190,7 @@ export async function handleVideo(request, env, user) {
     }
     if (!user) return json({ error: 'Please log in.' }, 401);
     if (!user.verified) return json({ error: 'Verify your email first.' }, 403);
-    if (!isVideoAdmin(env,user)) return json({ error: 'This video studio is restricted to administrators.' }, 403);
+    if (!canUseVideoWorkflow(env,user)) return json({ error: 'Video generation is not available for this account.' }, 403);
     if (!env.DB) return json({ error: 'Database is not configured.' }, 503);
     await ensureSchema(env.DB);
     if (url.pathname === '/api/video-jobs' && request.method === 'GET') {
