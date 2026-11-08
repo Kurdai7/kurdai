@@ -28,7 +28,7 @@ function d1() {
 const owner = { id: 'owner', email: ' OWNER@example.com ', verified: 1 };
 const other = { id: 'other', email: 'other@example.com', verified: 1 };
 const fresh = overrides => ({ requestId: crypto.randomUUID(), prompt: 'کارتۆنێکی کوردی، سڵاو.', duration: 8, ...overrides });
-function env() { return { DB: d1(), BILLABLE_REQUESTS_ENABLED:'true', API_MAX_JOB_USD:'100', API_MAX_DAY_USD:'1000', GEMINI_API_KEY: 'test-secret', VIDEO_GENERATION_ENABLED: 'true', VIDEO_TEST_EMAIL: 'owner@example.com' }; }
+function env() { return { DB: d1(), BILLABLE_REQUESTS_ENABLED:'true', API_MAX_JOB_USD:'100', API_MAX_DAY_USD:'1000', GEMINI_API_KEY: 'test-secret', VIDEO_GENERATION_ENABLED: 'true', VIDEO_TEST_EMAIL: 'owner@example.com', VIDEO_ADMIN_EMAIL: 'owner@example.com' }; }
 function post(body) { return new Request('https://kurdai.net/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
 const get = path => new Request(`https://kurdai.net${path}`);
 const operation = 'models/veo-3.1-fast-generate-preview/operations/test123';
