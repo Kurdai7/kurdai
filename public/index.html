@@ -4,6 +4,9 @@
 <meta name="theme-color" content="#103b2d">
 <title>KurdAI — دروستکەری ڤیدیۆی کوردی</title>
 <style>
+/* Public landing page must not expose the private native Veo studio. The admin page intentionally keeps it visible after server-side admin verification. */
+#studio,.preview{display:none!important;}
+
 :root{--green:#123d2e;--green2:#1b6547;--red:#d62929;--gold:#ffd52a;--cream:#f7f8f3;--ink:#17251e;--muted:#68776e;--line:#dfe7df}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--cream);color:var(--ink)}
 header{background:linear-gradient(135deg,#0d3024,#1b6547);color:white;padding:20px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:4px solid var(--gold)}
