@@ -10,6 +10,7 @@ let busy = false;
 let epoch = 0;
 let previewURLs = [];
 let generationAllowed=false;
+let adminAllowed=false;
 const token = () => localStorage.getItem(tokenKey);
 const ku = (sorani, english) => document.documentElement.lang === 'en' ? english : sorani;
 function updateDialogueSupport() {
@@ -119,7 +120,8 @@ async function refreshJobs() {
 }
 async function refreshAccount() {
   document.dispatchEvent(new Event('kurdai-account-change'));
-  generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
+  generationAllowed=false;adminAllowed=false;setBusy(busy);$('longPanel').hidden=true;
+  $('adminStudioNav').hidden=true;$('adminStudioShortcut').hidden=true;
   $('logoutBtn').hidden = !token();
   if (!token()) { $('creditStatus').textContent = ku('تکایە بچۆ ژوورەوە.', 'Please log in.'); return; }
   const expected = token();
@@ -130,14 +132,16 @@ async function refreshAccount() {
     const capability = await api('/api/video-capabilities');
     if (token() !== expected) return;
     generationAllowed=capability.configured===true && capability.accountAllowed===true && capability.accountVerified!==false;
-    $('longPanel').hidden=capability.isAdmin!==true;
+    adminAllowed=capability.isAdmin===true;
+    $('longPanel').hidden=!adminAllowed;$('adminStudioNav').hidden=!adminAllowed;$('adminStudioShortcut').hidden=!adminAllowed;
     setBusy(busy);
     if (!capability.configured && !capability.longWorkflowAllowed) message('toast', ku('بەشی ڤیدیۆ هێشتا ڕێکنەخراوە. هیچ داواکارییەکی بە پارە نەنێردراوە.', 'Video generation is not configured. No paid request was sent.') + (capability.missingConfiguration?.length ? ` (${capability.missingConfiguration.join(', ')})` : ''), true);
     else if (!capability.accountVerified && capability.accountVerified !== undefined) message('toast', 'Verify your email first.', true);
     else if (!capability.accountAllowed && !capability.longWorkflowAllowed) message('toast', 'Generation is currently available only to the configured test account.', true);
     await refreshJobs();
   } catch (error) {
-    generationAllowed=false;setBusy(busy);$('longPanel').hidden=true;
+    generationAllowed=false;adminAllowed=false;setBusy(busy);$('longPanel').hidden=true;
+    $('adminStudioNav').hidden=true;$('adminStudioShortcut').hidden=true;
     if(error.status===401){localStorage.removeItem(tokenKey);$('logoutBtn').hidden=true;}
     message('accountMessage', error.message, true);
   }
@@ -170,7 +174,7 @@ document.querySelectorAll('[data-style]').forEach(button => button.addEventListe
 }));
 function updateControls() {
   if ($('model').value==='p-video-2') {
-    $('longPanel').hidden=false;
+    $('longPanel').hidden=!adminAllowed;
     if ($('longModel').value!=='p-video-2') { $('longModel').value='p-video-2'; $('longModel').dispatchEvent(new Event('change')); }
     $('generate').disabled=true; $('nativeQuote').disabled=true;
     $('dialogueSupport').textContent=ku('Pruna هەڵبژێردرا. ماوە، دیالۆگ و نرخ لە بەشی «دروستکردنی ڤیدیۆ بە دەنگ» لە خوارەوە ڕێکبخە. دروستکردن پێویستی بە چالاکبوونی ئەکاونت و ڕێکخستنی نرخ هەیە.', 'Pruna selected. Set duration, dialogue and quote in the native video section below. Generation requires account access and configured pricing.');
