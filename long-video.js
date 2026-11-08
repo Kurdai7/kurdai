@@ -1,4 +1,4 @@
-import {canUseVideoWorkflow} from './video-access.js';
+import {canUseVideoWorkflow,isVideoAdmin} from './video-access.js';
 import {NATIVE_CANDIDATE_MODELS,validateNativeCandidate,quoteNativeCandidate} from './native-candidate-cost.js';
 // Owner costs only. No credits, retail margin, checkout fees or assumed tax.
 import { audioPreview } from './dialogue.js';
