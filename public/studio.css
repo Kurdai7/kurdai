@@ -121,3 +121,115 @@ input,select,textarea{border-color:#304c3a;background:#0a1710}input:focus,textar
 footer{background:#07100c;border-top-color:#294137}
 @media(max-width:900px){header{padding:18px 22px}.hero{padding:26px 24px;min-height:210px}.hero::before{inset-inline-start:28%}}
 @media(max-width:760px){header{padding:16px 15px;gap:10px}.brand-name{font-size:27px}.brand-name::before{font-size:.68em}.studio-nav{order:4;flex-basis:100%;margin:0;overflow-x:auto;justify-content:flex-start}.chat-nav{font-size:10px;padding:7px 9px}.language-switcher{margin-inline-start:auto}main{padding:18px 12px 38px}.hero{min-height:215px;padding:24px 18px;border-radius:18px}.hero::before{inset-inline-start:5%;opacity:.35}.hero::after{inset-inline-end:15px;top:8px;font-size:55px;letter-spacing:-5px}.hero h1{font-size:29px;max-width:90%}.hero>p:not(.toast){font-size:12px;max-width:90%}.workspace{margin-top:16px}.preview-screen{min-height:215px}.account-panel{border-radius:16px}}
+
+
+/* KurdAI v2 — complete public studio layout polish */
+:root{
+  --green:#b5f3c9;--green2:#45e98b;--gold:#f3d36b;
+  --cream:#07110c;--ink:#f3faf5;--muted:#a8bbae;--line:#294535;
+  --surface:#102017;--field:#09150e
+}
+html{background:#07110c}
+body{min-height:100vh;background:
+ radial-gradient(ellipse at 50% -15%,#28634155,transparent 45%),
+ radial-gradient(ellipse at 100% 48%,#1c503329,transparent 35%),#07110c}
+header{
+ position:sticky;top:0;max-width:none;padding:13px clamp(16px,4vw,58px);
+ background:#08140fee;border-bottom:1px solid #31513c;backdrop-filter:blur(18px);
+ box-shadow:0 8px 30px #0003
+}
+.brand{gap:12px}.brand-name{font-size:30px}.flag{width:48px;height:32px}
+.studio-nav{gap:8px}.studio-nav a{padding:9px 13px;border-radius:10px}
+.chat-nav{min-height:42px;padding:9px 13px;font-weight:700}
+main{max-width:1320px;padding:34px clamp(14px,3vw,42px) 70px}
+.hero{
+ min-height:270px;padding:clamp(24px,4vw,48px);
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ text-align:start;border:1px solid #467653;border-radius:26px;
+ background:
+ radial-gradient(ellipse at 80% 100%,#2c7848a8,transparent 46%),
+ linear-gradient(110deg,#0a1910 0%,#102b1b 58%,#153b25 100%);
+ box-shadow:0 24px 70px #0006;position:relative
+}
+.hero:before{
+ content:"";position:absolute;inset:0 0 0 38%;z-index:-1;opacity:.65;
+ background:
+ linear-gradient(145deg,transparent 45%,#0a2115 46%),
+ linear-gradient(35deg,transparent 44%,#2c6740 45% 59%,transparent 60%),
+ linear-gradient(145deg,transparent 48%,#1d4b2e 49% 70%,transparent 71%);
+ clip-path:polygon(0 100%,14% 64%,27% 78%,47% 22%,62% 65%,78% 32%,100% 73%,100% 100%)
+}
+.hero .eyebrow{background:#8ce8ad14;border-color:#78d99a55;color:#b9f4cb}
+.hero h1{font-size:clamp(34px,5vw,58px);line-height:1.35;max-width:760px;margin:18px 0 8px}
+.hero>p:not(.toast){font-size:15px;max-width:690px;color:#c5d9ca}
+#launchStatus{margin-top:20px;border-radius:14px;padding:13px 16px}
+.account-panel{
+ margin:22px 0;background:linear-gradient(135deg,#14291d,#0e1c14);
+ border:1px solid #345b40;border-radius:20px;padding:24px 26px;
+ box-shadow:0 16px 44px #0004
+}
+.account-panel h2{font-size:22px}
+.account-panel .sub{max-width:700px}
+.account-panel input{min-height:50px}
+.account-actions .chip{min-height:44px}
+.workspace{margin-top:22px;gap:22px;align-items:stretch}
+.workspace>.panel:first-child,.preview{
+ border-radius:22px;border:1px solid #355640;
+ background:linear-gradient(145deg,#14271c,#0d1912);
+ box-shadow:0 20px 55px #0005
+}
+.workspace>.panel:first-child{padding:clamp(18px,2.5vw,30px)}
+.workspace>.panel:first-child>h2,.preview>h2{font-size:23px}
+.preview{padding:24px}
+.preview-screen{border-radius:18px;min-height:320px;border-color:#52865f}
+.form-group{border-color:#2d4936}
+.form-group legend{font-size:13px;color:#a9edbd}
+.field-label{font-size:13px;color:#d9e9dd}
+input,select,textarea{border-radius:12px;min-height:48px}
+textarea{min-height:145px}
+.chip{border-radius:11px;min-height:44px}
+.generate,#longStart{min-height:56px;border-radius:13px;font-size:16px}
+.features{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:28px}
+.feature{border-radius:18px;padding:22px;background:linear-gradient(145deg,#14271c,#0d1912);border-color:#2c4b36}
+.feature .ico{font-size:25px}
+.feature h3{font-size:15px}
+.feature p{font-size:12px;line-height:1.9}
+#longPanel{border-radius:22px}
+footer{margin-top:24px;padding:30px 20px}
+@media(max-width:900px){
+ header{position:relative;padding:14px 18px}
+ .studio-nav{order:5;flex:1 0 100%;justify-content:center}
+ main{padding:22px 16px 50px}
+ .hero{min-height:240px}
+ .workspace{grid-template-columns:1fr}
+ .preview{position:static}
+}
+@media(max-width:760px){
+ header{gap:9px;padding:13px 12px}
+ .brand-name{font-size:26px}.flag{width:42px;height:28px}
+ .chat-nav{font-size:10px;padding:7px 8px;min-height:38px}
+ .studio-nav{order:5;overflow-x:auto;justify-content:flex-start;gap:5px}
+ .studio-nav a{font-size:11px;padding:7px 9px}
+ main{padding:16px 12px 38px}
+ .hero{min-height:245px;padding:23px 18px;border-radius:19px}
+ .hero:before{inset-inline-start:0;opacity:.34}
+ .hero:after{font-size:52px;letter-spacing:-4px;inset-inline-end:12px;top:9px}
+ .hero h1{font-size:30px;line-height:1.55;max-width:100%}
+ .hero>p:not(.toast){font-size:13px;max-width:100%}
+ #launchStatus{font-size:11px;line-height:1.9}
+ .account-panel{padding:18px;border-radius:16px;margin:16px 0}
+ .workspace{gap:14px;margin-top:14px}
+ .workspace>.panel:first-child,.preview{padding:17px;border-radius:17px}
+ .workspace>.panel:first-child>h2,.preview>h2{font-size:19px}
+ .preview-screen{min-height:210px;aspect-ratio:16/9}
+ .features{grid-template-columns:1fr;gap:11px;margin-top:17px}
+ .feature{padding:16px}
+ .feature .ico{font-size:21px}
+ .feature h3{font-size:14px}
+ .feature p{font-size:11px}
+}
+@media(max-width:390px){
+ .brand-name{font-size:23px}.chat-nav{font-size:9px}
+ .hero h1{font-size:27px}
+ .account-actions .chip{flex:1 1 100%}
+}
