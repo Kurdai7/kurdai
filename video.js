@@ -198,6 +198,8 @@ export async function handleVideo(request, env, user) {
       return json({ jobs: rows.results.map(publicJob) });
     }
     if (['/api/generate', '/api/video-quote'].includes(url.pathname) && request.method === 'POST') {
+      // The private Veo studio is administrator-only. Customer credits do not grant studio access.
+      if (!isVideoAdmin(env,user)) return json({ error: 'The private video studio is for administrators only.' }, 403);
       if (env.VIDEO_GENERATION_ENABLED !== 'true' || !env.GEMINI_API_KEY)
         return json({ error: 'Video generation is not configured or enabled.' }, 503);
       // Admin-only generation. Public customer credit billing is not enabled in this release.
