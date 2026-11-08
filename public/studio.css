@@ -450,3 +450,69 @@ main>.features{order:7!important}
  .hero-cta{font-size:9px!important;padding:6px 10px!important;margin-top:5px!important}
  .hero #launchStatus{font-size:7px!important;padding:5px 7px!important;margin-top:8px!important}
 }
+
+/* Reference-match correction: hero becomes one cinematic banner, not stacked text + strip */
+.hero{
+  position:relative!important;isolation:isolate!important;display:flex!important;
+  flex-direction:column!important;align-items:flex-end!important;justify-content:center!important;
+  min-height:300px!important;padding:22px 24px!important;gap:8px!important;overflow:hidden!important;
+  border:1px solid #2d8058!important;border-radius:22px!important;
+  background:#061710!important;text-align:right!important
+}
+.hero-showcase{position:absolute!important;inset:0!important;z-index:-1!important;
+  width:100%!important;height:100%!important;min-height:0!important;padding:0!important;
+  border:0!important;overflow:hidden!important}
+.showcase-photo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  min-height:0!important;padding:0!important;display:block!important;
+  background:linear-gradient(90deg,#06171000 0%,#06171018 42%,#061710ee 100%)!important}
+.kurdai-hero-art{position:absolute!important;left:0!important;right:auto!important;top:0!important;
+  width:64%!important;height:100%!important;object-fit:cover!important;object-position:center 42%!important;
+  opacity:1!important}
+.hero .eyebrow,.hero h1,.hero>p:not(.toast),.hero-cta{
+  position:relative!important;z-index:2!important;width:43%!important;max-width:43%!important;
+  margin:0!important;align-self:flex-end!important;text-align:right!important
+}
+.hero .eyebrow{font-size:12px!important;padding:7px 13px!important}
+.hero h1{font-size:clamp(25px,3vw,38px)!important;line-height:1.45!important;margin-top:5px!important}
+.hero>p:not(.toast){font-size:14px!important;line-height:1.8!important;color:#d4e9dc!important}
+.hero-cta{display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:12px!important;width:auto!important;padding:11px 25px!important;border-radius:30px!important;
+  background:linear-gradient(90deg,#22ef7b,#00b95b)!important;color:#03160b!important;
+  font-weight:900!important;text-decoration:none!important;box-shadow:0 0 24px #16e87977!important}
+.hero #launchStatus{position:relative!important;z-index:3!important;width:100%!important;max-width:100%!important;
+  margin:10px 0 0!important;padding:8px 12px!important;font-size:10px!important;line-height:1.6!important;
+  background:#292515dd!important;border-color:#78652c!important;color:#f2e7bd!important}
+.workspace{direction:ltr!important;grid-template-columns:minmax(250px,.78fr) minmax(0,1.22fr)!important;
+  align-items:stretch!important;gap:14px!important}
+.workspace>.preview{direction:rtl!important;order:1!important;min-width:0!important}
+.workspace>.panel:first-child{direction:rtl!important;order:2!important;min-width:0!important}
+.workspace>.preview .preview-screen{min-height:260px!important}
+.workspace>.preview h2,.workspace>.preview .sub{text-align:right!important}
+.workspace>.panel:first-child>h2,.workspace>.panel:first-child>.sub{text-align:right!important}
+.recent-projects{margin-top:14px!important}
+@media(max-width:900px){
+ .hero{min-height:250px!important;padding:14px!important}
+ .kurdai-hero-art{width:62%!important;object-position:42% center!important}
+ .hero .eyebrow,.hero h1,.hero>p:not(.toast),.hero-cta{width:48%!important;max-width:48%!important}
+ .hero h1{font-size:21px!important}
+ .hero>p:not(.toast){font-size:10px!important}
+ .hero #launchStatus{font-size:8px!important}
+ .workspace{grid-template-columns:minmax(0,1fr)!important;direction:rtl!important}
+ .workspace>.preview{order:1!important}
+ .workspace>.panel:first-child{order:2!important}
+ .workspace>.preview .preview-screen{min-height:180px!important}
+}
+@media(max-width:600px){
+ .hero{min-height:230px!important;padding:10px!important;border-radius:15px!important}
+ .kurdai-hero-art{width:58%!important;object-position:38% center!important}
+ .showcase-photo{background:linear-gradient(90deg,#06171000 0%,#06171020 35%,#061710f2 100%)!important}
+ .hero .eyebrow,.hero h1,.hero>p:not(.toast),.hero-cta{width:52%!important;max-width:52%!important}
+ .hero .eyebrow{font-size:7px!important;padding:4px 7px!important}
+ .hero h1{font-size:15px!important;line-height:1.5!important}
+ .hero>p:not(.toast){font-size:7px!important;line-height:1.65!important}
+ .hero-cta{font-size:8px!important;padding:6px 9px!important;gap:5px!important}
+ .hero #launchStatus{font-size:6px!important;padding:5px 6px!important;margin-top:6px!important}
+ .workspace{grid-template-columns:minmax(0,1fr)!important}
+ .workspace>.preview .preview-screen{min-height:145px!important}
+ .project-thumbnails{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
