@@ -86,3 +86,38 @@ input[type=email],input[type=password]{direction:ltr;text-align:start}input[type
 #longPanel #longStart:disabled{opacity:.45}
 #longPanel #longCost{grid-column:1/-1}
 @media(max-width:760px){#longPanel{grid-template-columns:minmax(0,1fr);gap:13px;padding:14px}#longPanel>.form-group,#longPanel .reference-station{grid-column:1!important;grid-row:auto!important}#longPanel .flow-canvas{min-height:205px}.flow-canvas-empty{min-height:160px}.reference-station{padding:14px}}
+
+
+/* KurdAI premium dashboard refresh — preserves existing IDs and JS behavior. */
+:root{--green:#a7f3c0;--green2:#42e987;--gold:#f5cf54;--cream:#08130f;--ink:#f0f8f2;--muted:#a0b5a8;--line:#294137;--surface:#11221a;--field:#0b1711}
+body{background:radial-gradient(ellipse at 88% 4%,#1c593b55,transparent 32%),radial-gradient(ellipse at 6% 65%,#153d2d40,transparent 38%),#08130f}
+body::before{height:760px;background-image:radial-gradient(#b8dccb17 1px,transparent 1px);background-size:24px 24px}
+header{max-width:1360px;padding:20px 34px;border-bottom:1px solid #294137;background:linear-gradient(180deg,#0a1711e8,#0a171180);backdrop-filter:blur(16px)}
+.brand-name{font-size:32px;font-weight:900}.brand-name::before{content:"🎬";font-size:.72em;margin-inline-end:9px;color:#42e987}.brand-name span{color:#42e987;text-shadow:0 0 24px #42e98755}
+.flag{width:50px;height:34px;box-shadow:0 0 0 1px #ffffff25,0 6px 20px #0005}
+.studio-nav a{padding:9px 13px;border:1px solid transparent;border-radius:11px;transition:all .18s}.studio-nav a:hover,.studio-nav a[aria-current]{border-color:#42e98755;background:#42e98712;color:#b5ffd0}
+.chat-nav{border-color:#355343;color:#c7e8d2;background:#102319;border-radius:12px}.chat-nav:hover{background:#173a27;border-color:#42e987}
+main{max-width:1360px;padding:30px 34px 64px}
+.hero{overflow:hidden;isolation:isolate;min-height:230px;padding:32px 36px 28px;border:1px solid #3a7251;border-radius:24px;background:linear-gradient(100deg,#0b1913 0%,#10271bdf 52%,#10271b88 100%),radial-gradient(ellipse at 76% 110%,#398b50 0,transparent 48%),linear-gradient(140deg,#142f20,#0b1711);box-shadow:0 18px 60px #0005}
+.hero::before{content:"";position:absolute;z-index:-1;inset:0 0 0 42%;opacity:.8;background:linear-gradient(145deg,transparent 35%,#0b2419aa 36%),linear-gradient(35deg,transparent 45%,#2b6843 46% 61%,transparent 62%),linear-gradient(145deg,transparent 40%,#183c29 41% 67%,transparent 68%);clip-path:polygon(0 100%,15% 55%,27% 72%,48% 20%,64% 66%,79% 34%,100% 76%,100% 100%)}
+.hero::after{content:"KURDAI";inset-inline-end:36px;top:20px;font-size:clamp(55px,8vw,112px);font-weight:950;letter-spacing:-8px;color:#d1f8dc0b;line-height:1}
+.hero h1{font-size:clamp(32px,4vw,48px);max-width:720px;text-shadow:0 2px 20px #0008}.hero>p:not(.toast){max-width:680px;color:#c1d6c7}
+#launchStatus{max-width:780px;background:#e8c64d0d;border-color:#e8c64d40;color:#e8dcae}
+.account-panel{position:relative;background:linear-gradient(115deg,#14271d,#102018);border-color:#355b43;box-shadow:0 14px 40px #0003}
+.account-panel h2{color:#eaf8ee}.account-panel .chip.active{background:#42e98720;border-color:#42e987;color:#b5ffd0}
+.workspace{gap:22px;margin-top:22px}.workspace>.panel:first-child{background:linear-gradient(150deg,#14251c,#101b15);border-color:#365541;box-shadow:0 18px 50px #0004}
+.preview{background:linear-gradient(145deg,#13271d,#0e1b14);border-color:#355a43;box-shadow:0 18px 50px #0004}
+.preview-screen{min-height:300px;border:1px solid #4d9868;background:radial-gradient(ellipse at 50% 100%,#4c9b59 0,transparent 62%),linear-gradient(145deg,#244a30,#0a1a11);box-shadow:inset 0 0 60px #0004}
+.preview-screen::before{background:linear-gradient(150deg,#ffffff08,transparent 50%),linear-gradient(0deg,#06140e88,transparent 55%)}
+.mountains{background:#0c2418;opacity:.7}.mountains.back{background:#39734b;opacity:.55}
+.play{width:66px;height:66px;border:1px solid #a4f7bfaa;background:#42e98722;color:#b9ffd0;box-shadow:0 0 32px #42e98733}
+.preview-title{font-size:26px;text-shadow:0 3px 18px #000}.preview-caption{font-size:13px}
+.form-group{border-top-color:#2c4837}.form-group legend{color:#9ef0b8}
+input,select,textarea{border-color:#304c3a;background:#0a1710}input:focus,textarea:focus,select:focus{border-color:#42e987;box-shadow:0 0 0 3px #42e98720}
+.chip{background:#14251b;border-color:#355640;color:#d8ebdd}.chip.active{background:#42e98720;border-color:#42e987;color:#baffce}
+.generate,#longStart{background:linear-gradient(110deg,#63f59a,#16c968);border-color:#79ffad;color:#062012;box-shadow:0 8px 28px #18d66a35;font-size:15px}.generate:disabled,#longStart:disabled{background:#263c2e;color:#9ab7a2;border-color:#405c49;box-shadow:none}
+.features{margin-top:26px}.feature{background:linear-gradient(145deg,#13251b,#0e1a14);border-color:#2e4a38}.feature .ico{color:#54e98e}
+#longPanel{border-color:#4a8a5e;box-shadow:0 18px 55px #0005}
+footer{background:#07100c;border-top-color:#294137}
+@media(max-width:900px){header{padding:18px 22px}.hero{padding:26px 24px;min-height:210px}.hero::before{inset-inline-start:28%}}
+@media(max-width:760px){header{padding:16px 15px;gap:10px}.brand-name{font-size:27px}.brand-name::before{font-size:.68em}.studio-nav{order:4;flex-basis:100%;margin:0;overflow-x:auto;justify-content:flex-start}.chat-nav{font-size:10px;padding:7px 9px}.language-switcher{margin-inline-start:auto}main{padding:18px 12px 38px}.hero{min-height:215px;padding:24px 18px;border-radius:18px}.hero::before{inset-inline-start:5%;opacity:.35}.hero::after{inset-inline-end:15px;top:8px;font-size:55px;letter-spacing:-5px}.hero h1{font-size:29px;max-width:90%}.hero>p:not(.toast){font-size:12px;max-width:90%}.workspace{margin-top:16px}.preview-screen{min-height:215px}.account-panel{border-radius:16px}}
