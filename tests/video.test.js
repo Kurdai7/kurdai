@@ -47,6 +47,20 @@ async function handleVideo(request, config, user) {
   }), config, user)).json();
   return rawHandleVideo(post({...body, quoteId:q.id, approved:true, approvedAPIEUR:q.apiEUR}), config, user);
 }
+test('non-admin customer accounts cannot read private Veo studio jobs or submit native quotes', async t => {
+  const config = { ...env(), VIDEO_ADMIN_EMAIL:'admin@example.com' };
+  mockFetch(t, () => { throw new Error('Must not call Google'); });
+  const cap = await (await rawHandleVideo(get('/api/video-capabilities'), config, owner)).json();
+  assert.equal(cap.accountAllowed, true);
+  assert.equal(cap.nativeStudioAllowed, false);
+  assert.equal((await rawHandleVideo(get('/api/video-jobs'), config, owner)).status, 403);
+  assert.equal((await rawHandleVideo(get('/api/video-status?job=private-job'), config, owner)).status, 403);
+  assert.equal((await rawHandleVideo(get('/api/video-file?job=private-job'), config, owner)).status, 403);
+  assert.equal((await rawHandleVideo(new Request('https://kurdai.net/api/video-quote', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(fresh())
+  }), config, owner)).status, 403);
+});
+
 test('validates aspect ratios, durations, reference limits and contradictory combinations', () => {
   const input = validateInput(fresh({ aspectRatio: '9:16', referenceImages: [png] }));
   assert.equal(input.aspectRatio, '9:16'); assert.equal(input.instance.referenceImages.length, 1);
