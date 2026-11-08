@@ -13,7 +13,8 @@ test('video administration is granted only to the verified configured admin emai
  const env={VIDEO_ADMIN_EMAIL:'admin@example.com',VIDEO_TEST_EMAIL:'owner@example.com'};
  assert.equal(isVideoAdmin(env,{verified:true,email:' ADMIN@example.com '}),true);
  assert.equal(isVideoAdmin(env,{verified:true,email:'owner@example.com'}),false);
- assert.equal(canUseVideoWorkflow(env,{verified:true,email:'owner@example.com'}),false);
+ assert.equal(canUseVideoWorkflow(env,{verified:true,email:'owner@example.com'}),true); // customer workflow only, not admin
+ assert.equal(isVideoAdmin(env,{verified:true,email:'owner@example.com'}),false);
  assert.equal(canUseVideoWorkflow(env,{verified:true,email:'admin@example.com'}),true);
  assert.equal(isVideoAdmin(env,{verified:false,email:'admin@example.com'}),false);
  assert.equal(isVideoAdmin(env,null),false);
