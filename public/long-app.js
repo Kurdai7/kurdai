@@ -77,7 +77,8 @@ $('longQuote').addEventListener('click', async () => {
       images.push(await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }));
     }
     if(session!==token() || version!==generation)return;
-    const dialogueText=scene.split(/\\r?\\n/).map(line=>line.trim()).filter(line=>/^[^:：]{1,40}[:：]\\s*\\S/.test(line)).map(line=>line.replace(/^[^:：]{1,40}[:：]\\s*/,'' )).join('\\n').slice(0,5000);\n    const data = await call('quote', { model:$('longModel').value,mode:$('longMode').value,
+    const dialogueText=scene.split(/\r?\n/).map(line=>line.trim()).filter(line=>/^[^:：]{1,40}[:：]\s*\S/.test(line)).map(line=>line.replace(/^[^:：]{1,40}[:：]\s*/,'' )).join('\n').slice(0,5000);
+    const data = await call('quote', { model:$('longModel').value,mode:$('longMode').value,
       ...($('longMode').value==='extension'?{sourceJobId:$('longSource').value}:{}),prompt: scene, aspectRatio: $('aspectRatio').value,
       resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: '', image:images[0] || null,referenceImages:images.slice(1),
       language: $('longModel').value==='wan2.2-i2v-flash'?'none':'sorani', dialogueText });
