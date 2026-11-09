@@ -231,6 +231,11 @@ export default {
             stripeMode:env.STRIPE_MODE||'not-configured',checkoutEnabled:env.STRIPE_CHECKOUT_ENABLED==='true',
             billableRequestsEnabled:env.BILLABLE_REQUESTS_ENABLED==='true',apiMaxJobUSD:env.API_MAX_JOB_USD||'0',apiMaxDayUSD:env.API_MAX_DAY_USD||'0'}});
       }
+      if (url.pathname === '/api/admin/access' && request.method === 'GET') {
+        const user = env.DB ? await currentUser(request, env) : null;
+        return json({ authenticated: !!user?.verified, isAdmin: isVideoAdmin(env, user),
+          email: isVideoAdmin(env, user) ? user.email : undefined });
+      }
       if (url.pathname.startsWith('/api/image')) {
         const user = env.DB ? await currentUser(request, env) : null;
         return handleImage(request, env, user);
