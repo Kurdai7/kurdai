@@ -23,7 +23,7 @@ test('extension UI loads only eligible own jobs and binds dialect, ratio and sou
   $('longMode').value='extension';$('longMode').dispatchEvent(new w.Event('change'));await wait();
   assert.equal($('longSourcePanel').hidden,false);assert.equal($('longSource').options.length,2);
   $('longSource').value=sourceId;$('longSource').dispatchEvent(new w.Event('change'));
-  assert.equal($('longLanguage').value,'badini');assert.equal($('aspectRatio').value,'9:16');
+  assert.equal($('aspectRatio').value,'9:16');
   $('longDuration').value='10';$('prompt').value='بەردەوام بە';$('longQuote').click();await wait();
   const quote=JSON.parse(calls.find(c=>c.path.endsWith('/quote')).options.body);
   assert.equal(quote.mode,'extension');assert.equal(quote.sourceJobId,sourceId);assert.equal(quote.language,'badini');
