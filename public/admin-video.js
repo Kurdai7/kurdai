@@ -34,16 +34,18 @@ $('referenceImage').addEventListener('change',()=>{
  quoteData=null;$('start').disabled=true;$('quoteBox').hidden=true;
 });
 $('quote').addEventListener('click',async()=>{
- const b=$('quote');b.disabled=true;$('start').disabled=true;$('quoteBox').hidden=true;quoteData=null;
+ const b=$('quote');b.disabled=true;b.textContent='چاوەڕێ بکە...';$('start').disabled=true;$('quoteBox').hidden=true;$('quoteError').hidden=true;$('quoteError').textContent='';quoteData=null;
  try{
+  if(!$('prompt').value.trim())throw new Error('تکایە چیرۆک و کردار بنووسە.');
+  if(!$('dialogue').value.trim())throw new Error('تکایە دیالۆگی کوردی بنووسە.');
   const payload=await input();const q=await api('/api/admin/video/quote',{method:'POST',body:JSON.stringify(payload)});quoteData=q;$('quoteBox').hidden=false;
   $('price').textContent=q.totalEUR==null?(q.planningEstimate?'€'+q.planningEstimate.totalEUR.toFixed(2)+' (تەنها هەڵسەنگاندن)':'نرخ دیاری نەکراوە'):'€'+q.totalEUR.toFixed(4);
   $('details').textContent='مۆدێل: P-Video 2 · '+q.outputSeconds+' چرکە · خەرجی API: '+(q.apiUSD==null?'—':'$'+q.apiUSD.toFixed(4))+' · native resolution: '+q.nativeResolution+' · نرخی هەر چرکەی دەرچوو: $0.015';
   $('blockers').textContent=(q.blockedReasons||[]).join(' ');
   $('start').disabled=!q.canStart;$('approve').checked=false;
   if(q.canStart)$('start').disabled=true;
- }catch(e){$('access').textContent=e.message;}
- finally{b.disabled=false;}
+ }catch(e){$('quoteError').textContent=e.message||'هەڵەیەک ڕوویدا؛ دووبارە هەوڵ بدەرەوە.';$('quoteError').hidden=false;}
+ finally{b.disabled=false;b.textContent='هەژمارکردنی نرخ';}
 });
 $('approve').addEventListener('change',()=>{$('start').disabled=!(quoteData?.canStart&&$('approve').checked);});
 $('start').addEventListener('click',async()=>{
@@ -55,5 +57,5 @@ $('start').addEventListener('click',async()=>{
   $('access').textContent='داواکاری تۆمارکرا: '+d.status+' · ID: '+d.id+' · ئەم داواکارییە تەنها لە ڕێگەی ئەدمینەوە بەڕێوە دەچێت.';
  }catch(e){$('access').textContent=e.message;}
 });
-for(const id of ['prompt','identity','dialogue','duration','ratio'])$(id).addEventListener('input',()=>{quoteData=null;$('start').disabled=true;$('quoteBox').hidden=true;});
+for(const id of ['prompt','identity','dialogue','duration','ratio'])$(id).addEventListener('input',()=>{quoteData=null;$('start').disabled=true;$('quoteBox').hidden=true;$('quoteError').hidden=true;});
 check();
