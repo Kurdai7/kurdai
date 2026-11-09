@@ -41,3 +41,18 @@ test('real FFmpeg assembly retains native 704p pixels and audio for one 70-secon
  const {stdout}=await exec('ffprobe',['-v','error','-show_streams','-show_format','-of','json',join(d,'final.mp4')]);const media=JSON.parse(stdout),v=media.streams.find(x=>x.codec_type==='video');
  assert.equal(v.width,1280);assert.equal(v.height,704);assert.ok(media.streams.some(x=>x.codec_type==='audio'));assert.ok(Math.abs(Number(media.format.duration)-70)<.15);
 });
+
+test('uploaded reference image is used for the first segment and generated final frames continue later segments',async t=>{
+ const directory=await dir(t),j=make(),requests=[];
+ const png=Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0x00]);
+ j.input.image='data:image/png;base64,'+png.toString('base64');
+ const deps={client:{submit:async(i)=>{requests.push(i);return {model:'p-video-2',id:'image-task-'+requests.length};},poll:async()=>({status:'completed',url:'https://api.pruna.ai/test'})},download:async(u,p)=>writeFile(p,'native'),lastFrame:async(s,p)=>writeFile(p,Buffer.from([0xff,0xd8,0xff,0x00])),inspect:async p=>({width:1280,height:704,duration:p.endsWith('final.mp4')?70:requests.at(-1).duration+.04,audioPresent:true}),trim:async(s,p)=>copyFile(s,p),assemble:async(d,count,seconds)=>writeFile(join(d,'final.mp4'),'assembled')};
+ await advancePrunaChain(j,directory,config,deps);
+ assert.equal(requests.length,1);
+ assert.equal(requests[0].image,j.input.image);
+ await advancePrunaChain(j,directory,config,deps);
+ await advancePrunaChain(j,directory,config,deps);
+ assert.equal(requests.length,2);
+ assert.notEqual(requests[1].image,j.input.image);
+ assert.match(requests[1].image,/^data:image\\/jpeg;base64,/);
+});
