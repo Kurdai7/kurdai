@@ -34,7 +34,7 @@ select{line-height:1.6;min-height:48px}
 
 #account.account-panel{display:block;position:relative;z-index:2;width:calc(100% - 40px);max-width:1080px;margin:22px auto 26px}
 @media(max-width:760px){#account.account-panel{width:calc(100% - 24px);margin:14px auto 20px}}
-</style>
+\n.public-reference-fields{margin:16px 0 10px;padding:16px;border:1px solid #2e7658;border-radius:18px;background:rgba(22,77,55,.08)}.public-reference-fields input{display:block;width:100%;margin-top:10px}.public-reference-fields .note{margin-bottom:0}\n</style>
 
 <link rel="stylesheet" href="/studio.css?v=99169fbe">
 </head>
@@ -103,6 +103,12 @@ select{line-height:1.6;min-height:48px}
       <fieldset class="form-group"><legend>١. بیرۆکە و دەنگ</legend>
       <label class="field-label" for="prompt">چیرۆک یان بیرۆکەی ڤیدیۆ</label>
       <textarea id="prompt" placeholder="بۆ نموونە: خێزانێکی کورد لە گوندێکی جواندا دەژی و ڕووداوێکی سەرنجڕاکێش ڕوودەدات..."></textarea>
+      <div id="referenceFields" class="public-reference-fields">
+        <label class="field-label" for="referenceImages">وێنەکانی ڕەفەرەنس (تا ٣ وێنە)</label>
+        <input id="referenceImages" type="file" accept="image/png,image/jpeg" multiple="">
+        <p class="note">PNG یان JPEG، هەر وێنەیەک تا ٤ MiB. وێنەکان یارمەتی پاراستنی ناسنامەی کارەکتەر و جل‌وبەرگ دەدەن.</p>
+      </div>
+      <div id="imagePreviews" class="image-previews"></div>
       <div class="two">
         <div><label class="field-label" for="language">شێوەزاری کوردی</label>
           <select id="language"><option value="sorani">کوردی سۆرانی (Sorani Kurdish)</option><option value="badini">کوردی بادینی (Badini Kurdish)</option><option value="none">بەبێ دیالۆگ</option></select>
@@ -131,10 +137,7 @@ select{line-height:1.6;min-height:48px}
         <label class="field-label" for="previousFrame">وێنەی سەرەتا یان دوا فڕەیم (PNG / JPEG)</label><input id="previousFrame" type="file" accept="image/png,image/jpeg">
         <button type="button" class="chip" id="captureFrame">وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو</button>
         <p class="note">ئەمە کلیپێکی نوێ لەو وێنەیەوە دەست پێ دەکات؛ بە خۆکار لەگەڵ ڤیدیۆی پێشوو یەک ناخات.</p>
-      </div><div id="referenceFields">
-        <label class="field-label" for="referenceImages">وێنەکانی کارەکتەر و جل‌وبەرگ (تا ٣ وێنە)</label><input id="referenceImages" type="file" accept="image/png,image/jpeg" multiple="">
-        <p class="note">PNG یان JPEG، هەر وێنەیەک تا ٤ MiB. وێنەکان یارمەتی پاراستنی ناسنامە دەدەن؛ یەکسانیی تەواو مسۆگەر نییە.</p>
-      </div><div id="imagePreviews" class="image-previews"></div></details>
+      </div></details>
       
       
       
