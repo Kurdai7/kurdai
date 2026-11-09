@@ -70,7 +70,7 @@ test('Omni UI handles unknown token costs, binds model and offers 5–70s withou
     nativeAudio:true,audioQuote:{native:true,language:'sorani'},canStart:false,blockedReasons:['Missing context costs']})};};
   w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
   assert.equal($('longModel').value,model);assert.equal($('longResolution').value,'720p');
-  assert.equal($('longDuration').options.length,14);$('longDuration').value='5';$('prompt').value='Animated family';
+  assert.equal($('longDuration').options.length,11);$('longDuration').value='5';$('prompt').value='Animated family';
   const wait=()=>new Promise(resolve=>setTimeout(resolve,10));$('longQuote').click();await wait();
   assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/0.4527/);assert.match($('longCost').textContent,/Missing context/);
   assert.equal(JSON.parse(requests[0].options.body).model,model);assert.equal(requests.some(r=>r.path.endsWith('/start')),false);
@@ -119,7 +119,7 @@ test('P-Video 2 allows 20 seconds, preserves Badini, and exposes a blocked free 
  w.fetch=async(path,options)=>{requests.push(path);const i=JSON.parse(options.body);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,segmentSeconds:i.duration,nativeAudio:true,canStart:false,totalEUR:null,apiUSD:null,blockedReasons:['Pruna authentication HTTP 401']})};};
  w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
  $('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
- assert.equal($('longLanguage').value,'badini');assert.equal($('longDuration').querySelector('[value="20"]').disabled,false);
+ assert.equal($('language').value,'sorani');assert.equal($('longDuration').querySelector('[value="20"]').disabled,false);
  assert.equal($('longDuration').querySelector('[value="25"]').disabled,false);assert.equal($('longDuration').querySelector('[value="70"]').disabled,false);
  $('prompt').value='A Kurdish family\nباوک: سڵاو';
  $('longDuration').value='20';$('longQuote').click();await new Promise(r=>setTimeout(r,20));
