@@ -38,9 +38,7 @@ test('dialect recommendations choose existing routes without spending, exposing 
  $('recommendBadini').click();assert.equal($('model').value,'veo-3.1-lite-generate-preview');assert.equal($('language').value,'badini');
  $('videoMode').value='extend';$('model').value='veo-3.1-fast-generate-preview';$('recommendBadini').click();
  assert.equal($('videoMode').value,'extend');assert.equal($('model').value,'veo-3.1-fast-generate-preview');
- $('longPanel').hidden=false;$('longMode').value='extension';$('longLanguage').value='badini';$('recommendSorani').click();assert.equal($('longLanguage').value,'badini');
- $('longMode').value='new';$('longModel').value='heygen-video-1';$('longStart').disabled=false;$('recommendSorani').click();
- assert.equal($('longModel').value,'gemini-omni-1.1-flash');assert.equal($('longLanguage').value,'sorani');assert.equal($('longStart').disabled,true);
+ const before=$('prompt').value;$('recommendSorani').click();assert.equal($('prompt').value,before);
  assert.equal(calls.filter(c=>c.options?.method==='POST').length,0);
  dom.window.close();
 });
@@ -55,9 +53,8 @@ test('public model selector exposes Pruna controls without enabling the legacy p
  await new Promise(resolve=>setTimeout(resolve,10));
  assert.equal($('longPanel').hidden,true);
  $('model').value='p-video-2';$('model').dispatchEvent(new w.Event('change'));
- assert.equal($('longPanel').hidden,false);assert.equal($('longModel').value,'p-video-2');assert.equal($('longResolution').value,'704p');
- assert.equal($('generate').disabled,true);assert.equal($('nativeQuote').disabled,true);assert.equal($('longStart').disabled,true);
- assert.match($('model').selectedOptions[0].textContent,/Pruna/);
+ assert.equal($('longPanel').hidden,true); // owner-only long studio stays private to admins
+ assert.equal($('generate').disabled,true);assert.equal($('nativeQuote').disabled,true);
  $('generate').click();$('nativeQuote').click();
  assert.equal(calls.filter(c=>c.options?.method==='POST').length,0);
  dom.window.close();
