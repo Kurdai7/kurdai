@@ -181,7 +181,7 @@ select{line-height:1.6;min-height:48px}
       <div class="flow-canvas-footer"><span><i></i> ئامادەی کار</span><span id="longCanvasFormat">16:9 · 720p</span></div>
     </div>
     <fieldset class="form-group"><legend>١. بیرۆکە و دەنگ</legend>
-    <label class="field-label" for="longPrompt">وەسفی دیمەنی ڤیدیۆ</label><textarea id="longPrompt" maxlength="5000" placeholder="دیمەنەکە باس بکە: کێ لە کوێیە و چی دەکات؟ دیالۆگ لە خانەی جیاوازی خوارەوە دابنێ."></textarea>
+    <label class="field-label" for="longPrompt">وەسفی دیمەنی ڤیدیۆ</label><textarea id="longPrompt" maxlength="5000" placeholder="هەموو شت لە یەک پرۆمپتدا بنووسە: چیرۆک، کردار، کارەکتەر، جل‌وبەرگ، کامێرا و دیالۆگ."></textarea>
     </fieldset><fieldset class="form-group"><legend>٢. ڕێکخستنی ڤیدیۆ</legend>
     <label class="field-label" for="longModel">مۆدێلی ڤیدیۆ</label><select id="longModel"><option value="gemini-omni-1.1-flash">Omni 1.1 Flash — دەنگ و ڤیدیۆ</option><option value="p-video-2">Pruna P-Video 2 — سۆرانی پەسەند کراوە</option><option value="pixverse-v6" disabled>PixVerse V6 — API پەیوەست نییە (بەردەست نییە)</option><option value="kling-3.0-standard" disabled>Kling 3.0 — API پەیوەست نییە (بەردەست نییە)</option><option value="seedance-2.0-mini" disabled>Seedance 2.0 Mini — API پەیوەست نییە (بەردەست نییە)</option><option value="heygen-video-1" disabled>HeyGen Video — API پەیوەست نییە (بەردەست نییە)</option><option value="wan2.2-i2v-flash">Wan — هەرزان، بێ دیالۆگ</option></select>
     <label class="field-label" for="longMode">جۆری دروستکردن</label><select id="longMode"><option value="new">ڤیدیۆی نوێ</option><option value="extension">Video Extension — بەردەوامکردنی ڤیدیۆی خۆت</option></select>
@@ -195,14 +195,9 @@ select{line-height:1.6;min-height:48px}
       <div class="reference-heading"><div><span class="reference-kicker">REFERENCE IMAGES</span><h3 id="referenceTitle">وێنەی ڕەفەرەنس</h3><p>وێنەی کارەکتەر، ڕوخسار، جل‌وبەرگ یان دیمەنی سەرەتا زیاد بکە.</p></div><span class="reference-count" id="longReferenceCount">٠ / ٣</span></div>
       <label class="reference-drop" for="longReference"><span class="reference-plus">＋</span><strong>وێنە زیاد بکە</strong><span>PNG یان JPG · هەر وێنەیەک تا 4MB</span><input id="longReference" type="file" multiple accept="image/png,image/jpeg"></label>
       <div class="reference-previews" id="longReferencePreview" aria-live="polite"><span class="reference-empty">هێشتا هیچ وێنەیەک هەڵنەبژێردراوە</span></div>
-      <details class="studio-details"><summary>ناسنامەی جێگیری کارەکتەرەکان</summary><label class="field-label" for="longIdentity">وەسفی ڕوخسار و جل‌وبەرگ</label><input id="longIdentity" maxlength="2000" placeholder="ڕوخسار، ڕەنگی قژ، جل و بەرگ..."></details>
+      
     </section>
-    </fieldset><fieldset class="form-group"><legend>٣. کارەکتەر و دیالۆگ</legend>
-    
-    <label class="field-label" for="longLanguage">زمانی دیالۆگی ڤیدیۆی درێژ</label><select id="longLanguage"><option value="sorani">کوردی سۆرانی</option><option value="badini">کوردی بادینی — هێشتا تاقی نەکراوەتەوە</option><option value="none">بێ دیالۆگ</option></select>
-    <label class="field-label" for="longDialogue">دیالۆگی ڕاستەقینە بە زمانی هەڵبژێردراو</label><textarea id="longDialogue" maxlength="5000" placeholder="هەر هێڵێک بۆ دیمەنێک، تا ١٤٠ پیت. شێوەزارەکە وەرناگێڕدرێت."></textarea>
-    <p class="note">Omni ڕاستەوخۆ بە دەق یان وێنە کار دەکات. تا سێ ڕەفەرەنس ڕوخسار و جل ڕوونتر دەکەن؛ یەکسانیی تەواو گەرەنتی نییە. Wan بەبێ وێنە، خەرجی وێنەی سەرەتایی زیاد دەکات.</p>
-    </fieldset>
+    </fieldset><p class="note">هەموو دیالۆگ و زمانی قسەکردن لە ناو پرۆمپتەکەدا بنووسە. بۆ دیالۆگی کارەکتەرەکان شێوازی «باوک: سڵاو مێریەم» بەکاربهێنە. تا سێ وێنەی PNG/JPEG وەک Reference Image زیاد بکە.</p>
     <div class="account-actions"><details class="studio-details"><summary><span class="fold-ku">پشکنینی تەکنیکی</span><span class="fold-en" lang="en">Technical checks</span></summary><button class="chip" id="longSmoke" type="button">تاقیکردنەوەی MP4 ـی ٧٠ چرکە — بێ API، ڤیدیۆی AI نییە</button><button class="chip" id="longReadiness" type="button">پشکنینی سێرڤەری ڤیدیۆی درێژ — بێ پارە</button></details>
     
       <button class="chip" id="longQuote" type="button">پیشاندانی خەرجی — بێ پارە</button><button class="chip" id="longStart" type="button" disabled="">قبوڵکردنی خەرجی و دروستکردنی ڤیدیۆی درێژ</button><button class="chip" id="longRefresh" type="button">پشکنینی پێشکەوتن</button></div>
