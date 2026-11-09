@@ -65,12 +65,12 @@ test('Omni UI handles unknown token costs, binds model and offers 5–70s withou
   const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
   w.HTMLMediaElement.prototype.pause=w.HTMLMediaElement.prototype.load=()=>{};
   let model='gemini-omni-1.1-flash';
-  w.fetch=async(path,options)=>{requests.push({path,options});return{ok:true,json:async()=>({model,outputSeconds:5,segments:1,
+  w.fetch=async(path,options)=>{requests.push({path,options});return{ok:true,json:async()=>({model,outputSeconds:4,segments:1,
     apiUSD:null,apiEUR:null,apiMinimumEUR:0.4527,mediaEUR:null,fxEUR:null,vatEUR:null,totalEUR:null,
     nativeAudio:true,audioQuote:{native:true,language:'sorani'},canStart:false,blockedReasons:['Missing context costs']})};};
   w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
   assert.equal($('longModel').value,model);assert.equal($('longResolution').value,'720p');
-  assert.equal($('longDuration').options.length,11);$('longDuration').value='5';$('prompt').value='Animated family';
+  assert.equal($('longDuration').options.length,11);$('longDuration').value='4';$('prompt').value='Animated family';
   const wait=()=>new Promise(resolve=>setTimeout(resolve,10));$('longQuote').click();await wait();
   assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/0.4527/);assert.match($('longCost').textContent,/Missing context/);
   assert.equal(JSON.parse(requests[0].options.body).model,model);assert.equal(requests.some(r=>r.path.endsWith('/start')),false);
