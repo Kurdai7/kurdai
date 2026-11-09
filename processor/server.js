@@ -277,7 +277,7 @@ export async function createProcessor(config, dependencies = {}) {
         // Never echo API credentials or vendor response body.
         if (!config.GEMINI_API_KEY) return send(res,{configured:false,reachable:false,modelAvailable:false},503);
         try {
-          const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-omni-1.1-flash',{
+          const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-omni-1.2-flash',{
             method:'GET',headers:{'x-goog-api-key':config.GEMINI_API_KEY},
             redirect:'manual',signal:AbortSignal.timeout(12000)
           });
@@ -570,18 +570,18 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (process.env.GEMINI_API_KEY) {
     void (async () => {
       try {
-        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-omni-1.1-flash', {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-omni-1.2-flash', {
           method:'GET',headers:{'x-goog-api-key':process.env.GEMINI_API_KEY},
           redirect:'manual',signal:AbortSignal.timeout(12000)
         });
         await response.body?.cancel();
         console.info('gemini_model_metadata_probe',JSON.stringify({
-          model:'gemini-omni-1.1-flash',httpStatus:response.status,
+          model:'gemini-omni-1.2-flash',httpStatus:response.status,
           accessible:response.ok,paidGenerationRequestsVerified:false
         }));
       } catch {
         console.info('gemini_model_metadata_probe',JSON.stringify({
-          model:'gemini-omni-1.1-flash',reachable:false,paidGenerationRequestsVerified:false
+          model:'gemini-omni-1.2-flash',reachable:false,paidGenerationRequestsVerified:false
         }));
       }
     })();
