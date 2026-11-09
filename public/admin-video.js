@@ -26,7 +26,7 @@ function readReferenceImage(){
  });
 }
 function extractDialogue(text){
- return text.split(/\\r?\\n/).map(line=>line.trim()).filter(line=>/^[^:：]{1,40}[:：]\\s*\\S/.test(line)).map(line=>line.replace(/^[^:：]{1,40}[:：]\\s*/,'' )).join('\\n').slice(0,5000);
+ return text.split(/\r?\n/).map(line=>line.trim()).filter(line=>/^[^:：]{1,40}[:：]\s*\S/.test(line)).map(line=>line.replace(/^[^:：]{1,40}[:：]\s*/,'' )).join('\n').slice(0,5000);
 }
 async function input(){const prompt=$('prompt').value.trim();return {model:'p-video-2',mode:'new',prompt,identity:'',dialogueText:extractDialogue(prompt),language:'sorani',duration:Number($('duration').value),resolution:'704p',aspectRatio:$('ratio').value,image:await readReferenceImage()};}
 $('referenceImage').addEventListener('change',()=>{
