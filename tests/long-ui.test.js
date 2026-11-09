@@ -69,14 +69,14 @@ test('Omni UI handles unknown token costs, binds model and offers 5–70s withou
     apiUSD:null,apiEUR:null,apiMinimumEUR:0.4527,mediaEUR:null,fxEUR:null,vatEUR:null,totalEUR:null,
     nativeAudio:true,audioQuote:{native:true,language:'sorani'},canStart:false,blockedReasons:['Missing context costs']})};};
   w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
-  assert.equal($('longModel').value,model);assert.equal($('longResolution').value,'720p');assert.equal($('longLanguage').value,'sorani');
+  assert.equal($('longModel').value,model);assert.equal($('longResolution').value,'720p');
   assert.equal($('longDuration').options.length,14);$('longDuration').value='5';$('prompt').value='Animated family';
   const wait=()=>new Promise(resolve=>setTimeout(resolve,10));$('longQuote').click();await wait();
   assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/0.4527/);assert.match($('longCost').textContent,/Missing context/);
   assert.equal(JSON.parse(requests[0].options.body).model,model);assert.equal(requests.some(r=>r.path.endsWith('/start')),false);
   model='wan2.2-i2v-flash';$('longQuote').click();await wait();assert.match($('longCost').textContent,/Deploy/);assert.equal($('longStart').disabled,true);
   $('longModel').value=model;$('longModel').dispatchEvent(new w.Event('change'));
-  assert.equal($('longDuration').value,'60');assert.equal($('longLanguage').value,'none');dom.window.close();
+  assert.equal($('longDuration').value,'60');dom.window.close();
 });
 
 test('pending native models preserve dialects, enforce actual resolutions and cannot request generation',async()=>{
@@ -84,10 +84,9 @@ test('pending native models preserve dialects, enforce actual resolutions and ca
  const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
  w.fetch=async(...args)=>{requests.push(args);throw new Error('Unexpected network request');};
  w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
- $('longLanguage').value='sorani';
  for(const [model,resolution] of [['seedance-2.0-mini','720p'],['heygen-video-1','768p']]) {
   $('longModel').value=model;$('longModel').dispatchEvent(new w.Event('change'));
-  assert.equal($('longLanguage').value,'sorani');assert.equal($('longResolution').value,resolution);
+  assert.equal($('longResolution').value,resolution);
   for(const value of ['460p','520p']) assert.equal([...$('longResolution').options].find(o=>o.value===value).disabled,true);
   assert.ok(Number($('longDuration').value)<=15);
   $('longQuote').click();await new Promise(resolve=>setTimeout(resolve,0));
@@ -119,28 +118,25 @@ test('P-Video 2 allows 20 seconds, preserves Badini, and exposes a blocked free 
  w.HTMLMediaElement.prototype.pause=w.HTMLMediaElement.prototype.load=()=>{};
  w.fetch=async(path,options)=>{requests.push(path);const i=JSON.parse(options.body);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,segmentSeconds:i.duration,nativeAudio:true,canStart:false,totalEUR:null,apiUSD:null,blockedReasons:['Pruna authentication HTTP 401']})};};
  w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
- $('longLanguage').value='badini';$('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
+ $('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
  assert.equal($('longLanguage').value,'badini');assert.equal($('longDuration').querySelector('[value="20"]').disabled,false);
  assert.equal($('longDuration').querySelector('[value="25"]').disabled,false);assert.equal($('longDuration').querySelector('[value="70"]').disabled,false);
- $('prompt').value='A Kurdish family';$('longDialogue').value='سلاڤ';
+ $('prompt').value='A Kurdish family\nباوک: سڵاو';
  $('longDuration').value='20';$('longQuote').click();await new Promise(r=>setTimeout(r,20));
  assert.equal($('longStart').disabled,true);assert.match($('longCost').textContent,/401/);assert.deepEqual(requests,['/api/long/quote']);dom.window.close();
 });
 
-test('Pruna missing scene and dialogue focus the correct local field, retain text, and never submit incomplete quotes',async()=>{
+test('Pruna uses one prompt for scene and speaker dialogue; no separate dialogue field',async()=>{
  const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
  const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
- w.fetch=async(path,options)=>{requests.push(JSON.parse(options.body));const i=requests.at(-1);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,nativeAudio:true,canStart:false})};};
+ w.localStorage.setItem('kurdai_session_token','owner');
+ w.fetch=async(path,options)=>{requests.push(JSON.parse(options.body));const i=requests.at(-1);return {ok:true,json:async()=>({model:i.model,outputSeconds:i.duration,segments:1,nativeAudio:true,canStart:false,blockedReasons:['Spending disabled']})};};
  w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
  $('longModel').value='p-video-2';$('longModel').dispatchEvent(new w.Event('change'));
- $('longPanel').hidden=false;
- $('longDialogue').value='سڵاو، بەخێربێن';$('longQuote').click();await new Promise(r=>setTimeout(r,10));
- assert.equal(requests.length,0);assert.equal(w.document.activeElement.id,'longPrompt');assert.equal($('longDialogue').value,'سڵاو، بەخێربێن');
- $('longPrompt').value='A Kurdish cartoon village';$('longPrompt').dispatchEvent(new w.Event('input'));
- assert.equal($('prompt').value,'A Kurdish cartoon village');
- $('longDialogue').value='';$('longQuote').click();await new Promise(r=>setTimeout(r,10));
- assert.equal(requests.length,0);assert.equal(w.document.activeElement.id,'longDialogue');
- $('longDialogue').value='سڵاو';$('longQuote').click();await new Promise(r=>setTimeout(r,10));
- assert.equal(requests.length,1);assert.equal(requests[0].prompt,'A Kurdish cartoon village');assert.equal(requests[0].dialogueText,'سڵاو');assert.equal($('longStart').disabled,true);
+ $('prompt').value='A Kurdish cartoon village.\nباوک: سڵاو، بەخێربێن';
+ $('longQuote').click();await new Promise(r=>setTimeout(r,10));
+ assert.equal(requests.length,1);assert.equal(requests[0].prompt,'A Kurdish cartoon village.\nباوک: سڵاو، بەخێربێن');
+ assert.equal(requests[0].dialogueText,'سڵاو، بەخێربێن');assert.equal($('longStart').disabled,true);
+ assert.equal($('longDialogue'),null);assert.equal($('longIdentity'),null);assert.equal($('longPrompt'),null);
  dom.window.close();
 });
