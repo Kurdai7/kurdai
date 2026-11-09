@@ -65,6 +65,7 @@ $('longQuote').addEventListener('click', async () => {
     if(['seedance-2.0-mini','heygen-video-1'].includes($('longModel').value)) throw new Error('ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ نرخ و پشتگیری دیالێکت پێویستیان بە پشتڕاستکردنەوە هەیە.');
     if($('longMode').value==='extension' && !$('longSource').value)throw new Error('ڤیدیۆیەکی تەواوکراو بۆ بەردەوامکردن هەڵبژێرە.');
     const scene=$('prompt').value.trim();
+    const sourceJob=$('longMode').value==='extension'?sources.find(j=>j.id===$('longSource').value):null;
     if($('longModel').value==='p-video-2' && !scene) { $('prompt').focus(); throw new Error('خانەی «وەسفی دیمەنی ڤیدیۆ» پڕ بکەرەوە؛ دیالۆگەکەت پارێزراوە.'); }
     
     const files=Array.from($('longReference').files),images=[];
@@ -78,7 +79,7 @@ $('longQuote').addEventListener('click', async () => {
     const data = await call('quote', { model:$('longModel').value,mode:$('longMode').value,
       ...($('longMode').value==='extension'?{sourceJobId:$('longSource').value}:{}),prompt: scene, aspectRatio: $('aspectRatio').value,
       resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: '', image:images[0] || null,referenceImages:images.slice(1),
-      language: $('longModel').value==='wan2.2-i2v-flash'?'none':'sorani', dialogueText });
+      language: $('longModel').value==='wan2.2-i2v-flash'?'none':(sourceJob?.language || 'sorani'), dialogueText });
     if (session !== token() || version !== generation) return;
     if (data.outputSeconds !== Number($('longDuration').value) || data.model !== $('longModel').value)
       throw new Error('سێرڤەری Render هێشتا ماوەی هەڵبژێردراو پشتگیری ناکات؛ پێویستی بە Deploy ـی کۆدی نوێ هەیە. هیچ دروستکردنێک دەست پێ ناکات.');
