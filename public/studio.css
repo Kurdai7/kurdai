@@ -721,3 +721,60 @@ main>.features{order:7!important}
  .hero-cta{display:inline-flex!important;justify-content:center!important;align-self:stretch!important;padding:12px 16px!important;font-size:14px!important}
  .hero #launchStatus{order:6!important;position:relative!important;inset:auto!important;width:100%!important;max-width:none!important;margin:0!important;font-size:11px!important;line-height:1.8!important}
 }
+
+
+/* KurdAI Flow-inspired public creation workspace (original UI, existing controls preserved). */
+#studio.workspace{
+  direction:ltr!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1.35fr) minmax(360px,.85fr)!important;
+  gap:16px!important;
+  align-items:stretch!important;
+  margin:18px 0 24px!important;
+  padding:14px!important;
+  border:1px solid #254b37!important;
+  border-radius:24px!important;
+  background:linear-gradient(145deg,#07140e,#0b1b12 55%,#07120d)!important;
+  box-shadow:0 24px 70px #0006!important;
+}
+#studio.workspace>.preview{order:1!important;direction:rtl!important;position:sticky!important;top:16px!important;align-self:start!important;min-width:0!important;padding:18px!important;border:1px solid #2c6042!important;border-radius:18px!important;background:#08150f!important}
+#studio.workspace>.panel:first-child{order:2!important;direction:rtl!important;min-width:0!important;padding:20px!important;border:1px solid #2c6042!important;border-radius:18px!important;background:linear-gradient(160deg,#11251a,#091710)!important}
+#studio.workspace>.panel:first-child>h2{font-size:22px!important;margin:0 0 4px!important}
+#studio.workspace>.panel:first-child>.sub{font-size:12px!important;margin-bottom:14px!important}
+#studio .preview>h2{font-size:19px!important}
+#studio .preview>.sub{margin-bottom:14px!important}
+#studio .preview-screen{position:relative!important;display:grid!important;place-items:center!important;min-height:0!important;width:100%!important;aspect-ratio:16/9!important;border:1px solid #416d50!important;border-radius:14px!important;background:radial-gradient(ellipse at 50% 75%,#1c5031 0%,#10271a 48%,#07130d 100%)!important;overflow:hidden!important}
+#studio .preview-screen .mountains{opacity:.28!important}
+#studio .preview-screen .preview-title{font-size:clamp(19px,2vw,28px)!important}
+#studio .preview-screen .preview-caption{font-size:11px!important}
+#studio .preview-footer{padding-top:12px!important;border-top:1px solid #203d2c!important}
+#studio .form-group{margin:16px 0 0!important;padding:14px 0 0!important;border-top:1px solid #244632!important;background:transparent!important}
+#studio .form-group legend{font-size:11px!important;letter-spacing:.04em!important;color:#8de6aa!important}
+#studio #prompt{min-height:150px!important;background:#07140e!important;border:1px solid #355b43!important;border-radius:14px!important;font-size:14px!important;line-height:1.9!important}
+#studio #prompt:focus{border-color:#43e889!important;box-shadow:0 0 0 3px #43e88920!important}
+#studio .public-reference-fields{margin:12px 0 8px!important;padding:13px!important;border:1px dashed #578565!important;border-radius:14px!important;background:#0d2116!important}
+#studio .public-reference-fields .field-label{margin:0 0 8px!important;color:#b9f0ca!important}
+#studio .public-reference-fields input{background:transparent!important;border:0!important;padding:4px!important}
+#studio #imagePreviews{min-height:0!important;margin:8px 0 4px!important}
+#studio #imagePreviews img{width:66px!important;height:66px!important;object-fit:cover!important;border-radius:10px!important;border:1px solid #4b805d!important}
+#studio select,#studio input:not([type=file]){background:#07140e!important;border:1px solid #315540!important;border-radius:11px!important}
+#studio .studio-details{background:#0b1a12!important;border-color:#294b35!important}
+#studio .studio-details>summary{color:#a8e9ba!important;font-weight:700!important}
+#studio .generation-actions{margin-top:16px!important;padding:14px!important;border:1px solid #2c5239!important;border-radius:15px!important;background:#0b1b12!important}
+#studio .generation-actions .generate{min-height:54px!important;border-radius:13px!important;font-size:15px!important}
+#studio .preview .account-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important}
+#studio #resultVideo{max-height:560px!important;border:1px solid #3c694a!important;border-radius:13px!important}
+@media(max-width:900px){
+ #studio.workspace{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;padding:10px!important}
+ #studio.workspace>.preview{position:static!important;order:1!important}
+ #studio.workspace>.panel:first-child{order:2!important}
+ #studio .preview-screen{aspect-ratio:16/9!important;min-height:190px!important}
+}
+@media(max-width:600px){
+ #studio.workspace{margin:10px 0 18px!important;padding:8px!important;border-radius:18px!important}
+ #studio.workspace>.preview,#studio.workspace>.panel:first-child{padding:14px!important;border-radius:14px!important}
+ #studio .preview-screen{min-height:175px!important}
+ #studio #prompt{min-height:130px!important;font-size:13px!important}
+ #studio .public-reference-fields{padding:11px!important}
+ #studio .two{gap:8px!important}
+}
