@@ -62,6 +62,18 @@ select{line-height:1.6;min-height:48px}
   </nav><div class="sidebar-landscape"><span>Kurdistan</span></div>
 </aside>
          <main id="home">
+  <section id="account" class="panel account-panel" aria-labelledby="accountTitle">
+    <h2 id="accountTitle">ئەکاونتی KurdAI</h2>
+    <p class="sub">هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.</p>
+    <div class="two">
+      <div><label class="field-label" for="accountEmail">ئیمەیڵ</label><input id="accountEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
+      <div><label class="field-label" for="accountPassword">وشەی نهێنی</label><input id="accountPassword" type="password" autocomplete="current-password" minlength="12" placeholder="لانیکەم ١٢ پیت"></div>
+    </div>
+    <div class="account-actions"><button type="button" class="chip" id="registerBtn">دروستکردنی ئەکاونت</button><button type="button" class="chip active" id="loginBtn">چوونەژوورەوە</button><button type="button" class="chip" id="logoutBtn" hidden="">دەرچوون</button></div>
+    <div class="toast" id="accountMessage" role="status" aria-live="polite"></div>
+    <p class="note" id="creditStatus">کرێدیت: پێویستە بچیتە ژوورەوە. پشتڕاستکردنەوەی ئیمەیڵ پێویستە.</p>
+  </section>
+
   <section class="hero">
     <div class="eyebrow"><span class="sun">☀</span> KurdAI Public Beta</div>
     <h1>بیرۆکەکەت بکە بە <em>ڤیدیۆ</em></h1>
@@ -77,17 +89,7 @@ select{line-height:1.6;min-height:48px}
     <a class="shortcut shortcut-extend" href="/admin.html" id="adminStudioShortcut" hidden><span>▤</span><strong>ستۆدیۆی ئەدمین</strong></a>
     <a class="shortcut shortcut-projects" href="#recentProjects"><span>▱</span><strong>پڕۆژەکانم</strong></a>
   </section>
-  <section id="account" class="panel account-panel" aria-labelledby="accountTitle">
-    <h2 id="accountTitle">ئەکاونتی KurdAI</h2>
-    <p class="sub">هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.</p>
-    <div class="two">
-      <div><label class="field-label" for="accountEmail">ئیمەیڵ</label><input id="accountEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
-      <div><label class="field-label" for="accountPassword">وشەی نهێنی</label><input id="accountPassword" type="password" autocomplete="current-password" minlength="12" placeholder="لانیکەم ١٢ پیت"></div>
-    </div>
-    <div class="account-actions"><button type="button" class="chip" id="registerBtn">دروستکردنی ئەکاونت</button><button type="button" class="chip active" id="loginBtn">چوونەژوورەوە</button><button type="button" class="chip" id="logoutBtn" hidden="">دەرچوون</button></div>
-    <div class="toast" id="accountMessage" role="status" aria-live="polite"></div>
-    <p class="note" id="creditStatus">کرێدیت: پێویستە بچیتە ژوورەوە. پشتڕاستکردنەوەی ئیمەیڵ پێویستە.</p>
-  </section>
+
 
   <section id="studio" class="workspace">
     <div class="panel">
