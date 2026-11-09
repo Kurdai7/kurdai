@@ -25,7 +25,10 @@ function readReferenceImage(){
   reader.readAsDataURL(file);
  });
 }
-async function input(){return {model:'p-video-2',mode:'new',prompt:$('prompt').value.trim(),identity:$('identity').value.trim(),dialogueText:$('dialogue').value.trim(),language:'sorani',duration:Number($('duration').value),resolution:'704p',aspectRatio:$('ratio').value,image:await readReferenceImage()};}
+function extractDialogue(text){
+ return text.split(/\\r?\\n/).map(line=>line.trim()).filter(line=>/^[^:：]{1,40}[:：]\\s*\\S/.test(line)).map(line=>line.replace(/^[^:：]{1,40}[:：]\\s*/,'' )).join('\\n').slice(0,5000);
+}
+async function input(){const prompt=$('prompt').value.trim();return {model:'p-video-2',mode:'new',prompt,identity:'',dialogueText:extractDialogue(prompt),language:'sorani',duration:Number($('duration').value),resolution:'704p',aspectRatio:$('ratio').value,image:await readReferenceImage()};}
 $('referenceImage').addEventListener('change',()=>{
  const file=$('referenceImage').files?.[0],preview=$('referencePreview');
  if(!file){preview.hidden=true;preview.removeAttribute('src');$('referenceHint').textContent='وێنەی کارەکتەر یان دیمەن باربکە بۆ پاراستنی شێوە و ناسنامەی وێنەکە.';return;}
@@ -37,7 +40,6 @@ $('quote').addEventListener('click',async()=>{
  const b=$('quote');b.disabled=true;b.textContent='چاوەڕێ بکە...';$('start').disabled=true;$('quoteBox').hidden=true;$('quoteError').hidden=true;$('quoteError').textContent='';quoteData=null;
  try{
   if(!$('prompt').value.trim())throw new Error('تکایە چیرۆک و کردار بنووسە.');
-  if(!$('dialogue').value.trim())throw new Error('تکایە دیالۆگی کوردی بنووسە.');
   const payload=await input();const q=await api('/api/admin/video/quote',{method:'POST',body:JSON.stringify(payload)});quoteData=q;$('quoteBox').hidden=false;
   $('price').textContent=q.totalEUR==null?(q.planningEstimate?'€'+q.planningEstimate.totalEUR.toFixed(2)+' (تەنها هەڵسەنگاندن)':'نرخ دیاری نەکراوە'):'€'+q.totalEUR.toFixed(4);
   $('details').textContent='مۆدێل: P-Video 2 · '+q.outputSeconds+' چرکە · خەرجی API: '+(q.apiUSD==null?'—':'$'+q.apiUSD.toFixed(4))+' · native resolution: '+q.nativeResolution+' · نرخی هەر چرکەی دەرچوو: $0.015';
@@ -57,5 +59,5 @@ $('start').addEventListener('click',async()=>{
   $('access').textContent='داواکاری تۆمارکرا: '+d.status+' · ID: '+d.id+' · ئەم داواکارییە تەنها لە ڕێگەی ئەدمینەوە بەڕێوە دەچێت.';
  }catch(e){$('access').textContent=e.message;}
 });
-for(const id of ['prompt','identity','dialogue','duration','ratio'])$(id).addEventListener('input',()=>{quoteData=null;$('start').disabled=true;$('quoteBox').hidden=true;$('quoteError').hidden=true;});
+for(const id of ['prompt','duration','ratio'])$(id).addEventListener('input',()=>{quoteData=null;$('start').disabled=true;$('quoteBox').hidden=true;$('quoteError').hidden=true;});
 check();
