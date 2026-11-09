@@ -31,6 +31,9 @@ select{line-height:1.6;min-height:48px}
 @media(max-width:760px){.form-group{padding:14px;margin-top:20px}.panel h2{line-height:1.6}.sub{margin-bottom:14px}.hero p{font-size:15px}.field-label{line-height:1.7}.account-actions{gap:10px}}
 
  .chat-nav{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;color:var(--green);text-decoration:none;font-size:12px;white-space:nowrap}.chat-nav:hover{border-color:var(--green2);background:#76d6a619}@media(max-width:760px){.chat-nav{font-size:11px;padding:7px}}
+
+#account.account-panel{display:block;position:relative;z-index:2;width:calc(100% - 40px);max-width:1080px;margin:22px auto 26px}
+@media(max-width:760px){#account.account-panel{width:calc(100% - 24px);margin:14px auto 20px}}
 </style>
 
 <link rel="stylesheet" href="/studio.css?v=99169fbe">
@@ -51,17 +54,6 @@ select{line-height:1.6;min-height:48px}
 <a class="chat-nav" href="/image.html">🎨 دروستکردنی وێنە</a>
 
 </header>
-<aside class="dashboard-sidebar" aria-label="KurdAI dashboard navigation">
-  <div class="sidebar-user"><div class="user-avatar">DB</div><div><strong>Darin Barznji</strong><small>ئەکاونتی KurdAI</small></div></div>
-  <nav class="sidebar-links">
-    <a href="#home" class="side-link active"><span>⌂</span> ماڵەوە</a><a href="#studio" class="side-link"><span>▣</span> ستۆدیۆ</a>
-    <a href="/image.html" class="side-link"><span>▧</span> وێنە دروستکردن</a><a href="/admin.html" class="side-link" id="adminStudioNav" hidden><span>▱</span> ستۆدیۆی ئەدمین</a>
-    <a href="#recentProjects" class="side-link"><span>▤</span> پڕۆژەکانم</a><a href="#recentProjects" class="side-link"><span>☆</span> پەسەندکراوەکان</a>
-    <a href="#billingPanel" class="side-link"><span>◉</span> بەکارهێنان / کرێدیت</a><a href="#account" class="side-link"><span>⚙</span> ڕێکخستنەکان</a>
-    <a href="#account" class="side-link"><span>?</span> یارمەتی</a><a href="#account" class="side-link"><span>⇥</span> دەرچوون</a>
-  </nav><div class="sidebar-landscape"><span>Kurdistan</span></div>
-</aside>
-         <main id="home">
   <section id="account" class="panel account-panel" aria-labelledby="accountTitle">
     <h2 id="accountTitle">ئەکاونتی KurdAI</h2>
     <p class="sub">هەژمار دروست بکە یان بچۆ ژوورەوە بۆ بینینی کرێدیتەکانت.</p>
@@ -73,6 +65,19 @@ select{line-height:1.6;min-height:48px}
     <div class="toast" id="accountMessage" role="status" aria-live="polite"></div>
     <p class="note" id="creditStatus">کرێدیت: پێویستە بچیتە ژوورەوە. پشتڕاستکردنەوەی ئیمەیڵ پێویستە.</p>
   </section>
+
+<aside class="dashboard-sidebar" aria-label="KurdAI dashboard navigation">
+  <div class="sidebar-user"><div class="user-avatar">DB</div><div><strong>Darin Barznji</strong><small>ئەکاونتی KurdAI</small></div></div>
+  <nav class="sidebar-links">
+    <a href="#home" class="side-link active"><span>⌂</span> ماڵەوە</a><a href="#studio" class="side-link"><span>▣</span> ستۆدیۆ</a>
+    <a href="/image.html" class="side-link"><span>▧</span> وێنە دروستکردن</a><a href="/admin.html" class="side-link" id="adminStudioNav" hidden><span>▱</span> ستۆدیۆی ئەدمین</a>
+    <a href="#recentProjects" class="side-link"><span>▤</span> پڕۆژەکانم</a><a href="#recentProjects" class="side-link"><span>☆</span> پەسەندکراوەکان</a>
+    <a href="#billingPanel" class="side-link"><span>◉</span> بەکارهێنان / کرێدیت</a><a href="#account" class="side-link"><span>⚙</span> ڕێکخستنەکان</a>
+    <a href="#account" class="side-link"><span>?</span> یارمەتی</a><a href="#account" class="side-link"><span>⇥</span> دەرچوون</a>
+  </nav><div class="sidebar-landscape"><span>Kurdistan</span></div>
+</aside>
+         <main id="home">
+
 
   <section class="hero">
     <div class="eyebrow"><span class="sun">☀</span> KurdAI Public Beta</div>
