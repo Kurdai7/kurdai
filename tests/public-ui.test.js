@@ -23,6 +23,9 @@ test('signed-in public accounts cannot expose owner generation and retain format
   assert.equal(calls.includes('/api/generate'),false);assert.equal(calls.includes('/api/video-quote'),false);
   assert.deepEqual(Array.from($('aspectRatio').options,o=>o.value),['16:9','9:16']);
   assert.deepEqual(Array.from($('language').options,o=>o.value),['sorani','badini','none']);
+  assert.ok($('prompt').compareDocumentPosition($('referenceFields')) & w.Node.DOCUMENT_POSITION_FOLLOWING);
+  assert.ok($('referenceFields').compareDocumentPosition($('language')) & w.Node.DOCUMENT_POSITION_FOLLOWING);
+  assert.equal($('referenceImages').multiple,true);
   dom.window.close();
 });
 
