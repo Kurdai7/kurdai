@@ -71,3 +71,17 @@ test('planning reserves never become payable costs even with generation flags en
  }
 });
 
+test('P-Video 2 accepts a validated PNG/JPEG reference image without enabling paid generation',()=>{
+ const png=Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0x00]);
+ const jpeg=Buffer.from([0xff,0xd8,0xff,0x00]);
+ for(const [mime,bytes] of [['image/png',png],['image/jpeg',jpeg]]){
+  const image=`data:${mime};base64,${bytes.toString('base64')}`;
+  const input=longInput({...base,model:'p-video-2',resolution:'704p',image});
+  assert.equal(input.image,image);
+  const quote=quoteLong(input,{});
+  assert.equal(quote.canStart,false);
+  assert.equal(quote.totalEUR,null);
+ }
+ assert.throws(()=>longInput({...base,model:'p-video-2',resolution:'704p',image:'data:image/png;base64,ZmFrZQ=='}),/content does not match type/);
+ assert.throws(()=>longInput({...base,model:'p-video-2',resolution:'704p',image:'data:image/gif;base64,R0lGODlh'}),/PNG\/JPEG/);
+});
