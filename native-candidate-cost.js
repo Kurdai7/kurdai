@@ -18,7 +18,7 @@ export function validateNativeCandidate(body,{internalPrompt=false}={}) {
   image=body.image;
  }
  const prompt=String(body.prompt||'').trim(),dialogueText=String(body.dialogueText||'').trim(),identity=String(body.identity||'').trim();
- if(!prompt||!dialogueText)throw new Error('Enter the scene and exact Kurdish dialogue.');
+ if(!prompt)throw new Error('Enter the complete video prompt.');
  if(body.model==='p-video-2' && dialogueText.split(/\s+/u).length>Math.floor(body.duration*2.5))throw new Error('دیالۆگەکە بۆ ئەم ماوەیە درێژە؛ دەقەکە کورت بکەرەوە یان ماوەکە زیاد بکە.');
  const maxBytes=body.model==='p-video-2'?(internalPrompt?11000:10000):1000;
  if(new TextEncoder().encode(prompt+dialogueText+identity).length>maxBytes)throw new Error(`Shorten the scene, identities and dialogue to ${maxBytes} UTF-8 bytes.`);
