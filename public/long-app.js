@@ -26,7 +26,7 @@ function modelChanged() {
   if(pending && Number($('longDuration').value)>(pruna?70:15)) $('longDuration').value='5';
   if(selected==='wan2.2-i2v-flash' && !['720p','480p'].includes($('longResolution').value)) $('longResolution').value='720p';
   if(!omni && !pending && !['60','70'].includes($('longDuration').value)) $('longDuration').value='60';
-  if(selected==='wan2.2-i2v-flash') $('longLanguage').value='none';
+  
   $('longMode').options[1].disabled=!(omni||pruna);
   if(!omni&&!pruna) $('longMode').value='new';
   $('longSourcePanel').hidden=$('longMode').value!=='extension';
@@ -36,7 +36,7 @@ let sources=[];
 function selectSource() {
   invalidate();const source=sources.find(j=>j.id===$('longSource').value);
   if(source) {
-    $('longLanguage').value=source.language;$('aspectRatio').value=source.aspectRatio;
+    $('aspectRatio').value=source.aspectRatio;
     $('longResolution').value=source.resolution;
   }
 }
@@ -80,7 +80,7 @@ $('longQuote').addEventListener('click', async () => {
     const dialogueText=scene.split(/\\r?\\n/).map(line=>line.trim()).filter(line=>/^[^:：]{1,40}[:：]\\s*\\S/.test(line)).map(line=>line.replace(/^[^:：]{1,40}[:：]\\s*/,'' )).join('\\n').slice(0,5000);\n    const data = await call('quote', { model:$('longModel').value,mode:$('longMode').value,
       ...($('longMode').value==='extension'?{sourceJobId:$('longSource').value}:{}),prompt: scene, aspectRatio: $('aspectRatio').value,
       resolution: $('longResolution').value, duration: Number($('longDuration').value), identity: '', image:images[0] || null,referenceImages:images.slice(1),
-      language: 'sorani', dialogueText });
+      language: $('longModel').value==='wan2.2-i2v-flash'?'none':'sorani', dialogueText });
     if (session !== token() || version !== generation) return;
     if (data.outputSeconds !== Number($('longDuration').value) || data.model !== $('longModel').value)
       throw new Error('سێرڤەری Render هێشتا ماوەی هەڵبژێردراو پشتگیری ناکات؛ پێویستی بە Deploy ـی کۆدی نوێ هەیە. هیچ دروستکردنێک دەست پێ ناکات.');
