@@ -29,7 +29,7 @@ test('admin budget retains failures, legacy jobs, and uncertain exposure across 
 });
 
 test('verified server-configured admin bypasses purchased credits even when credit charging is enabled',async t=>{
- const env={VIDEO_TEST_EMAIL:'admin@example.test',VIDEO_PURCHASED_CREDITS_ENABLED:'true',
+ const env={VIDEO_ADMIN_EMAIL:'admin@example.test',VIDEO_TEST_EMAIL:'admin@example.test',VIDEO_PURCHASED_CREDITS_ENABLED:'true',
   STRIPE_MODE:'test',LONG_VIDEO_SERVICE_URL:'https://processor.example',LONG_VIDEO_SERVICE_SECRET:'x'.repeat(32),
   DB:{prepare(){throw Error('Purchased-credit database must not be accessed for admin generation');}}};
  const user={id:'admin',email:' Admin@example.test ',verified:true};
