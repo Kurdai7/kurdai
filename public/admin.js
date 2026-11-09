@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id),key='kurdai_session_token';let english=false,data=null;
 const words={
- title:['ستۆدیۆی ئەدمین','Admin Studio'],intro:['چاودێری هەژمارەکان، پڕۆژەکان، کرێدیت و پارەدان.','Monitor accounts, projects, credits and payments.'],refresh:['نوێکردنەوە','Refresh'],
+ videoStudioLink:['🎬 ستۆدیۆی ڤیدیۆ','🎬 Video Studio'],title:['ستۆدیۆی ئەدمین','Admin Studio'],intro:['چاودێری هەژمارەکان، پڕۆژەکان، کرێدیت و پارەدان.','Monitor accounts, projects, credits and payments.'],refresh:['نوێکردنەوە','Refresh'],
  usersLabel:['کۆی هەژمارەکان','Total accounts'],verifiedLabel:['هەژماری پشتڕاستکراو','Verified accounts'],jobsLabel:['داواکاریی ڤیدیۆ','Video requests'],creditsLabel:['کرێدیتی تۆمارکراو','Credits issued'],
  readyLabel:['ڤیدیۆی ئامادە','Ready videos'],failedLabel:['ڤیدیۆی سەرنەکەوتوو','Failed videos'],ordersLabel:['داواکاریی پارەدان','Payment orders'],revenueLabel:['پارەی وەرگیراو (EUR)','Revenue (EUR)'],
  settingsTitle:['دۆخی خزمەتگوزارییەکان','Service status'],safeNote:['دروستکردنی ڤیدیۆ و پارەدان لەم داشبۆردەوە ناگۆڕدرێن؛ ئەم پەڕەیە تەنها چاودێرییە.','Video generation and payments cannot be changed here; this page is read-only.'],
