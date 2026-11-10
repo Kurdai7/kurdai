@@ -1,8 +1,8 @@
 // Shared browser/Worker/Node-safe Omni validation and owner cost estimates.
 // These are provider list-price estimates, never a promised final invoice.
-export const OMNI_MODEL = 'gemini-omni-1.1-flash';
-export const OMNI_PRICES = Object.freeze({reviewed:'2026-11-10',expires:'2026-12-10',
-  inputPerMillionUSD:1.5,textPerMillionUSD:9,videoPerMillionUSD:17.5,videoTokensPerSecond720:5792,
+export const OMNI_MODEL = 'gemini-omni-1.2-flash';
+export const OMNI_PRICES = Object.freeze({reviewed:'2026-11-05',expires:'2026-12-05',
+  inputPerMillionUSD:1.5,textPerMillionUSD:9,videoPerMillionUSD:12,videoTokensPerSecond720:5792,
   usdPerEUR:1.1193,fxDate:'2026-10-23'});
 const number = value => ['string','number'].includes(typeof value) && String(value).trim() !== '' &&
   Number.isFinite(Number(value)) && Number(value)>=0 ? Number(value) : null;
