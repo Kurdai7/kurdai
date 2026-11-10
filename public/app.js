@@ -30,7 +30,7 @@ $('recommendSorani').addEventListener('click', () => {
     $('dialectRecommendation').textContent=ku('لە Extension زمان و مۆدێلی ڤیدیۆی پێشوو دەپارێزرێن؛ بۆ سۆرانی ڤیدیۆی نوێ هەڵبژێرە.', 'Extension preserves the source dialect and model. Choose New Video for a new Sorani video.');
     return;
   }
-  $('longModel').value='gemini-omni-1.1-flash';
+  $('longModel').value='gemini-omni-1.2-flash';
   $('longModel').dispatchEvent(new Event('change'));
   $('longLanguage').value='sorani';$('longLanguage').dispatchEvent(new Event('input'));
   $('dialectRecommendation').textContent=ku('Omni بۆ سۆرانی هەڵبژێردرا. هیچ داواکارییەکی دروستکردن نەنێردراوە.', 'Omni selected for Sorani. No generation request was sent.');
@@ -406,7 +406,7 @@ const translations = new Map([
   ['وردەکارییەکان دیاری بکە بۆ ئامادەکردنی ڤیدیۆکەت.','Set up the details for your video.'],['چیرۆک یان بیرۆکەی ڤیدیۆ','Video story or prompt'],
   ['١. بیرۆکە و دەنگ','1. Idea and dialogue'],['٢. ڕێکخستنی ڤیدیۆ','2. Video settings'],['ڕێنمایی زمان و مۆدێل','Language and model guidance'],
   ['Veo: داواکردنی سۆرانی؛ کوالێتیی دەنگ و شێوەزار هێشتا تاقی نەکراوەتەوە. دەنگ لە نرخی Veo دایە؛ TTS ـی جیاواز چالاک نییە.','Veo: Sorani can be requested, but speech and dialect quality have not been verified. Native audio is included in Veo pricing; separate TTS is disabled.'],
-  ['سۆرانی → Omni 1.1 Flash','Sorani → Omni 1.1 Flash'],['بادینی → Veo 3.1 Lite','Badini → Veo 3.1 Lite'],
+  ['سۆرانی → Omni 1.2 Flash','Sorani → Omni 1.2 Flash'],['بادینی → Veo 3.1 Lite','Badini → Veo 3.1 Lite'],
   ['پێشنیار بەپێی ئەزموونی خاوەن پڕۆژە؛ دەنگی هەردوو مۆدێل لە API ـی KurdAI هێشتا پشتڕاست نەکراوەتەوە. هەڵبژاردن هیچ ڤیدیۆیەک دروست ناکات.','Recommendations are based on project testing; neither model’s speech output is verified through the KurdAI API. Selecting a model does not generate a video.'],
   ['وێنە و ڤیدیۆی ڕەفەرەنس','Reference images and video'],['ڤیدیۆیەکی ئامادە هەڵبژێرە','Choose a ready video'],
   ['وەرگرتنی دوا فڕەیمی ڤیدیۆی پیشاندراو','Capture final frame from the displayed video'],['ئەمە کلیپێکی نوێ لەو وێنەیەوە دەست پێ دەکات؛ بە خۆکار لەگەڵ ڤیدیۆی پێشوو یەک ناخات.','This starts a new clip from that image; it does not automatically join the previous video.'],

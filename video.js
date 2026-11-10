@@ -177,9 +177,9 @@ export async function handleVideo(request, env, user) {
     if (url.pathname === '/api/video-capabilities' && request.method === 'GET') {
       const allowed = canUseVideoWorkflow(env,user);
       return json({ spending:spendingPolicy(env), configured: !!env.DB && !!env.GEMINI_API_KEY && env.VIDEO_GENERATION_ENABLED === 'true' && spendingPolicy(env).enabled,
-        accountAllowed: allowed, longWorkflowAllowed:canUseVideoWorkflow(env,user), isAdmin:isVideoAdmin(env,user), accountVerified: !!user?.verified,
+        accountAllowed: allowed, longWorkflowAllowed:allowed, nativeStudioAllowed:isVideoAdmin(env,user), isAdmin:isVideoAdmin(env,user), accountVerified: !!user?.verified,
         missingConfiguration: [!env.DB && 'DB', !env.GEMINI_API_KEY && 'GEMINI_API_KEY',
-          env.VIDEO_GENERATION_ENABLED !== 'true' && 'VIDEO_GENERATION_ENABLED', !env.VIDEO_TEST_EMAIL && 'VIDEO_TEST_EMAIL'].filter(Boolean),
+          env.VIDEO_GENERATION_ENABLED !== 'true' && 'VIDEO_GENERATION_ENABLED', !env.VIDEO_ADMIN_EMAIL && 'VIDEO_ADMIN_EMAIL'].filter(Boolean),
         publicGenerationEnabled:false,providerGenerationVerified:false,
         featureStatus:{textToVideo:'owner-test-only',imageToVideo:'owner-test-only',referenceImages:'owner-test-only',extension:'owner-test-only',longVideo:'not-ready'},
         costApprovalRequired: true, models: MODELS, durations: [4, 6, 8], aspectRatios: ['16:9', '9:16'],
@@ -190,6 +190,10 @@ export async function handleVideo(request, env, user) {
     }
     if (!user) return json({ error: 'Please log in.' }, 401);
     if (!user.verified) return json({ error: 'Verify your email first.' }, 403);
+    if (!canUseVideoWorkflow(env,user)) return json({ error: 'Video generation is not available for this account.' }, 403);
+    // Native Veo history, polling, downloads, quotes and generation are private admin-studio data.
+    if (['/api/video-jobs','/api/video-status','/api/video-file','/api/generate','/api/video-quote'].includes(url.pathname) && !isVideoAdmin(env,user))
+      return json({ error: 'The private video studio is for administrators only.' }, 403);
     if (!env.DB) return json({ error: 'Database is not configured.' }, 503);
     await ensureSchema(env.DB);
     if (url.pathname === '/api/video-jobs' && request.method === 'GET') {

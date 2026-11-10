@@ -1,7 +1,7 @@
 import {KURDISH_WARDROBE} from './kurdish-wardrobe.js';
 // Gemini Omni transport. Not enabled by the website until its separate quote/
 // approval integration is complete. Never reuse the silent Wan price for this model.
-export const OMNI_MODEL = 'gemini-omni-1.1-flash';
+export const OMNI_MODEL = 'gemini-omni-1.2-flash';
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const interactionID = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,300}$/.test(value);
 function safeUsage(value) {

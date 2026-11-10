@@ -28,7 +28,7 @@ function d1() {
 const owner = { id: 'owner', email: ' OWNER@example.com ', verified: 1 };
 const other = { id: 'other', email: 'other@example.com', verified: 1 };
 const fresh = overrides => ({ requestId: crypto.randomUUID(), prompt: 'کارتۆنێکی کوردی، سڵاو.', duration: 8, ...overrides });
-function env() { return { DB: d1(), BILLABLE_REQUESTS_ENABLED:'true', API_MAX_JOB_USD:'100', API_MAX_DAY_USD:'1000', GEMINI_API_KEY: 'test-secret', VIDEO_GENERATION_ENABLED: 'true', VIDEO_TEST_EMAIL: 'owner@example.com' }; }
+function env() { return { DB: d1(), BILLABLE_REQUESTS_ENABLED:'true', API_MAX_JOB_USD:'100', API_MAX_DAY_USD:'1000', GEMINI_API_KEY: 'test-secret', VIDEO_GENERATION_ENABLED: 'true', VIDEO_TEST_EMAIL: 'owner@example.com', VIDEO_ADMIN_EMAIL: 'owner@example.com' }; }
 function post(body) { return new Request('https://kurdai.net/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
 const get = path => new Request(`https://kurdai.net${path}`);
 const operation = 'models/veo-3.1-fast-generate-preview/operations/test123';
@@ -47,6 +47,20 @@ async function handleVideo(request, config, user) {
   }), config, user)).json();
   return rawHandleVideo(post({...body, quoteId:q.id, approved:true, approvedAPIEUR:q.apiEUR}), config, user);
 }
+test('non-admin customer accounts cannot read private Veo studio jobs or submit native quotes', async t => {
+  const config = { ...env(), VIDEO_ADMIN_EMAIL:'admin@example.com' };
+  mockFetch(t, () => { throw new Error('Must not call Google'); });
+  const cap = await (await rawHandleVideo(get('/api/video-capabilities'), config, owner)).json();
+  assert.equal(cap.accountAllowed, true);
+  assert.equal(cap.nativeStudioAllowed, false);
+  assert.equal((await rawHandleVideo(get('/api/video-jobs'), config, owner)).status, 403);
+  assert.equal((await rawHandleVideo(get('/api/video-status?job=private-job'), config, owner)).status, 403);
+  assert.equal((await rawHandleVideo(get('/api/video-file?job=private-job'), config, owner)).status, 403);
+  assert.equal((await rawHandleVideo(new Request('https://kurdai.net/api/video-quote', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(fresh())
+  }), config, owner)).status, 403);
+});
+
 test('validates aspect ratios, durations, reference limits and contradictory combinations', () => {
   const input = validateInput(fresh({ aspectRatio: '9:16', referenceImages: [png] }));
   assert.equal(input.aspectRatio, '9:16'); assert.equal(input.instance.referenceImages.length, 1);
@@ -87,11 +101,11 @@ test('polling stores result, streams privately and prevents another user accessi
     return Response.json({ done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: videoURI } }] } } });
   });
   const created = await (await handleVideo(post(fresh()), config, owner)).json();
-  assert.equal((await handleVideo(get(`/api/video-status?job=${created.id}`), config, other)).status, 404);
+  assert.equal((await handleVideo(get(`/api/video-status?job=${created.id}`), config, other)).status, 403);
   const ready = await (await handleVideo(get(`/api/video-status?job=${created.id}`), config, owner)).json();
   assert.equal(ready.ready, true); assert.equal(ready.canExtend, true); assert.ok(!JSON.stringify(ready).includes(videoURI));
   const file = await handleVideo(get(ready.videoUrl), config, owner); assert.equal(await file.text(), 'mp4-fixture'); assert.equal(file.headers.get('Cache-Control'), 'private, no-store');
-  assert.equal((await handleVideo(get(ready.videoUrl), config, other)).status, 404);
+  assert.equal((await handleVideo(get(ready.videoUrl), config, other)).status, 403);
   assert.equal(calls, 3);
 });
 

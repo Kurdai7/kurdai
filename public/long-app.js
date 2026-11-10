@@ -13,7 +13,7 @@ async function call(path, body) {
 function invalidate() { generation++; quote = null; $('longStart').disabled = true; }
 for (const id of ['prompt', 'aspectRatio', 'longModel', 'longMode', 'longSource', 'longResolution', 'longDuration', 'longReference']) $(id).addEventListener('input', invalidate);
 function modelChanged() {
-  invalidate();const selected=$('longModel').value;const omni=selected==='gemini-omni-1.1-flash';
+  invalidate();const selected=$('longModel').value;const omni=selected==='gemini-omni-1.2-flash';
   const pruna=selected==='p-video-2';
   const pending=['p-video-2','seedance-2.0-mini','heygen-video-1','pixverse-v6','kling-3.0-standard'].includes(selected);
   $('longModelNotice').textContent=pruna?'سۆرانیی P-Video 2 لە ڤیدیۆی API پەسەند کراوە. قەبارەی ڕاستەقینەی تاقیکردنەوە 1280×704 بوو؛ 720pی تەواو نییە. هەردوو زمان دەمێننەوە.':['pixverse-v6','kling-3.0-standard'].includes(selected)?'سۆرانی لەلایەن خاوەنی KurdAI تاقی کراوەتەوە؛ پەیوەندی API هێشتا ئامادە نییە. بادینی پێویستی بە تاقیکردنەوە هەیە.':pending?'ئەم مۆدێلە هێشتا پەیوەست نەکراوە؛ دەنگی سۆرانی و بادینی تاقی نەکراوەتەوە. دروستکردن داخراوە.': 'سۆرانی و بادینی هێشتا بە ڤیدیۆی ڕاستەقینە پشتڕاست نەکراونەتەوە.';
@@ -69,7 +69,7 @@ $('longQuote').addEventListener('click', async () => {
     if($('longModel').value==='p-video-2' && !scene) { $('prompt').focus(); throw new Error('خانەی «وەسفی دیمەنی ڤیدیۆ» پڕ بکەرەوە؛ دیالۆگەکەت پارێزراوە.'); }
     
     const files=Array.from($('longReference').files),images=[];
-    if(files.length>($('longModel').value==='gemini-omni-1.1-flash'?3:1)) throw new Error('Omni تا سێ وێنە، Wan تەنها یەک وێنە پەسەند دەکات.');
+    if(files.length>($('longModel').value==='gemini-omni-1.2-flash'?3:1)) throw new Error('Omni تا سێ وێنە، Wan تەنها یەک وێنە پەسەند دەکات.');
     for (const file of files) {
       if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 4 * 1024 * 1024) throw new Error('وێنەی PNG/JPEG بەکاربهێنە، تا 4 MiB.');
       images.push(await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }));
@@ -184,8 +184,8 @@ $('longReadiness').addEventListener('click', async () => {
       show('سێرڤەر: بەردەستە.\\nPruna P-Video 2: پەیوەندی API و دەنگی سۆرانی پێشتر تاقی کراونەتەوە و پەسەند کراون. کوالێتی بادینی هێشتا پەسەند نەکراوە.\\nبۆ پشکنینی نرخی ئەم داواکارییە و ڕێکخستنە ماوەکان، «پیشاندانی خەرجی — بێ پارە» هەڵبژێرە. پەیوەستبوونی سێرڤەر بە تەنها واتای چالاکبوونی دروستکردن نییە.\\nهیچ داواکارییەکی ڤیدیۆ نەنێردراوە.');
       return;
     }
-    if(state.processorReachable && $('longModel').value==='gemini-omni-1.1-flash') {
-      const model=state.models?.['gemini-omni-1.1-flash'];
+    if(state.processorReachable && $('longModel').value==='gemini-omni-1.2-flash') {
+      const model=state.models?.['gemini-omni-1.2-flash'];
       show(`سێرڤەر: بەردەستە.\nOmni 1.1 Flash: ${model ? (model.canStart?'ڕێکخراوە؛ تاقیکردنەوەی AI هێشتا نەکراوە.':(model.blockedReasons || []).join('\n')):'سێرڤەر پێویستی بە Deploy ـی کۆدی نوێی Omni هەیە.'}\nسۆرانی و بادینی جیاوازن؛ کوالێتیی دەنگ و جێگیری کارەکتەر هێشتا بە API تاقی نەکراونەتەوە.\nهیچ داواکارییەکی ڤیدیۆ نەنێردراوە.`);
       return;
     }
@@ -207,7 +207,7 @@ if(referenceInput){
     previewURLs.forEach(url=>URL.revokeObjectURL(url));previewURLs=[];
     preview.replaceChildren();
     const files=Array.from(referenceInput.files||[]);
-    const max=$('longModel').value==='gemini-omni-1.1-flash'?3:1;
+    const max=$('longModel').value==='gemini-omni-1.2-flash'?3:1;
     count.textContent=String(files.length)+' / '+String(max);
     if(!files.length){const empty=document.createElement('span');empty.className='reference-empty';empty.textContent='هێشتا هیچ وێنەیەک هەڵنەبژێردراوە';preview.append(empty);return;}
     files.slice(0,max).forEach(file=>{

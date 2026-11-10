@@ -15,12 +15,12 @@ const body={model:OMNI_MODEL,prompt:'خێزانێکی کارتۆنی لە دار
 
 test('Omni quotes distinguish output cost from unknown context and never borrow Wan prices',()=>{
   const input=longInput(body),q=quoteLong(input);
-  assert.equal(q.model,OMNI_MODEL);assert.equal(q.apiMinimumUSD,0.5068);assert.equal(q.apiUSD,null);
+  assert.equal(q.model,OMNI_MODEL);assert.equal(q.apiMinimumUSD,0.34752);assert.equal(q.apiUSD,null);
   assert.equal(q.totalEUR,null);assert.equal(q.canStart,false);assert.equal(q.audioQuote.native,true);
   assert.equal(q.serviceCostBreakdown.continuationVideoEUR,0);
   assert.equal(q.serviceCostBreakdown.inputAndHistoryEUR,null);
   const long=quoteLong({...input,duration:70}).serviceCostBreakdown;
-  assert.ok(Math.abs(long.firstSegmentVideoEUR+long.continuationVideoEUR-7.0952/1.1193)<1e-9);
+  assert.ok(Math.abs(long.firstSegmentVideoEUR+long.continuationVideoEUR-4.86528/1.1193)<1e-9);
   assert.equal(input.dialogueSegments[0],body.dialogueText);
   for(const language of ['sorani','badini']) assert.equal(longInput({...body,language}).language,language);
   for(const duration of Array.from({length:14},(_,i)=>(i+1)*5))
@@ -66,9 +66,9 @@ for(const [seconds,language] of [[5,'sorani'],[10,'badini'],[60,'sorani'],[70,'s
   };
   t.after(async()=>{globalThis.fetch=realFetch;await new Promise(resolve=>processor.server.close(resolve));await processor.close();await rm(root,{recursive:true,force:true});});
   const owner={id:'owner',email:'owner@example.test',verified:true};
-  const env={VIDEO_TEST_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:config.LONG_VIDEO_SERVICE_SECRET};
+  const env={VIDEO_TEST_EMAIL:owner.email,VIDEO_ADMIN_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:config.LONG_VIDEO_SERVICE_SECRET};
   const request=(path,data)=>handleLong(new Request('https://kurdai.net/api/long/'+path,data?{method:'POST',body:JSON.stringify(data)}:{}),env,owner);
-  const health=await(await request('capabilities')).json();assert.equal(health.models[OMNI_MODEL].canStart,true);assert.equal(health.paidProviderProbe,false);assert.equal(submissions,0);
+  const health=await(await request('capabilities')).json();assert.equal(health.models[OMNI_MODEL].canStart,true,JSON.stringify(health.models[OMNI_MODEL]));assert.equal(health.paidProviderProbe,false);assert.equal(submissions,0);
   const quote=await(await request('quote',{...body,language,dialogueText,duration:seconds,aspectRatio:seconds===70?'9:16':'16:9'})).json();
   assert.equal(quote.model,OMNI_MODEL);assert.equal(quote.canStart,true);assert.equal(quote.outputSeconds,seconds);assert.equal(submissions,0);
   assert.equal((await request('start',{id:quote.id,approved:true,approvedTotalEUR:0})).status,400);
