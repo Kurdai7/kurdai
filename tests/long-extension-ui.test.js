@@ -16,9 +16,9 @@ test('extension UI loads only eligible own jobs and binds dialect, ratio and sou
   const {w,$}=setup(t,async(path,options)=>{
     calls.push({path,options});
     return {ok:true,json:async()=>path.endsWith('/jobs')?{jobs:[
-      {id:sourceId,canExtend:true,model:'gemini-omni-1.1-flash',duration:5,language:'badini',aspectRatio:'9:16',resolution:'720p'},
+      {id:sourceId,canExtend:true,model:'gemini-omni-1.2-flash',duration:5,language:'badini',aspectRatio:'9:16',resolution:'720p'},
       {id:'unusable',canExtend:false,model:'synthetic-test-no-ai'}
-    ]}:{model:'gemini-omni-1.1-flash',mode:'extension',sourceJobId:sourceId,outputSeconds:10,segments:2,canStart:false,apiUSD:null,totalEUR:null,blockedReasons:['Spending disabled']}};
+    ]}:{model:'gemini-omni-1.2-flash',mode:'extension',sourceJobId:sourceId,outputSeconds:10,segments:2,canStart:false,apiUSD:null,totalEUR:null,blockedReasons:['Spending disabled']}};
   });
   $('longMode').value='extension';$('longMode').dispatchEvent(new w.Event('change'));await wait();
   assert.equal($('longSourcePanel').hidden,false);assert.equal($('longSource').options.length,2);
@@ -46,7 +46,7 @@ test('a start response arriving after logout cannot poll or display another sess
   const {$}=setup(t,async(path)=>{
     calls.push(path);
     if(path.endsWith('/start'))return new Promise(r=>{finish=()=>r({ok:true,json:async()=>({id:sourceId})});});
-    return {ok:true,json:async()=>({id:sourceId,model:'gemini-omni-1.1-flash',outputSeconds:60,segments:12,
+    return {ok:true,json:async()=>({id:sourceId,model:'gemini-omni-1.2-flash',outputSeconds:60,segments:12,
       apiUSD:1,totalEUR:1,canStart:true,nativeAudio:true})};
   });
   const w=$('longStart').ownerDocument.defaultView;w.confirm=()=>true;
@@ -58,7 +58,7 @@ test('a lost start response refreshes the reserved balance without retrying gene
  let starts=0,notifications=0;
  const {w,$}=setup(t,async(path)=>{
   if(path.endsWith('/start')){starts++;throw new TypeError('Synthetic lost response');}
-  return {ok:true,json:async()=>({id:sourceId,model:'gemini-omni-1.1-flash',outputSeconds:60,segments:12,
+  return {ok:true,json:async()=>({id:sourceId,model:'gemini-omni-1.2-flash',outputSeconds:60,segments:12,
    apiUSD:1,totalEUR:1,canStart:true,nativeAudio:true})};
  });
  w.confirm=()=>true;w.document.addEventListener('kurdai-balance-change',()=>notifications++);
