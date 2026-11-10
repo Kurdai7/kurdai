@@ -12,7 +12,7 @@ test('70-second UI quotes freely, blocks unknown costs, requires approval, inval
   w.confirm = () => consent;
   w.fetch = async (path, options = {}) => {
     records.push({ path, options });
-    const q = { id: 'quote', model:'gemini-omni-1.2-flash',nativeAudio:true, outputSeconds: serverSeconds, segments:serverSeconds/5, apiUSD: 1.053, apiEUR: 1.053 / 1.1188, mediaEUR: enabled ? 0.01 : null,
+    const q = { id: 'quote', model:'gemini-omni-1.1-flash',nativeAudio:true, outputSeconds: serverSeconds, segments:serverSeconds/5, apiUSD: 1.053, apiEUR: 1.053 / 1.1188, mediaEUR: enabled ? 0.01 : null,
       fxEUR: enabled ? 0 : null, vatEUR: enabled ? 0 : null, totalEUR: enabled ? 0.9512 : null, canStart: enabled,
       planningEstimate:enabled?undefined:{basis:'unverified-planning-reserve',payable:false,totalEUR:1.31} };
     if (path.endsWith('/capabilities')) return {ok:true,json:async()=>({processorReachable:false,missingConfiguration:['LONG_VIDEO_SERVICE_URL']})};
@@ -64,7 +64,7 @@ test('Omni UI handles unknown token costs, binds model and offers 5–70s withou
   const dom=new JSDOM(readFileSync(new URL('../public/index.html',import.meta.url),'utf8'),{url:'https://kurdai.net',runScripts:'outside-only'});
   const w=dom.window,$=id=>w.document.getElementById(id),requests=[];
   w.HTMLMediaElement.prototype.pause=w.HTMLMediaElement.prototype.load=()=>{};
-  let model='gemini-omni-1.2-flash';
+  let model='gemini-omni-1.1-flash';
   w.fetch=async(path,options)=>{requests.push({path,options});return{ok:true,json:async()=>({model,outputSeconds:4,segments:1,
     apiUSD:null,apiEUR:null,apiMinimumEUR:0.4527,mediaEUR:null,fxEUR:null,vatEUR:null,totalEUR:null,
     nativeAudio:true,audioQuote:{native:true,language:'sorani'},canStart:false,blockedReasons:['Missing context costs']})};};
