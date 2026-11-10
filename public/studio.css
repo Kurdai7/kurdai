@@ -778,3 +778,38 @@ main>.features{order:7!important}
  #studio .public-reference-fields{padding:11px!important}
  #studio .two{gap:8px!important}
 }
+
+
+/* Fix: keep Chat and Image shortcuts visible in the redesigned dashboard header. */
+header a.chat-nav,
+header a.chat-nav[href="/chat.html"],
+header a.chat-nav[href="/image.html"]{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+  z-index:25!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:40px!important;
+  padding:8px 11px!important;
+  border:1px solid #4b8061!important;
+  border-radius:11px!important;
+  background:#102c20!important;
+  color:#f4fff6!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  line-height:1.4!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+  flex:0 0 auto!important;
+}
+header a.chat-nav:hover{background:#19452f!important;border-color:#42e987!important}
+@media(max-width:900px){
+  header{flex-wrap:wrap!important;row-gap:8px!important}
+  header a.chat-nav{order:4!important;flex:1 1 calc(50% - 5px)!important;min-width:0!important}
+  header a.chat-nav[href="/image.html"]{order:5!important}
+}
+@media(max-width:390px){
+  header a.chat-nav{font-size:10px!important;padding:7px 5px!important}
+}
