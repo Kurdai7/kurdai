@@ -4,6 +4,7 @@ import {canUseVideoWorkflow,isVideoAdmin} from './video-access.js';
 import { spendingPolicy, budgetAllows } from './spending.js';
 import { nativeCost, inputHash } from './native-cost.js';
 import { DIALECTS, dialogueInstruction } from './dialogue.js';
+import { OMNI_MODEL } from './omni-cost.js';
 export const MODELS = ['veo-3.1-fast-generate-preview', 'veo-3.1-generate-preview', 'veo-3.1-lite-generate-preview'];
 const API = 'https://generativelanguage.googleapis.com/v1beta/';
 const MAX_BODY = 18 * 1024 * 1024;
@@ -183,6 +184,10 @@ export async function handleVideo(request, env, user) {
         publicGenerationEnabled:false,providerGenerationVerified:false,
         featureStatus:{textToVideo:'owner-test-only',imageToVideo:'owner-test-only',referenceImages:'owner-test-only',extension:'owner-test-only',longVideo:'not-ready'},
         costApprovalRequired: true, models: MODELS, durations: [4, 6, 8], aspectRatios: ['16:9', '9:16'],
+        // Keep the legacy Veo endpoint explicit while publishing the separate Omni long-video contract.
+        longVideo: { model: OMNI_MODEL, durations: Array.from({length:14}, (_, i) => (i + 1) * 5),
+          resolution: '720p', aspectRatios: ['16:9','9:16'], nativeAudio: true,
+          speechQualityVerified: false, requiresAdmin: true, publicGenerationEnabled: false },
         maxReferenceImages: 3, extensionSeconds: 7, soraniGuaranteed: false, badiniGuaranteed: false,
         dialogueLanguages: Object.entries(DIALECTS).map(([id, d]) => ({ id, label: d.label,
           nativeVideoVerified: false, ttsDocumented: d.ttsDocumented, ttsEnabled: false })),
