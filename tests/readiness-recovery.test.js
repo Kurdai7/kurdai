@@ -15,7 +15,7 @@ for (const permanent of [false,true]) test(`readiness ${permanent?'stops on auth
       if(!permanent)throw new w.TypeError('Failed to fetch');
       return {ok:false,json:async()=>({error:'Unauthorized',code:'PROCESSOR_AUTH_REJECTED'})};
     }
-    return {ok:true,json:async()=>({processorReachable:true,models:{'gemini-omni-1.2-flash':{canStart:false,blockedReasons:['Spending disabled']}}})};
+    return {ok:true,json:async()=>({processorReachable:true,models:{'gemini-omni-1.1-flash':{canStart:false,blockedReasons:['Spending disabled']}}})};
   };
   w.eval(readFileSync(new URL('../public/long-app.js',import.meta.url),'utf8'));
   w.document.getElementById('longReadiness').click();

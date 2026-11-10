@@ -13,7 +13,7 @@ import {duration} from '../processor/media.js';
 import {TEST_CREDIT_PACKS} from '../billing-packs.js';
 import {memoryJobStorage,durableTestFlags} from './helpers/r2-memory.js';
 
-const scenarios=[{model:'gemini-omni-1.2-flash',pack:{id:'small',priceId:'price_synthetic',amountCents:200,credits:200}},
+const scenarios=[{model:'gemini-omni-1.1-flash',pack:{id:'small',priceId:'price_synthetic',amountCents:200,credits:200}},
  ...TEST_CREDIT_PACKS.map(pack=>({model:'p-video-2',pack}))];
 for(const {model,pack} of scenarios) test(`isolated Worker/D1: EUR${pack.amountCents/100} purchase funds one synthetic ${model} video without duplicate credits or debit`,async t=>{
  const root=await mkdtemp(join(tmpdir(),'kurdai-purchase-video-')),run=promisify(execFile),source=join(root,'source.mp4');
