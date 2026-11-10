@@ -68,7 +68,7 @@ for(const [seconds,language] of [[5,'sorani'],[10,'badini'],[60,'sorani'],[70,'s
   const owner={id:'owner',email:'owner@example.test',verified:true};
   const env={VIDEO_TEST_EMAIL:owner.email,VIDEO_ADMIN_EMAIL:owner.email,LONG_VIDEO_SERVICE_URL:'https://processor.test',LONG_VIDEO_SERVICE_SECRET:config.LONG_VIDEO_SERVICE_SECRET};
   const request=(path,data)=>handleLong(new Request('https://kurdai.net/api/long/'+path,data?{method:'POST',body:JSON.stringify(data)}:{}),env,owner);
-  const health=await(await request('capabilities')).json();assert.equal(health.models[OMNI_MODEL].canStart,true);assert.equal(health.paidProviderProbe,false);assert.equal(submissions,0);
+  const health=await(await request('capabilities')).json();assert.equal(health.models[OMNI_MODEL].canStart,true,JSON.stringify(health.models[OMNI_MODEL]));assert.equal(health.paidProviderProbe,false);assert.equal(submissions,0);
   const quote=await(await request('quote',{...body,language,dialogueText,duration:seconds,aspectRatio:seconds===70?'9:16':'16:9'})).json();
   assert.equal(quote.model,OMNI_MODEL);assert.equal(quote.canStart,true);assert.equal(quote.outputSeconds,seconds);assert.equal(submissions,0);
   assert.equal((await request('start',{id:quote.id,approved:true,approvedTotalEUR:0})).status,400);
