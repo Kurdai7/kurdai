@@ -28,7 +28,7 @@ export function publicLongJob(job) {
     error: job.error || null, approvedAt: job.approvedAt || null,
     reservedAPIUSD: job.reservedAPIUSD || 0,
     billingClass:job.billingClass || 'admin',
-    canExtend:job.status==='ready' && (job.input.model==='p-video-2' || (job.input.model==='gemini-omni-1.1-flash' &&
+    canExtend:job.status==='ready' && (job.input.model==='p-video-2' || (job.input.model==='gemini-omni-1.2-flash' &&
       typeof job.previousInteractionId==='string' && /^[A-Za-z0-9_-]{1,300}$/.test(job.previousInteractionId))),
     language:job.input.language || 'none',aspectRatio:job.input.aspectRatio,resolution:job.input.resolution,
     ...(job.input.sourceJobId?{sourceJobId:job.input.sourceJobId}:{}),
