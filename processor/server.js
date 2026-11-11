@@ -270,7 +270,14 @@ export async function createProcessor(config, dependencies = {}) {
           audioEnabled: {sorani: false, badini: false},
           syntheticTest:{available:true,duration:70,providerRequests:0,aiGenerated:false},
           models:{[OMNI_MODEL]:{configured:!!config.GEMINI_API_KEY,canStart:omni.canStart,
-            blockedReasons:omni.blockedReasons,nativeAudio:true,speechQualityVerified:false}},paidProviderProbe: false});
+            blockedReasons:omni.blockedReasons,nativeAudio:true,speechQualityVerified:false}},
+          omniGenerationEnabled:config.OMNI_GENERATION_ENABLED==='true',
+          omniBillingVerified:config.OMNI_BILLING_VERIFIED==='true',
+          durableStorageConfirmed:config.LONG_DURABLE_STORAGE==='true',
+          apiSpendingEnabled:policy().enabled,
+          missingOmniCostSettings:['OMNI_INPUT_TOKENS_PER_SEGMENT','OMNI_TEXT_TOKENS_PER_SEGMENT','LONG_MEDIA_EUR','LONG_FX_PERCENT','LONG_VAT_PERCENT']
+            .filter(k=>config[k]===undefined || String(config[k]).trim()==='' || !Number.isFinite(Number(config[k])) || Number(config[k])<0),
+          paidProviderProbe: false});
       }
       if (req.method === 'GET' && url.pathname === '/v1/gemini/probe') {
         // GET model metadata: no content generation, no billable inference.

@@ -90,6 +90,9 @@ test('authentication and owner billing boundary block calls before Google', asyn
   assert.equal((await handleVideo(post(fresh()), config, { ...owner, verified: 0 })).status, 403);
   config.VIDEO_GENERATION_ENABLED = 'false'; assert.equal((await handleVideo(post(fresh()), config, owner)).status, 503);
   const cap = await (await handleVideo(get('/api/video-capabilities'), config, owner)).json(); assert.equal(cap.configured, false);
+  assert.equal(cap.longVideo.model, 'gemini-omni-1.2-flash');
+  assert.deepEqual(cap.longVideo.durations, [5,10,15,20,25,30,35,40,45,50,55,60,65,70]);
+  assert.equal(cap.longVideo.publicGenerationEnabled, false);
 });
 
 test('polling stores result, streams privately and prevents another user accessing it', async t => {
