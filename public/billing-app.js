@@ -15,7 +15,7 @@
  }
  function buttons(){for(const b of $('billingPacks').querySelectorAll('button'))b.disabled=busy || b.dataset.preview==='true';}
  function render(c) {
-  $('billingTitle').textContent=ku('کرییدیتی کڕدراو','Purchased credits');
+  $('billingTitle').textContent=ku('کرییدیتی کڕدراو · Stripe (EUR)','Purchased credits · Stripe (EUR)');
   $('billingRefresh').textContent=ku('پشکنینی دۆخی پارەدان','Check payment status');
   $('billingBalance').textContent=ku(`کرییدیتی کڕدراو: ${c.credits} — جیاوازە لە کرییدیتی ڕۆژانە.`,`Purchased credits: ${c.credits} — separate from daily credits.`);
   $('billingPacks').replaceChildren();
@@ -34,9 +34,18 @@
   const c={epoch:++epoch,token:token()};context=null;busy=false;panel.hidden=true;
   $('billingPacks').replaceChildren();$('billingBalance').textContent='';$('billingMessage').textContent='';
   if(!c.token)return;
+  $('billingRefresh').disabled=false;
   try{
    Object.assign(c,await api('capabilities',c));
-   if(!active(c) || !c.configured || !c.accountId)return;
+   if(!active(c))return;
+   if(!c.configured || !c.accountId){
+    panel.hidden=false;
+    $('billingBalance').textContent=ku('🇪🇺 پارەدان بە یۆرۆ لە ڕێگەی Stripe. هەژماری بانکی فینلەندی بۆ وەرگرتنی پارە تۆمار کراوە.','🇪🇺 EUR payments via Stripe. A Finnish payout bank account has been registered.');
+    $('billingMessage').textContent=ku('پارەدانی ڕاستەقینە هێشتا چالاک نییە. هیچ پارەیەک وەرناگیرێت.','Live checkout is not enabled yet. No payment will be taken.');
+    $('billingRefresh').disabled=true;
+    return;
+   }
+   $('billingRefresh').disabled=false;
    const balance=await api('balance',c);if(!active(c))return;
    c.credits=balance.credits;c.latestPurchase=balance.latestPurchase;context=c;render(c);panel.hidden=false;
    const receiptMessage=()=>ku(`دوایین کڕین پشتڕاست کرایەوە؛ ${c.latestPurchase.credits} کرێدیت زیاد کراوە.`,`Latest purchase verified; ${c.latestPurchase.credits} credits added.`);
