@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="112" fill="#103b2d"/>
+<rect x="76" y="145" width="360" height="74" rx="10" fill="#e32636"/>
+<rect x="76" y="219" width="360" height="74" fill="#fff"/>
+<rect x="76" y="293" width="360" height="74" rx="10" fill="#159447"/>
+<circle cx="256" cy="256" r="53" fill="#f9d616"/>
+<path d="M256 216l10 30 31-10-19 26 19 26-31-10-10 30-10-30-31 10 19-26-19-26 31 10z" fill="#103b2d"/>
+<text x="256" y="435" text-anchor="middle" font-family="Arial,sans-serif" font-size="47" font-weight="800" fill="#fff">KurdAI</text>
+</svg>
