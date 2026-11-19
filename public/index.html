@@ -2,6 +2,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#103b2d">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="/icons/kurdai.svg">
+<link rel="apple-touch-icon" href="/icons/kurdai.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KurdAI">
 <title>KurdAI — دروستکەری ڤیدیۆی کوردی</title>
 <style>
 :root{--green:#123d2e;--green2:#1b6547;--red:#d62929;--gold:#ffd52a;--cream:#f7f8f3;--ink:#17251e;--muted:#68776e;--line:#dfe7df}
@@ -240,4 +246,5 @@ select{line-height:1.6;min-height:48px}
 
 
 <script type="module" src="/navigation.js"></script>
+<script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {})); }</script>
 </body></html>
