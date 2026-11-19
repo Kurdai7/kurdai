@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "KurdAI — دروستکەری ڤیدیۆی کوردی",
+  "short_name": "KurdAI",
+  "description": "داهێنان بە زمانی کوردی",
+  "lang": "ckb",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7f8f3",
+  "theme_color": "#103b2d",
+  "icons": [
+    {
+      "src": "/icons/kurdai.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
